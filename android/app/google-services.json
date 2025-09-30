@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "329366449067",
+    "project_id": "sync-bded7",
+    "storage_bucket": "sync-bded7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:329366449067:android:6b020e606e70731edf80ee",
+        "android_client_info": {
+          "package_name": "com.example.sync_event"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqMl7PvyH-piO_p-ly_w111BXtD9fUyNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
