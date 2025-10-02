@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF4A43EC);
-  static const Color secondary = Color(0xFF1A1A1A);
-  static const Color accent = Color(0xFFFFFFFF);
-  static const Color background = Color.fromARGB(255, 255, 255, 255);
-  static const Color text = Color.fromARGB(255, 0, 0, 0);
-  static const Color button = Color(0xFF5669FF);
-  static const Color splash = Color(0xFF131C67);
-  static const Color splashtext = Color.fromARGB(255, 166, 175, 255);
-  static const Color textDark = Color(0xFF333333);
-  static const Color textLight = Color(0xFF888888);
-  static const Color textwhite = Color.fromARGB(255, 255, 255, 255);
+  // Brand colors
+  static const primary = Color(0xFF0057FF); // Main brand color (blue)
+  static const secondary = Color(0xFF1A1A1A); // Secondary / accents
+
+  // Light mode
+  static const backgroundLight = Color(0xFFFFFFFF); // Pure white
+  static const surfaceLight = Color(0xFFF5F5F5); // Cards, sheets
+  static const textPrimaryLight = Color(0xFF000000); // Black text
+  static const textSecondaryLight = Color(0xFF444444); // Muted black/gray
+
+  // Dark mode
+  static const backgroundDark = Color(0xFF121212); // Material dark background
+  static const surfaceDark = Color(0xFF1E1E1E); // Dark cards, sheets
+  static const textPrimaryDark = Color(0xFFFFFFFF); // White text
+  static const textSecondaryDark = Color(0xFFB3B3B3); // Muted white/gray
+
+  // Status colors (universal)
+  static const success = Color(0xFF4CAF50);
+  static const error = Color(0xFFF44336);
+  static const warning = Color(0xFFFF9800);
+
+  // Special use (Splash / branding)
+  static const splash = Color(0xFF131C67);
+  static const splashText = Color(0xFFA6AFFF);
 }

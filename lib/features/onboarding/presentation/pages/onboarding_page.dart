@@ -34,7 +34,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final currentItem = onboardingItems[currentPage];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundLight,
       body: Stack(
         children: [
           // Main Onboarding Images

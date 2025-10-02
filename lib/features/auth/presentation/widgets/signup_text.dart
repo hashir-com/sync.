@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class SignupText extends StatelessWidget {
   const SignupText({super.key});
@@ -8,7 +9,7 @@ class SignupText extends StatelessWidget {
     return Center(
       child: TextButton(
         onPressed: () {
-          // TODO: navigate to SignupPage
+          context.push('/signup');
         },
         child: const Text("Don’t have an account? Sign Up"),
       ),

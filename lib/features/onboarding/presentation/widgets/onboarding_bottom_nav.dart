@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:sync_event/core/constants/app_font_size.dart';
 import 'package:sync_event/features/onboarding/controller/onboarding_controler.dart';
 
 class OnboardingBottomNav extends ConsumerWidget {
@@ -29,12 +29,12 @@ class OnboardingBottomNav extends ConsumerWidget {
       );
       ref.read(onboardingProvider.notifier).nextPage(totalPages);
     } else {
-      Navigator.pushNamed(context, '/login');
+      context.go('/login');
     }
   }
 
   void _skip(BuildContext context) {
-    Navigator.pushNamed(context, '/login');
+    context.push('/login');
   }
 
   @override
@@ -51,13 +51,13 @@ class OnboardingBottomNav extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Title & Subtitle
-            heading(title),
+            Text(title, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
             Text(
               subtitle,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textwhite),
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimaryDark),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 22.h),
@@ -71,7 +71,7 @@ class OnboardingBottomNav extends ConsumerWidget {
                   onPressed: () => _skip(context),
                   child: const Text(
                     "Skip",
-                    style: TextStyle(color: AppColors.textwhite),
+                    style: TextStyle(color: AppColors.textPrimaryDark),
                   ),
                 ),
 
@@ -86,7 +86,7 @@ class OnboardingBottomNav extends ConsumerWidget {
                       height: 8,
                       decoration: BoxDecoration(
                         color: currentPage == index
-                            ? AppColors.accent
+                            ? AppColors.backgroundLight
                             : Colors.grey[400],
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -100,7 +100,7 @@ class OnboardingBottomNav extends ConsumerWidget {
                   child: Text(
                     currentPage == totalPages - 1 ? "Get Started" : "Next",
                     style: const TextStyle(
-                      color: AppColors.textwhite,
+                      color: AppColors.textPrimaryDark,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),

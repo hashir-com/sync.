@@ -1,5 +1,6 @@
 
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 
 final onboardingProvider = StateNotifierProvider<OnboardingController, int>((ref) {
   return OnboardingController();
