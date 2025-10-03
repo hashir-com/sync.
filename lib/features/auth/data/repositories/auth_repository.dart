@@ -1,13 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sync_event/features/auth/domain/entities/user_entitiy.dart';
 import 'package:sync_event/features/auth/domain/repo/auth_repo.dart';
-
 import '../datasources/auth_remote_datasource.dart';
 import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource dataSource;
+  final FirebaseFirestore _firestore;
 
-  AuthRepositoryImpl(this.dataSource);
+  AuthRepositoryImpl(this.dataSource, {FirebaseFirestore? firestore}) 
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<UserEntity?> signUpWithEmail(
@@ -18,6 +20,13 @@ class AuthRepositoryImpl implements AuthRepository {
     final user = await dataSource.signUpWithEmail(email, password);
     if (user != null) {
       await dataSource.updateUserName(name);
+      // Store user data in Firestore
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'email': email,
+        'name': name,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       return UserModel.fromFirebase(user);
     }
     return null;
@@ -72,5 +81,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> signOut() async {
     await dataSource.signOut();
+  }
+
+  // New method to get user data from Firestore
+  Future<Map<String, dynamic>?> getUserData(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    return doc.data();
   }
 }
