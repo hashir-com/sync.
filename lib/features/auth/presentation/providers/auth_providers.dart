@@ -52,11 +52,16 @@ class AuthController extends StateNotifier<LoginState> {
     }
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final user = await _loginWithEmailUseCase.call(email.trim(), password.trim());
+      final user = await _loginWithEmailUseCase.call(
+        email.trim(),
+        password.trim(),
+      );
       state = state.copyWith(isLoading: false);
       return user;
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      print(e);
+
       return null;
     }
   }
@@ -66,6 +71,7 @@ class AuthController extends StateNotifier<LoginState> {
   }
 }
 
-final authControllerProvider = StateNotifierProvider<AuthController, LoginState>(
-  (ref) => AuthController(ref.read(loginWithEmailUseCaseProvider)),
-);
+final authControllerProvider =
+    StateNotifierProvider<AuthController, LoginState>(
+      (ref) => AuthController(ref.read(loginWithEmailUseCaseProvider)),
+    );

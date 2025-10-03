@@ -1,7 +1,12 @@
 import 'package:sync_event/features/auth/domain/entities/user_entitiy.dart';
 
 abstract class AuthRepository {
-  Future<UserEntity?> signUpWithEmail(String email, String password, String name);
+  Future<UserEntity?> signUpWithEmail(
+    String email,
+    String password,
+    String name,
+    String? imagePath,
+  );
   Future<UserEntity?> loginWithEmail(String email, String password);
   Future<void> sendPasswordResetEmail(String email);
   Future<bool> signInWithGoogle(bool forceAccountChooser);

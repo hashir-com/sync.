@@ -28,6 +28,7 @@ class SignupNotifier extends StateNotifier<SignupState> {
     required String email,
     required String password,
     required String confirmPassword,
+    required String imagePath
   }) async {
     if (password != confirmPassword) {
       state = state.copyWith(errorMessage: "Passwords do not match");
@@ -35,7 +36,7 @@ class SignupNotifier extends StateNotifier<SignupState> {
     }
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final user = await _signUpWithEmailUseCase.call(email, password, name);
+      final user = await _signUpWithEmailUseCase.call(email, password, name, imagePath);
       return user;
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());

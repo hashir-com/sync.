@@ -89,4 +89,8 @@ class AuthRemoteDataSource {
   Future<void> updateUserName(String name) async {
     await _auth.currentUser?.updateDisplayName(name);
   }
+
+  Future<void> updateProfilePhoto(String? url) async {
+    await _auth.currentUser?.updatePhotoURL(url);
+  }
 }
