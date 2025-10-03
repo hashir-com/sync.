@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/routes/routes.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -22,9 +24,9 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'User App',
         theme: AppTheme.lightTheme,
-        
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
         routerConfig: appRouter,
       ),
     );

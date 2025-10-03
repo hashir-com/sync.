@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:sync_event/core/constants/app_font_size.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 class SocialButtons extends ConsumerWidget {
@@ -11,66 +10,66 @@ class SocialButtons extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final authState = ref.watch(authNotifierProvider);
     final authNotifier = ref.read(authNotifierProvider.notifier);
 
     return Column(
       children: [
-        // Google Sign-In Button
         SizedBox(
-          width: 320,
+          width: 320.w,
           child: Material(
             elevation: 5,
-            borderRadius: BorderRadius.circular(14),
-            shadowColor: Colors.black26,
+            borderRadius: BorderRadius.circular(14.r),
+            shadowColor: theme.shadowColor.withOpacity(0.26),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(14.r),
               onTap: authState.isLoading
                   ? null
                   : () async {
                       final success = await authNotifier.signInWithGoogle(
                         forceAccountChooser: true,
                       );
-
-                      if (!context.mounted) return;
-
-                      if (success) {
+                      if (success && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
                               'Successfully signed in!',
-                              style: AppTextStyles.bodyLarge(
-                                AppColors.backgroundLight,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: theme.colorScheme.onPrimary,
                               ),
                             ),
-                            backgroundColor: AppColors.success,
+                            backgroundColor: theme.colorScheme.primary,
                           ),
                         );
                         context.go('/home');
-                      } else if (authState.error != null) {
+                      } else if (authState.error != null && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
                               'Sign-in failed: ${authState.error}',
-                              style: AppTextStyles.bodyLarge(
-                                AppColors.backgroundLight,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: theme.colorScheme.onPrimary,
                               ),
                             ),
-                            backgroundColor: AppColors.error,
+                            backgroundColor: theme.colorScheme.error,
                           ),
                         );
+                        print(authState.error);
                       }
                     },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  color: AppColors.backgroundLight,
-                  boxShadow: const [
+                  borderRadius: BorderRadius.circular(14.r),
+                  color: theme.colorScheme.surface,
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: theme.shadowColor.withOpacity(0.12),
                       blurRadius: 5,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -78,24 +77,33 @@ class SocialButtons extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (authState.isLoading)
-                      const SizedBox(
-                        width: 22,
-                        height: 22,
+                      SizedBox(
+                        width: 22.w,
+                        height: 22.h,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
+                          valueColor: AlwaysStoppedAnimation(
+                            theme.colorScheme.primary,
                           ),
                         ),
                       )
                     else
-                      const FaIcon(FontAwesomeIcons.google, color: Colors.red),
-                    const SizedBox(width: 16),
+                      FaIcon(
+                        FontAwesomeIcons.google,
+                        color:
+                            theme.colorScheme.error, // Maps to red-like color
+                        size: 22,
+                      ),
+                    SizedBox(width: 16.w),
                     Text(
                       authState.isLoading
                           ? "Signing in..."
                           : "Continue with Google",
-                      style: AppTextStyles.button(AppColors.textPrimaryLight),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -103,49 +111,54 @@ class SocialButtons extends ConsumerWidget {
             ),
           ),
         ),
-
-        const SizedBox(height: 20),
-
-        // Phone Sign-In Button
+        SizedBox(height: 20.h),
         SizedBox(
-          width: 320,
+          width: 320.w,
           child: Material(
             elevation: 5,
-            borderRadius: BorderRadius.circular(14),
-            shadowColor: Colors.black26,
+            borderRadius: BorderRadius.circular(14.r),
+            shadowColor: theme.shadowColor.withOpacity(0.26),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () {
-                context.push('/phone');
-              },
+              borderRadius: BorderRadius.circular(14.r),
+              onTap: () => context.push('/phone'),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(14.r),
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.backgroundLight,
-                      AppColors.backgroundLight.withOpacity(0.9),
+                      theme.colorScheme.surface,
+                      theme.colorScheme.surface.withOpacity(0.9),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: theme.shadowColor.withOpacity(0.12),
                       blurRadius: 5,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.phone, color: AppColors.success, size: 22),
-                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.phone,
+                      color: theme
+                          .colorScheme
+                          .primary, // Maps to success-like color
+                      size: 22,
+                    ),
+                    SizedBox(width: 16.w),
                     Text(
                       "Continue with Phone",
-                      style: AppTextStyles.button(AppColors.textPrimaryLight),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),

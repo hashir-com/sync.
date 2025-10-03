@@ -1,18 +1,17 @@
 final onboardingItems = [
   {
-    'title': 'Explore Upcoming and\n Nearby Events',
-    'subtitle':
-        'Easily Explore and book tickets for the upcoming events effortlessly',
+    'title': 'Explore Nearby Events',
+    'subtitle': 'Explore and book tickets for the events effortlessly',
     'image': 'assets/images/onboarding1.png',
   },
   {
     'title': 'Manage Bookings',
-    'subtitle': 'Keep track of all your bookings.',
+    'subtitle': 'Keep track of all your bookings makes things easy',
     'image': 'assets/images/onboarding2.png',
   },
   {
     'title': 'Enjoy Seamlessly',
-    'subtitle': 'Experience hassle-free event management.',
+    'subtitle': 'Experience hassle-free event Exploring \nand enjoy',
     'image': 'assets/images/onboarding2.png',
   },
 ];

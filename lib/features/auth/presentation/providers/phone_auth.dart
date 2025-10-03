@@ -1,67 +1,91 @@
 // ignore_for_file: use_build_context_synchronously
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sync_event/features/auth/domain/usecases/verify_otp_usecase.dart';
+import 'package:sync_event/features/auth/domain/usecases/verify_phone_number_usecase.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_providers.dart';
 
-class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  String? _verificationId;
-  int? _resendToken;
+class PhoneAuthState {
+  final String phone;
+  final bool loading;
+  final bool autoValidate;
 
-  // Step 1: Send OTP
-  Future<void> verifyPhoneNumber(String phoneNumber, BuildContext context) async {
-    try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-        timeout: const Duration(seconds: 60),
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await _signInWithCredential(credential);
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Verification failed: ${e.message}')));
-        },
-        codeSent: (String verificationId, int? resendToken) {
-  _verificationId = verificationId;
-  _resendToken = resendToken;
+  PhoneAuthState({
+    this.phone = '',
+    this.loading = false,
+    this.autoValidate = false,
+  });
 
-  // Navigate to OTP screen using phoneNumber and this AuthService instance
-  context.go(
-    '/otp',
-    extra: {
-      'phoneNumber': phoneNumber, // use the argument
-      'authService': this,        // the current AuthService instance
-    },
-  );
-},
-
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-        forceResendingToken: _resendToken,
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error sending OTP: $e')));
-    }
-  }
-
-  // Step 2: Verify OTP
-  Future<UserCredential?> verifyOtp(String otp) async {
-    if (_verificationId == null) return null;
-    try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: otp,
-      );
-      return await _signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
-      print('OTP Verification failed: ${e.message}');
-      return null;
-    }
-  }
-
-  Future<UserCredential> _signInWithCredential(PhoneAuthCredential credential) async {
-    return await _auth.signInWithCredential(credential);
+  PhoneAuthState copyWith({String? phone, bool? loading, bool? autoValidate}) {
+    return PhoneAuthState(
+      phone: phone ?? this.phone,
+      loading: loading ?? this.loading,
+      autoValidate: autoValidate ?? this.autoValidate,
+    );
   }
 }
+
+class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
+  final VerifyPhoneNumberUseCase _verifyPhoneNumberUseCase;
+  final VerifyOtpUseCase _verifyOtpUseCase;
+
+  PhoneAuthNotifier(this._verifyPhoneNumberUseCase, this._verifyOtpUseCase) : super(PhoneAuthState());
+
+  void updatePhone(String value) {
+    String digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('91') && digits.length > 10) digits = digits.substring(2);
+    if (digits.length > 10) digits = digits.substring(0, 10);
+    state = state.copyWith(phone: digits, autoValidate: true);
+  }
+
+  Future<void> sendOtp(BuildContext context) async {
+    state = state.copyWith(autoValidate: true, loading: true);
+    if (state.phone.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid 10-digit number')),
+      );
+      state = state.copyWith(loading: false);
+      return;
+    }
+    await _verifyPhoneNumberUseCase.call(
+      '+91${state.phone}',
+      (verificationId, resendToken) {
+        context.go('/otp', extra: {'phoneNumber': state.phone, 'phoneAuthNotifier': this});
+      },
+      (verificationId) {}, // Timeout
+      (user) {
+        context.go('/home');
+      },
+      (error) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      },
+    );
+    state = state.copyWith(loading: false);
+  }
+
+  Future<void> verifyOtp(String otp, BuildContext context) async {
+    final user = await _verifyOtpUseCase.call(otp);
+    if (user != null) {
+      context.go('/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid OTP')));
+    }
+  }
+}
+
+final phoneAuthProvider = StateNotifierProvider<PhoneAuthNotifier, PhoneAuthState>(
+  (ref) => PhoneAuthNotifier(
+    ref.read(verifyPhoneNumberUseCaseProvider),
+    ref.read(verifyOtpUseCaseProvider),
+  ),
+);
+
+final verifyPhoneNumberUseCaseProvider = Provider<VerifyPhoneNumberUseCase>(
+  (ref) => VerifyPhoneNumberUseCase(ref.read(authRepositoryProvider)),
+);
+
+final verifyOtpUseCaseProvider = Provider<VerifyOtpUseCase>(
+  (ref) => VerifyOtpUseCase(ref.read(authRepositoryProvider)),
+);

@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sync_event/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
+import 'package:sync_event/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_providers.dart';
+
 
 class AuthState {
   final bool isLoading;
@@ -19,38 +22,17 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(AuthState());
+  final SignInWithGoogleUseCase _signInWithGoogleUseCase;
+  final SignOutUseCase _signOutUseCase;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+  AuthNotifier(this._signInWithGoogleUseCase, this._signOutUseCase) : super(AuthState());
 
-  /// Google Sign-In with account chooser every time
   Future<bool> signInWithGoogle({bool forceAccountChooser = true}) async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
-      // Show account chooser
-      final GoogleSignInAccount? googleUser = forceAccountChooser
-          ? await _googleSignIn.signIn()
-          : await _googleSignIn.signInSilently() ??
-                await _googleSignIn.signIn();
-
-      if (googleUser == null) {
-        state = state.copyWith(isLoading: false);
-        return false; // User cancelled
-      }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
-      );
-
-      final userCredential = await _auth.signInWithCredential(credential);
-      state = state.copyWith(isLoading: false, user: userCredential.user);
-      return true;
+      final success = await _signInWithGoogleUseCase.call(forceAccountChooser);
+      state = state.copyWith(isLoading: false, user: FirebaseAuth.instance.currentUser);
+      return success;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       return false;
@@ -58,12 +40,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
-    await _googleSignIn.signOut();
+    await _signOutUseCase.call();
     state = AuthState();
   }
 }
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>(
-  (ref) => AuthNotifier(),
+  (ref) => AuthNotifier(
+    ref.read(signInWithGoogleUseCaseProvider),
+    ref.read(signOutUseCaseProvider),
+  ),
+);
+
+final signInWithGoogleUseCaseProvider = Provider<SignInWithGoogleUseCase>(
+  (ref) => SignInWithGoogleUseCase(ref.read(authRepositoryProvider)),
+);
+
+final signOutUseCaseProvider = Provider<SignOutUseCase>(
+  (ref) => SignOutUseCase(ref.read(authRepositoryProvider)),
 );

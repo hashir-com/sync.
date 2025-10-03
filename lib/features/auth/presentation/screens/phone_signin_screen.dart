@@ -1,72 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/features/auth/presentation/providers/phone_auth.dart';
+import 'package:flutter/services.dart';
+import '../providers/phone_auth.dart';
 
-/// State class to hold phone input info
-class PhoneAuthState {
-  final String phone; // 10-digit number
-  final bool loading;
-  final bool autoValidate;
-
-  PhoneAuthState({
-    this.phone = '',
-    this.loading = false,
-    this.autoValidate = false,
-  });
-
-  PhoneAuthState copyWith({String? phone, bool? loading, bool? autoValidate}) {
-    return PhoneAuthState(
-      phone: phone ?? this.phone,
-      loading: loading ?? this.loading,
-      autoValidate: autoValidate ?? this.autoValidate,
-    );
-  }
-}
-
-/// Riverpod StateNotifier to manage phone auth state
-class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
-  final AuthService _authService;
-
-  PhoneAuthNotifier(this._authService) : super(PhoneAuthState());
-
-  void updatePhone(String value) {
-    // Remove any non-digit characters
-    String digits = value.replaceAll(RegExp(r'\D'), '');
-
-    // Remove leading 91 if pasted
-    if (digits.startsWith('91') && digits.length > 10) {
-      digits = digits.substring(2);
-    }
-
-    // Limit to 10 digits
-    if (digits.length > 10) digits = digits.substring(0, 10);
-
-    state = state.copyWith(phone: digits, autoValidate: true);
-  }
-
-  Future<void> sendOtp(BuildContext context) async {
-    state = state.copyWith(autoValidate: true);
-    if (state.phone.length != 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid 10-digit number')),
-      );
-      return;
-    }
-
-    state = state.copyWith(loading: true);
-    await _authService.verifyPhoneNumber('+91${state.phone}', context);
-    state = state.copyWith(loading: false);
-  }
-}
-
-/// Riverpod provider
-final phoneAuthProvider =
-    StateNotifierProvider<PhoneAuthNotifier, PhoneAuthState>(
-      (ref) => PhoneAuthNotifier(AuthService()),
-    );
-
-/// Phone Sign-In Screen
 class PhoneSignInScreen extends ConsumerWidget {
   const PhoneSignInScreen({super.key});
 
@@ -112,9 +48,7 @@ class PhoneSignInScreen extends ConsumerWidget {
                   prefixText: '+91 ',
                   prefixStyle: const TextStyle(fontWeight: FontWeight.w500),
                   hintText: 'Enter 10-digit phone number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: theme.primaryColor, width: 2),
@@ -124,12 +58,8 @@ class PhoneSignInScreen extends ConsumerWidget {
                 onChanged: authNotifier.updatePhone,
                 initialValue: authState.phone,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
-                  }
-                  if (authState.phone.length != 10) {
-                    return 'Phone number must be 10 digits';
-                  }
+                  if (value == null || value.isEmpty) return 'Please enter your phone number';
+                  if (authState.phone.length != 10) return 'Phone number must be 10 digits';
                   return null;
                 },
               ),
@@ -138,13 +68,9 @@ class PhoneSignInScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: authState.loading
-                      ? null
-                      : () => authNotifier.sendOtp(context),
+                  onPressed: authState.loading ? null : () => authNotifier.sendOtp(context),
                   style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 3,
                     backgroundColor: theme.primaryColor,
                   ),
@@ -152,18 +78,9 @@ class PhoneSignInScreen extends ConsumerWidget {
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text(
-                          'Send OTP',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      : const Text('Send OTP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

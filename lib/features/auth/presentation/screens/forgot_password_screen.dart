@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_font_size.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_providers.dart';
 
-/// Riverpod providers
-final emailProvider = StateProvider<TextEditingController>((ref) {
-  return TextEditingController();
-});
+final emailProvider = StateProvider<TextEditingController>(
+  (ref) => TextEditingController(),
+);
 
 final isLoadingProvider = StateProvider<bool>((ref) => false);
 
-class ForgotPasswordPage extends ConsumerWidget {
-  const ForgotPasswordPage({super.key});
+class ForgotPasswordScreen extends ConsumerWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final emailController = ref.watch(emailProvider);
     final isLoading = ref.watch(isLoadingProvider);
+    final sendResetUseCase = ref.watch(sendPasswordResetUseCaseProvider);
 
-    /// Show snackbar
     void showSnackBar(String message, {bool isError = false}) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -35,25 +34,20 @@ class ForgotPasswordPage extends ConsumerWidget {
       );
     }
 
-    /// Send password reset email
     Future<void> resetPassword() async {
       final email = emailController.text.trim();
       if (email.isEmpty) {
         showSnackBar("Please enter your email", isError: true);
         return;
       }
-
       ref.read(isLoadingProvider.notifier).state = true;
-
       try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+        await sendResetUseCase.call(email);
         showSnackBar(
           "Password reset link has been sent to your email. Check inbox.",
         );
-      } on FirebaseAuthException catch (e) {
-        showSnackBar("Error: ${e.message}", isError: true);
       } catch (e) {
-        showSnackBar("Unexpected error: $e", isError: true);
+        showSnackBar("Error: $e", isError: true);
       } finally {
         ref.read(isLoadingProvider.notifier).state = false;
       }
@@ -81,8 +75,6 @@ class ForgotPasswordPage extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-
-            /// Email field
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
@@ -102,8 +94,6 @@ class ForgotPasswordPage extends ConsumerWidget {
               style: AppTextStyles.bodyLarge(AppColors.textPrimaryLight),
             ),
             const SizedBox(height: 32),
-
-            /// Reset Button
             SizedBox(
               height: 50,
               child: ElevatedButton(

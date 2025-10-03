@@ -8,9 +8,7 @@ class LoginText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: TextButton(
-        onPressed: () {
-          context.push("/login");
-        },
+        onPressed: () => context.push("/login"),
         child: const Text("Already have account? Login"),
       ),
     );

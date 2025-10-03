@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:sync_event/features/auth/presentation/providers/phone_auth.dart';
+import '../providers/phone_auth.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
-  final AuthService authService;
+  final PhoneAuthNotifier phoneAuthNotifier;
 
   const OtpVerificationScreen({
     super.key,
     required this.phoneNumber,
-    required this.authService,
+    required this.phoneAuthNotifier,
   });
 
   @override
@@ -17,33 +16,20 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final AuthService _authService = AuthService();
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
+  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
 
   @override
   void dispose() {
-    for (var c in _controllers) c.dispose();
+    for (var c in _controllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   void _submitOtp() async {
     final otp = _controllers.map((c) => c.text).join();
     if (otp.length < 6) return;
-
-    final user = await widget.authService.verifyOtp(otp);
-
-    if (user != null) {
-      if (context.mounted) {
-        context.go('/home');
-      }
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid OTP')));
-    }
+    await widget.phoneAuthNotifier.verifyOtp(otp, context);
   }
 
   Widget _buildOtpBox(int index) {
