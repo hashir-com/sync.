@@ -8,6 +8,7 @@ import 'package:sync_event/features/auth/presentation/screens/phone_signin_scree
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
 import 'package:sync_event/features/home/screen/home_screen.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
 import 'package:sync_event/features/splash/presentation/splash_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart'; // <-- Add Profile import
 
@@ -55,6 +56,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: '/edit-profile',
+      builder: (context, state) => const EditProfileScreen(),
     ),
   ],
 );

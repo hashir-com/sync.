@@ -155,7 +155,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();

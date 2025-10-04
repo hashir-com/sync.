@@ -1,8 +1,12 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 class SocialButtons extends ConsumerWidget {
@@ -57,7 +61,6 @@ class SocialButtons extends ConsumerWidget {
                             backgroundColor: theme.colorScheme.error,
                           ),
                         );
-                        print(authState.error);
                       }
                     },
               child: Container(
@@ -73,40 +76,52 @@ class SocialButtons extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (authState.isLoading)
-                      SizedBox(
-                        width: 22.w,
-                        height: 22.h,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(
-                            theme.colorScheme.primary,
-                          ),
+                child: authState.isLoading
+                    ? Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.google,
+                              color: AppColors
+                                  .textSecondaryLight, 
+                              size: 22,
+                            ),
+                            SizedBox(width: 16.w),
+                            Text(
+                              "Continue with Google",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: AppColors.textSecondaryLight,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       )
-                    else
-                      FaIcon(
-                        FontAwesomeIcons.google,
-                        color:
-                            theme.colorScheme.error, // Maps to red-like color
-                        size: 22,
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FaIcon(
+                            FontAwesomeIcons.google,
+                            color: theme
+                                .colorScheme
+                                .error, 
+                            size: 22,
+                          ),
+                          SizedBox(width: 16.w),
+                          Text(
+                            "Continue with Google",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                    SizedBox(width: 16.w),
-                    Text(
-                      authState.isLoading
-                          ? "Signing in..."
-                          : "Continue with Google",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ),

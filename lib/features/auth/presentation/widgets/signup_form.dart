@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_protected_member
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,9 +45,8 @@ class SignupForm extends ConsumerWidget {
     final picker = ImagePicker();
     final formKey = GlobalKey<FormState>();
 
-    // Listen to password changes to trigger confirm password validation
     ref.listen(passwordControllerProvider, (previous, next) {
-      confirmPasswordController.notifyListeners(); // Trigger revalidation
+      confirmPasswordController.notifyListeners(); 
     });
 
     Future<void> pickImage() async {
