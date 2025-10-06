@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AppTextStyles {
-  // Shared font family
   static const fontFamily = "baron";
 
-  // These will be overridden by theme (light/dark)
   static TextStyle splash(Color color) =>
       TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: color);
 

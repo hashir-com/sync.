@@ -16,7 +16,10 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
 
   @override
   void dispose() {
@@ -28,7 +31,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   void _submitOtp() async {
     final otp = _controllers.map((c) => c.text).join();
-    if (otp.length < 6) return;
+    if (otp.length < 6) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter 6-digit OTP')));
+      return;
+    }
+
     await widget.phoneAuthNotifier.verifyOtp(otp, context);
   }
 

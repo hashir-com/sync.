@@ -45,16 +45,12 @@ class SignupForm extends ConsumerWidget {
     final picker = ImagePicker();
     final formKey = GlobalKey<FormState>();
 
-    ref.listen(passwordControllerProvider, (previous, next) {
-      confirmPasswordController.notifyListeners(); 
-    });
-
     Future<void> pickImage() async {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         ref.read(profileImageProvider.notifier).state = File(image.path);
         ref.read(autoValidateProvider.notifier).state =
-            true; // Enable autovalidation
+            true; 
       }
     }
 
@@ -62,6 +58,7 @@ class SignupForm extends ConsumerWidget {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+      print(message);
     }
 
     ref.listen<SignupState>(signupNotifierProvider, (previous, next) {
@@ -71,6 +68,7 @@ class SignupForm extends ConsumerWidget {
         ); // Show Firebase or non-validation errors
         signupNotifier.clearError();
       }
+      print(next.errorMessage);
     });
 
     Future<void> signup() async {
@@ -98,6 +96,7 @@ class SignupForm extends ConsumerWidget {
       );
       if (user != null) {
         showSnackBar("Signup successful!");
+        ref.read(profileImageProvider.notifier).state = null;
         if (context.mounted) context.go('/login');
       }
     }
@@ -169,10 +168,10 @@ class SignupForm extends ConsumerWidget {
               obscureText: true,
               visibilityProvider: confirmPasswordVisibilityProvider,
               fieldType: AuthFieldType.confirmPassword,
-              confirmPassword:
-                  passwordController.text, // Pass current password value
+              matchController: passwordController,
               autoValidate: autoValidate,
             ),
+
             const SizedBox(height: 24),
             SizedBox(
               height: 50,

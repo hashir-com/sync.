@@ -12,8 +12,9 @@ class AuthTextField extends ConsumerWidget {
   final bool obscureText;
   final StateProvider<bool>? visibilityProvider;
   final AuthFieldType fieldType;
-  final String? confirmPassword; // For confirmPassword validation
+  final TextEditingController? matchController; 
   final bool autoValidate;
+
 
   const AuthTextField({
     super.key,
@@ -24,11 +25,11 @@ class AuthTextField extends ConsumerWidget {
     this.obscureText = false,
     this.visibilityProvider,
     required this.fieldType,
-    this.confirmPassword,
+    this.matchController,
     this.autoValidate = false,
   });
 
-  // Validation logic for different field types
+
   String? _validateField(String? value) {
     if (value == null || value.trim().isEmpty) {
       return '$label is required';
@@ -61,10 +62,11 @@ class AuthTextField extends ConsumerWidget {
         }
         break;
       case AuthFieldType.confirmPassword:
-        if (value != confirmPassword) {
-          return 'Passwords do not match';
-        }
-        break;
+  if (matchController != null && value != matchController!.text) {
+    return 'Passwords do not match';
+  }
+  break;
+
     }
     return null;
   }

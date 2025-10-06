@@ -10,7 +10,7 @@ import 'package:sync_event/features/home/screen/home_screen.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
 import 'package:sync_event/features/splash/presentation/splash_screen.dart';
-import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart'; // <-- Add Profile import
+import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart'; 
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -52,7 +52,7 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
-    // ✅ Profile Route
+    
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfileScreen(),

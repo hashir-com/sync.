@@ -13,7 +13,7 @@ class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.secondary,
       surface: AppColors.surfaceLight,
-      onPrimary: Colors.white, // Button text
+      onPrimary: Colors.white, 
       onSecondary: Colors.white,
       onSurface: AppColors.textPrimaryLight,
       error: AppColors.error,
@@ -47,7 +47,7 @@ class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.secondary,
       surface: AppColors.surfaceDark,
-      onPrimary: Colors.white, // Button text
+      onPrimary: Colors.white, 
       onSecondary: Colors.white,
       onSurface: AppColors.textPrimaryDark,
       error: AppColors.error,
