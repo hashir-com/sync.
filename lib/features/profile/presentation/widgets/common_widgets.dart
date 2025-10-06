@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:sync_event/core/constants/app_colors.dart';
 
 class CommonWidgets {
   static const double _avatarRadius = 50;
-  static const double _spacingSmall = 10;
-  static const double _spacingMedium = 20;
-  static const double _spacingLarge = 25;
 
   static Widget buildProfileAvatar(String? photoURL, ThemeData theme) {
     return Center(
@@ -26,6 +22,7 @@ class CommonWidgets {
               child: Icon(
                 Icons.person,
                 size: 40,
+                // ignore: deprecated_member_use
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
