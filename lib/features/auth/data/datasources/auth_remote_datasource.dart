@@ -32,7 +32,8 @@ class AuthRemoteDataSource {
     try {
       final GoogleSignInAccount? googleUser = forceAccountChooser
           ? await _googleSignIn.signIn()
-          : await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
+          : await _googleSignIn.signInSilently() ??
+                await _googleSignIn.signIn();
       if (googleUser == null) return false;
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -69,34 +70,33 @@ class AuthRemoteDataSource {
   }
 
   Future<User?> verifyOtp(String otp) async {
-  if (_verificationId == null) return null;
+    if (_verificationId == null) return null;
 
-  try {
-    final credential = PhoneAuthProvider.credential(
-      verificationId: _verificationId!,
-      smsCode: otp,
-    );
-    return await signInWithCredential(credential);
-  } on FirebaseAuthException catch (e) {
-    if (e.code == 'invalid-verification-code') {
-      // Handle invalid OTP
-      throw Exception('Invalid OTP. Please try again.');
-    } else {
-      throw Exception(e.message ?? 'An error occurred.');
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: otp,
+      );
+      return await signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'invalid-verification-code') {
+        // Handle invalid OTP
+        throw Exception('Invalid OTP. Please try again.');
+      } else {
+        throw Exception(e.message ?? 'An error occurred.');
+      }
+    } on PlatformException catch (e) {
+      // Catch the native invalid OTP error
+      if (e.code == 'ERROR_INVALID_VERIFICATION_CODE' ||
+          e.code == 'invalid-verification-code') {
+        throw Exception('Invalid OTP. Please try again.');
+      } else {
+        throw Exception(e.message ?? 'An unexpected error occurred.');
+      }
+    } catch (e) {
+      throw Exception('An unexpected error occurred.');
     }
-  } on PlatformException catch (e) {
-    // Catch the native invalid OTP error
-    if (e.code == 'ERROR_INVALID_VERIFICATION_CODE' ||
-        e.code == 'invalid-verification-code') {
-      throw Exception('Invalid OTP. Please try again.');
-    } else {
-      throw Exception(e.message ?? 'An unexpected error occurred.');
-    }
-  } catch (e) {
-    throw Exception('An unexpected error occurred.');
   }
-}
-
 
   Future<User?> signInWithCredential(PhoneAuthCredential credential) async {
     final userCred = await _auth.signInWithCredential(credential);

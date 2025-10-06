@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,7 +13,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final FirebaseFirestore _firestore;
 
   AuthRepositoryImpl(this.dataSource, {FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<UserEntity?> signUpWithEmail(
@@ -31,7 +30,9 @@ class AuthRepositoryImpl implements AuthRepository {
         if (imagePath != null) {
           final file = File(imagePath);
           final extension = imagePath.split('.').last;
-          final storageRef = FirebaseStorage.instance.ref('users/${user.uid}/profile.$extension');
+          final storageRef = FirebaseStorage.instance.ref(
+            'users/${user.uid}/profile.$extension',
+          );
           await storageRef.putFile(file);
           imageUrl = await storageRef.getDownloadURL();
           await dataSource.updateProfilePhoto(imageUrl);
@@ -91,7 +92,9 @@ class AuthRepositoryImpl implements AuthRepository {
     } on FirebaseAuthException catch (e) {
       throw _mapFirebaseAuthException(e);
     } catch (e) {
-      throw Exception('An unexpected error occurred while sending password reset email.');
+      throw Exception(
+        'An unexpected error occurred while sending password reset email.',
+      );
     }
   }
 
@@ -130,7 +133,9 @@ class AuthRepositoryImpl implements AuthRepository {
         (e) => verificationFailed(_mapFirebaseAuthException(e)),
       );
     } catch (e) {
-      verificationFailed('An unexpected error occurred during phone verification.');
+      verificationFailed(
+        'An unexpected error occurred during phone verification.',
+      );
     }
   }
 
@@ -142,7 +147,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on FirebaseAuthException catch (e) {
       throw _mapFirebaseAuthException(e);
     } catch (e) {
-      throw Exception('An unexpected error occurred during OTP verification.');
+      throw Exception(e);
     }
   }
 
