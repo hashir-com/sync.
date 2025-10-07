@@ -5,13 +5,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:sync_event/core/di/injection_container.dart';
-import 'package:sync_event/features/auth/domain/repo/auth_repo.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:sync_event/features/profile/presentation/providers/auth_state_provider.dart';
 
-final authStateProvider = StreamProvider((ref) {
-  final authRepository = sl<AuthRepository>();
-  return authRepository.authStateChanges;
-});
+// Define a UserModel to match your repository's structure
+class UserModel {
+  final String? name;
+  final String? image;
+  final String? uid;
+
+  UserModel({this.name, this.image, this.uid});
+
+  factory UserModel.fromFirebaseUser(firebase_auth.User? user) {
+    return UserModel(
+      name: user?.displayName,
+      image: user?.photoURL,
+      uid: user?.uid,
+    );
+  }
+}
 
 final userStatsProvider = Provider<Map<String, String>>((ref) {
   return {'following': '950', 'followers': '550'};
@@ -66,51 +78,40 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         child: authStateAsync.when(
-          data: (authState) => authState.fold(
-            (failure) => Center(
-              child: Text(
-                "Failed to load profile. Please try again.",
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.error,
-                  fontSize: 16.sp,
-                ),
-              ),
-            ),
-            (user) => user == null
-                ? Center(
-                    child: Text(
-                      "Please sign in to view your profile",
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                        fontSize: 16.sp,
-                      ),
-                    ),
-                  )
-                : Padding(
-                    padding: EdgeInsets.all(16.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProfileAvatar(user.image, theme),
-                        SizedBox(height: _spacingMedium.h),
-                        _buildUserDetails(
-                          user,
-                          userStats,
-                          navigateToEditProfile,
-                          theme,
-                        ),
-                        SizedBox(height: _spacingLarge.h),
-                        _buildAboutSection(theme),
-                        SizedBox(height: _spacingSmall.h),
-                        _buildInterestSection(ref, theme),
-                      ],
+          data: (user) => user == null
+              ? Center(
+                  child: Text(
+                    "Please sign in to view your profile",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 16.sp,
                     ),
                   ),
-          ),
+                )
+              : Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildProfileAvatar(user.image, theme),
+                      SizedBox(height: _spacingMedium.h),
+                      _buildUserDetails(
+                        user,
+                        userStats,
+                        navigateToEditProfile,
+                        theme,
+                      ),
+                      SizedBox(height: _spacingLarge.h),
+                      _buildAboutSection(theme),
+                      SizedBox(height: _spacingSmall.h),
+                      _buildInterestSection(ref, theme),
+                    ],
+                  ),
+                ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
             child: Text(
-              "Failed to load profile. Please try again.",
+              "Failed to load profile: $error",
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.error,
                 fontSize: 16.sp,
@@ -150,7 +151,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildUserDetails(
-    user,
+    UserModel user,
     Map<String, String> stats,
     VoidCallback onEditPressed,
     ThemeData theme,
@@ -174,10 +175,7 @@ class ProfileScreen extends ConsumerWidget {
                 _buildStatColumn(stats['following']!, "Following", theme),
                 SizedBox(width: 40.w),
                 Padding(
-                  padding: EdgeInsets.only(
-                    top: 10.h,
-                    bottom: 10.h,
-                  ),
+                  padding: EdgeInsets.only(top: 10.h, bottom: 10.h),
                   child: VerticalDivider(
                     color: theme.colorScheme.onSurface.withOpacity(0.4),
                     thickness: 1,
@@ -202,11 +200,7 @@ class ProfileScreen extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.edit,
-                  color: theme.colorScheme.primary,
-                  size: 18.sp,
-                ),
+                Icon(Icons.edit, color: theme.colorScheme.primary, size: 18.sp),
                 SizedBox(width: 8.w),
                 Text(
                   "Edit Profile",
@@ -257,9 +251,7 @@ class ProfileScreen extends ConsumerWidget {
         SizedBox(height: _spacingSmall.h),
         Text(
           "I am someone who enjoys being around happy people who love hosting and attending parties and events, so I often host lovely events.",
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontSize: 12.sp,
-          ),
+          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12.sp),
         ),
       ],
     );
@@ -288,10 +280,7 @@ class ProfileScreen extends ConsumerWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primaryContainer,
                   foregroundColor: theme.colorScheme.primary,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 0,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20.r),
                   ),

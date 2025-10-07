@@ -2,8 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
+
+// Assuming authStateProvider is defined as in the previous response
+// If not, include it here or in a shared file:
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:sync_event/core/di/injection_container.dart';
+import 'package:sync_event/features/auth/domain/repo/auth_repo.dart';
+
+// Define UserModel (same as in ProfileScreen)
+class UserModel {
+  final String? name;
+  final String? image;
+  final String? uid;
+
+  UserModel({this.name, this.image, this.uid});
+
+  factory UserModel.fromFirebaseUser(firebase_auth.User? user) {
+    return UserModel(
+      name: user?.displayName,
+      image: user?.photoURL,
+      uid: user?.uid,
+    );
+  }
+}
+
+// Ensure authStateProvider is accessible (same as in ProfileScreen)
+final authStateProvider = StreamProvider<UserModel?>((ref) {
+  sl<AuthRepository>();
+  return firebase_auth.FirebaseAuth.instance.userChanges().map((user) {
+    return user != null ? UserModel.fromFirebaseUser(user) : null;
+  });
+});
 
 class CustomDrawer extends ConsumerWidget {
   const CustomDrawer({super.key});
@@ -11,7 +41,8 @@ class CustomDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authNotifier = ref.read(authNotifierProvider.notifier);
-    final user = FirebaseAuth.instance.currentUser;
+    // Watch authStateProvider for real-time user data
+    final userAsync = ref.watch(authStateProvider);
 
     return Drawer(
       elevation: 8,
@@ -36,37 +67,79 @@ class CustomDrawer extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // --- User Info ---
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => context.push('/profile'),
-                              child: Hero(
-                                tag: "profile",
-                                child: CircleAvatar(
-                                  radius: 28.r,
-                                  backgroundImage: user?.photoURL != null
-                                      ? NetworkImage(user!.photoURL!)
-                                      : const AssetImage(
-                                              'assets/avatar_placeholder.png',
-                                            )
-                                            as ImageProvider,
+                        userAsync.when(
+                          data: (user) => Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => context.push('/profile'),
+                                child: Hero(
+                                  tag: "profile",
+                                  child: CircleAvatar(
+                                    radius: 28.r,
+                                    backgroundImage: user?.image != null
+                                        ? NetworkImage(user!.image!)
+                                        : const AssetImage(
+                                                'assets/avatar_placeholder.png',
+                                              )
+                                              as ImageProvider,
+                                  ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Expanded(
-                              child: Text(
-                                user?.displayName ??
-                                    user?.email?.split('@').first ??
-                                    'User',
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Text(
+                                  user?.name ??
+                                      user?.uid?.split('@').first ??
+                                      'User',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          loading: () => Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 28.r,
+                                backgroundColor: Colors.grey.shade300,
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Container(
+                                  height: 18.sp,
+                                  width: 100.w,
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                            ],
+                          ),
+                          error: (error, stack) => Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 28.r,
+                                backgroundColor: Colors.grey.shade300,
+                                child: Icon(
+                                  Icons.error,
+                                  size: 20.sp,
+                                  color: Colors.red,
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Text(
+                                  'Error loading user',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         SizedBox(height: 32.h),
 

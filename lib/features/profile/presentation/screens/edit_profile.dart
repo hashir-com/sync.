@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -120,6 +121,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
 
       if (success) {
+        // NEW: Reload user data from Firebase to refresh local cache
+        await FirebaseAuth.instance.currentUser?.reload();
+        // NEW: Invalidate the provider to force ProfileScreen to refresh with updated data
+        ref.invalidate(authStateProvider);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
