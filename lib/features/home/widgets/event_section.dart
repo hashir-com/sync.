@@ -15,20 +15,27 @@ class EventSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Upcoming Events', style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF120D26),
-              )),
+              const Text(
+                'Upcoming Events',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF120D26),
+                ),
+              ),
               TextButton(
                 onPressed: () {},
                 child: const Row(
                   children: [
-                    Text('See All', style: TextStyle(
+                    Text(
+                      'See All',
+                      style: TextStyle(color: Color(0xFF747688), fontSize: 14),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12,
                       color: Color(0xFF747688),
-                      fontSize: 14,
-                    )),
-                    Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF747688)),
+                    ),
                   ],
                 ),
               ),
@@ -42,7 +49,7 @@ class EventSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             children: [
               _buildEventCard(
-                date: '10\nJUNE',
+                date: '11\nJUNE',
                 title: 'International Band Mu...',
                 image: 'band',
                 location: '36 Guild Street London, UK',
@@ -67,20 +74,27 @@ class EventSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Nearby You', style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF120D26),
-              )),
+              const Text(
+                'Nearby You',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF120D26),
+                ),
+              ),
               TextButton(
                 onPressed: () {},
                 child: const Row(
                   children: [
-                    Text('See All', style: TextStyle(
+                    Text(
+                      'See All',
+                      style: TextStyle(color: Color(0xFF747688), fontSize: 14),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12,
                       color: Color(0xFF747688),
-                      fontSize: 14,
-                    )),
-                    Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF747688)),
+                    ),
                   ],
                 ),
               ),
@@ -105,13 +119,23 @@ class EventSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildEventImage(date, image, color),
-          EventCardContent(title: title, location: location, attendees: attendees),
+          EventCardContent(
+            title: title,
+            location: location,
+            attendees: attendees,
+          ),
         ],
       ),
     );
@@ -143,13 +167,20 @@ class EventSection extends StatelessWidget {
   Widget _buildDateTag(String date) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-      child: Text(date, textAlign: TextAlign.center, style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFFFF6B6B),
-        height: 1.2,
-      )),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        date,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFFF6B6B),
+          height: 1.2,
+        ),
+      ),
     );
   }
 }
@@ -165,7 +196,11 @@ class _BookmarkIcon extends StatelessWidget {
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: const Icon(Icons.bookmark_border, size: 18, color: Color(0xFFFF6B6B)),
+      child: const Icon(
+        Icons.bookmark_border,
+        size: 18,
+        color: Color(0xFFFF6B6B),
+      ),
     );
   }
 }

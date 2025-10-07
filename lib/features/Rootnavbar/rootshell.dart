@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/Rootnavbar/root_tab_notifier.dart';
-import 'package:sync_event/features/home/screen/events_screen.dart';
+import 'package:sync_event/features/Rootnavbar/root_tab_notifier.dart';
+import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
 import 'package:sync_event/features/home/screen/home.dart';
 import 'package:sync_event/features/home/screen/map_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart'; // Adjust import path
@@ -16,7 +16,7 @@ class RootShell extends ConsumerWidget {
     final selectedIndex = ref.watch(
       rootTabProvider,
     ); // Watch the selected index
-    final pages = [Home(), EventsScreen(), MapScreen(), ProfileScreen()];
+    final pages = [HomeScreen(), EventsScreen(), MapScreen(), ProfileScreen()];
 
     return Scaffold(
       body: pages[selectedIndex],

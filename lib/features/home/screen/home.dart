@@ -6,14 +6,14 @@ import 'package:sync_event/features/home/widgets/event_section.dart';
 import 'package:sync_event/features/home/widgets/header_section.dart';
 import 'package:sync_event/features/home/widgets/invite_banner.dart';
 
-class Home extends ConsumerStatefulWidget {
-  const Home({super.key});
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  ConsumerState<Home> createState() => _HomeState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeState extends ConsumerState<Home> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedCategory = 0;
 
   @override
