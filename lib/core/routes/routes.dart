@@ -6,11 +6,12 @@ import 'package:sync_event/features/auth/presentation/screens/login_screen.dart'
 import 'package:sync_event/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
-import 'package:sync_event/features/home/screen/home_screen.dart';
+import 'package:sync_event/features/home/screen/home.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
 import 'package:sync_event/features/splash/presentation/splash_screen.dart';
-import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart'; 
+import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart';
+import 'package:sync_event/Rootnavbar/rootshell.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -22,7 +23,9 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
-    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+
+    GoRoute(path: '/root', builder: (context, state) => const RootShell()),
+    GoRoute(path: '/home', builder: (context, state) => const Home()),
     GoRoute(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
@@ -52,7 +55,7 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
-    
+
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfileScreen(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import '../providers/phone_auth.dart';
 
@@ -69,53 +70,87 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       builder: (context, ref, child) {
         final authState = ref.watch(phoneAuthProvider);
         return Scaffold(
-          appBar: AppBar(title: const Text('Enter OTP')),
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          appBar: AppBar(),
+          body: SafeArea(
+            child: Stack(
               children: [
-                Text('OTP sent to ${widget.phoneNumber}'),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) => _buildOtpBox(index)),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: authState.loading ? null : _submitOtp,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                // Top-left text
+                Padding(
+                  padding: EdgeInsets.only(left: 32.w, top: 16.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Verification",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 28.sp,
+                        ),
                       ),
-                      elevation: 3,
-                      backgroundColor: Theme.of(context).primaryColor,
-                    ),
-                    child: authState.loading
-                        ? Shimmer.fromColors(
-                            baseColor: Colors.grey[300]!,
-                            highlightColor: Colors.grey[100]!,
-                            period: const Duration(milliseconds: 1000),
-                            child: Text(
-                              'Verifying',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'Verify OTP',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                      SizedBox(height: 15.h),
+                      Text(
+                        'OTP sent to +91${widget.phoneNumber}',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Centered OTP input and button
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(
+                            6,
+                            (index) => _buildOtpBox(index),
                           ),
+                        ),
+                        SizedBox(height: 30.h),
+                        SizedBox(
+                          width: 200.w,
+                          height: 60.h,
+                          child: ElevatedButton(
+                            onPressed: authState.loading ? null : _submitOtp,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              elevation: 3,
+                              backgroundColor: Theme.of(context).primaryColor,
+                            ),
+                            child: authState.loading
+                                ? Shimmer.fromColors(
+                                    baseColor: Colors.grey[300]!,
+                                    highlightColor: Colors.grey[100]!,
+                                    period: const Duration(milliseconds: 1000),
+                                    child: Text(
+                                      'Verifying',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    'Verify OTP',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

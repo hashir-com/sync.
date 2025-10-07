@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/features/auth/domain/entities/user_entitiy.dart';
+import 'package:sync_event/features/auth/domain/entities/user_entity.dart';
 import 'package:sync_event/features/auth/domain/usecases/signup_with_email_usecase.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_providers.dart';
-
 
 class SignupState {
   final bool isLoading;
@@ -28,7 +27,7 @@ class SignupNotifier extends StateNotifier<SignupState> {
     required String email,
     required String password,
     required String confirmPassword,
-    required String imagePath
+    required String imagePath,
   }) async {
     if (password != confirmPassword) {
       state = state.copyWith(errorMessage: "Passwords do not match");
@@ -36,8 +35,24 @@ class SignupNotifier extends StateNotifier<SignupState> {
     }
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final user = await _signUpWithEmailUseCase.call(email, password, name, imagePath);
-      return user;
+      final result = await _signUpWithEmailUseCase.call(
+        SignUpParams(
+          email: email,
+          password: password,
+          name: name,
+          imagePath: imagePath,
+        ),
+      );
+      return result.fold(
+        (failure) {
+          state = state.copyWith(errorMessage: failure.message);
+          return null;
+        },
+        (user) {
+          state = state.copyWith(isLoading: false);
+          return user;
+        },
+      );
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
       return null;
@@ -51,6 +66,7 @@ class SignupNotifier extends StateNotifier<SignupState> {
   }
 }
 
-final signupNotifierProvider = StateNotifierProvider<SignupNotifier, SignupState>(
-  (ref) => SignupNotifier(ref.read(signUpWithEmailUseCaseProvider)),
-);
+final signupNotifierProvider =
+    StateNotifierProvider<SignupNotifier, SignupState>(
+      (ref) => SignupNotifier(ref.read(signUpWithEmailUseCaseProvider)),
+    );

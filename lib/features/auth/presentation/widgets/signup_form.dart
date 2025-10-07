@@ -1,6 +1,7 @@
 // ignore_for_file: invalid_use_of_protected_member
 
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,7 +59,9 @@ class SignupForm extends ConsumerWidget {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
-      print(message);
+      if (kDebugMode) {
+        print(message);
+      }
     }
 
     ref.listen<SignupState>(signupNotifierProvider, (previous, next) {
@@ -68,7 +71,9 @@ class SignupForm extends ConsumerWidget {
         ); // Show Firebase or non-validation errors
         signupNotifier.clearError();
       }
-      print(next.errorMessage);
+      if (kDebugMode) {
+        print(next.errorMessage);
+      }
     });
 
     Future<void> signup() async {

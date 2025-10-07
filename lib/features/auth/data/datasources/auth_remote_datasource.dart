@@ -1,118 +1,150 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/services.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sync_event/core/error/exceptions.dart';
 
-class AuthRemoteDataSource {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
-  String? _verificationId;
-  int? _resendToken;
-
-  Future<User?> signUpWithEmail(String email, String password) async {
-    final userCred = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return userCred.user;
-  }
-
-  Future<User?> loginWithEmail(String email, String password) async {
-    final userCred = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return userCred.user;
-  }
-
-  Future<void> sendPasswordResetEmail(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
-  }
-
-  Future<bool> signInWithGoogle(bool forceAccountChooser) async {
-    try {
-      final GoogleSignInAccount? googleUser = forceAccountChooser
-          ? await _googleSignIn.signIn()
-          : await _googleSignIn.signInSilently() ??
-                await _googleSignIn.signIn();
-      if (googleUser == null) return false;
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
-      );
-      await _auth.signInWithCredential(credential);
-      return true;
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
+abstract class AuthRemoteDataSource {
+  Future<User?> signUpWithEmail(String email, String password);
+  Future<User?> loginWithEmail(String email, String password);
+  Future<void> updateUserName(String name);
+  Future<void> updateProfilePhoto(String imageUrl);
+  Future<void> sendPasswordResetEmail(String email);
+  Future<bool> signInWithGoogle(bool forceAccountChooser);
   Future<void> verifyPhoneNumber(
     String phoneNumber,
     Function(String, int?) codeSent,
     Function(String) codeAutoRetrievalTimeout,
-    Function(PhoneAuthCredential) verificationCompleted,
-    Function(FirebaseAuthException) verificationFailed,
+    Function(User) verificationCompleted,
+    Function(String) verificationFailed,
+  );
+  Future<User?> signInWithCredential(PhoneAuthCredential credential);
+  Future<User?> verifyOtp(String otp);
+  Future<void> signOut();
+  Future<String> uploadProfileImage(File imageFile, String userId);
+}
+
+class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
+  final FirebaseAuth firebaseAuth;
+  final FirebaseFirestore firebaseFirestore;
+  final FirebaseStorage firebaseStorage;
+  String? _verificationId; // Store verificationId for OTP verification
+
+  AuthRemoteDataSourceImpl({
+    required this.firebaseAuth,
+    required this.firebaseFirestore,
+    required this.firebaseStorage,
+  });
+
+  @override
+  Future<User?> signUpWithEmail(String email, String password) async {
+    final credential = await firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return credential.user;
+  }
+
+  @override
+  Future<User?> loginWithEmail(String email, String password) async {
+    final credential = await firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return credential.user;
+  }
+
+  @override
+  Future<void> updateUserName(String name) async {
+    await firebaseAuth.currentUser?.updateDisplayName(name);
+  }
+
+  @override
+  Future<void> updateProfilePhoto(String imageUrl) async {
+    await firebaseAuth.currentUser?.updatePhotoURL(imageUrl);
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    await firebaseAuth.sendPasswordResetEmail(email: email);
+  }
+
+  @override
+  Future<bool> signInWithGoogle(bool forceAccountChooser) async {
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    if (forceAccountChooser) {
+      await googleSignIn.signOut(); // Forces account chooser
+    }
+
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    if (googleUser == null) {
+      return false; // User cancelled sign-in
+    }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final UserCredential userCredential = await firebaseAuth.signInWithCredential(credential);
+    return userCredential.user != null;
+  }
+
+  @override
+  Future<void> verifyPhoneNumber(
+    String phoneNumber,
+    Function(String, int?) codeSent,
+    Function(String) codeAutoRetrievalTimeout,
+    Function(User) verificationCompleted,
+    Function(String) verificationFailed,
   ) async {
-    await _auth.verifyPhoneNumber(
+    await firebaseAuth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: verificationCompleted,
-      verificationFailed: verificationFailed,
-      codeSent: (verificationId, resendToken) {
-        _verificationId = verificationId;
-        _resendToken = resendToken;
-        codeSent(verificationId, resendToken);
+      verificationCompleted: (credential) async {
+        final user = await signInWithCredential(credential);
+        if (user != null) {
+          verificationCompleted(user);
+        }
+      },
+      verificationFailed: (e) => verificationFailed(e.message ?? 'Verification failed'),
+      codeSent: (verificationId, forceResendingToken) {
+        _verificationId = verificationId; // Store verificationId
+        codeSent(verificationId, forceResendingToken);
       },
       codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
-      forceResendingToken: _resendToken,
     );
   }
 
-  Future<User?> verifyOtp(String otp) async {
-    if (_verificationId == null) return null;
-
-    try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: otp,
-      );
-      return await signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'invalid-verification-code') {
-        // Handle invalid OTP
-        throw Exception('Invalid OTP. Please try again.');
-      } else {
-        throw Exception(e.message ?? 'An error occurred.');
-      }
-    } on PlatformException catch (e) {
-      // Catch the native invalid OTP error
-      if (e.code == 'ERROR_INVALID_VERIFICATION_CODE' ||
-          e.code == 'invalid-verification-code') {
-        throw Exception('Invalid OTP. Please try again.');
-      } else {
-        throw Exception(e.message ?? 'An unexpected error occurred.');
-      }
-    } catch (e) {
-      throw Exception('An unexpected error occurred.');
-    }
-  }
-
+  @override
   Future<User?> signInWithCredential(PhoneAuthCredential credential) async {
-    final userCred = await _auth.signInWithCredential(credential);
-    return userCred.user;
+    final credentialResult = await firebaseAuth.signInWithCredential(credential);
+    return credentialResult.user;
   }
 
+  @override
+  Future<User?> verifyOtp(String otp) async {
+    if (_verificationId == null) {
+      throw const ServerException(message: 'Verification ID not found');
+    }
+    final credential = PhoneAuthProvider.credential(
+      verificationId: _verificationId!,
+      smsCode: otp,
+    );
+    return await signInWithCredential(credential);
+  }
+
+  @override
   Future<void> signOut() async {
-    await _auth.signOut();
-    await _googleSignIn.signOut();
+    await firebaseAuth.signOut();
+    await GoogleSignIn().signOut(); // Ensure Google Sign-In session clears
   }
 
-  Future<void> updateUserName(String name) async {
-    await _auth.currentUser?.updateDisplayName(name);
-  }
-
-  Future<void> updateProfilePhoto(String? url) async {
-    await _auth.currentUser?.updatePhotoURL(url);
+  @override
+  Future<String> uploadProfileImage(File imageFile, String userId) async {
+    final ref = firebaseStorage.ref().child('users/$userId/profile.jpg');
+    await ref.putFile(imageFile);
+    return await ref.getDownloadURL();
   }
 }

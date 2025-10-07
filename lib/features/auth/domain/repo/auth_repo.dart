@@ -1,22 +1,37 @@
-import 'package:sync_event/features/auth/domain/entities/user_entitiy.dart';
+import 'package:dartz/dartz.dart';
+import 'package:sync_event/core/error/failures.dart';
+import 'package:sync_event/features/auth/domain/entities/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<UserEntity?> signUpWithEmail(
+  Future<Either<Failure, UserEntity>> signUpWithEmail(
     String email,
     String password,
     String name,
     String? imagePath,
   );
-  Future<UserEntity?> loginWithEmail(String email, String password);
-  Future<void> sendPasswordResetEmail(String email);
-  Future<bool> signInWithGoogle(bool forceAccountChooser);
-  Future<void> verifyPhoneNumber(
+
+  Future<Either<Failure, UserEntity>> loginWithEmail(
+    String email,
+    String password,
+  );
+
+  Future<Either<Failure, void>> sendPasswordResetEmail(String email);
+
+  Future<Either<Failure, UserEntity>> signInWithGoogle(
+    bool forceAccountChooser,
+  );
+
+  Future<Either<Failure, void>> verifyPhoneNumber(
     String phoneNumber,
     Function(String, int?) codeSent,
     Function(String) codeAutoRetrievalTimeout,
     Function(UserEntity) verificationCompleted,
     Function(String) verificationFailed,
   );
-  Future<UserEntity?> verifyOtp(String otp);
-  Future<void> signOut();
+
+  Future<Either<Failure, UserEntity>> verifyOtp(String otp);
+
+  Future<Either<Failure, void>> signOut();
+
+  Stream<Either<Failure, UserEntity?>> get authStateChanges;
 }

@@ -1,77 +1,78 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sync_event/core/di/injection_container.dart';
+import 'package:sync_event/core/network/network_info.dart';
+import 'package:sync_event/features/auth/data/datasources/auth_local_datasource.dart';
+import 'package:sync_event/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:sync_event/features/auth/data/repositories/auth_repository.dart';
-import 'package:sync_event/features/auth/domain/entities/user_entitiy.dart';
 import 'package:sync_event/features/auth/domain/repo/auth_repo.dart';
+import 'package:sync_event/features/auth/domain/usecases/login_with_email_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/signup_with_email_usecase.dart';
-import '../../data/datasources/auth_remote_datasource.dart';
-import '../../domain/usecases/login_with_email_usecase.dart';
-import '../../domain/usecases/send_password_reset_usecase.dart';
+import 'package:sync_event/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:sync_event/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
+import 'package:sync_event/features/auth/domain/usecases/verify_phone_number_usecase.dart';
+import 'package:sync_event/features/auth/domain/usecases/verify_otp_usecase.dart';
+import 'package:sync_event/features/auth/domain/usecases/send_password_reset_usecase.dart';
+
+// Dependency providers
+final sharedPreferencesProvider = Provider<SharedPreferences>(
+  (ref) => sl<SharedPreferences>(),
+);
+
+final networkInfoProvider = Provider<NetworkInfo>(
+  (ref) => sl<NetworkInfo>(),
+);
+
+final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>(
+  (ref) => AuthRemoteDataSourceImpl(
+    firebaseAuth: FirebaseAuth.instance,
+    firebaseFirestore: FirebaseFirestore.instance,
+    firebaseStorage: FirebaseStorage.instance,
+  ),
+);
+
+final authLocalDataSourceProvider = Provider<AuthLocalDataSource>(
+  (ref) => AuthLocalDataSourceImpl(
+    sharedPreferences: ref.read(sharedPreferencesProvider),
+  ),
+);
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepositoryImpl(AuthRemoteDataSource()),
+  (ref) => AuthRepositoryImpl(
+    remoteDataSource: ref.read(authRemoteDataSourceProvider),
+    localDataSource: ref.read(authLocalDataSourceProvider),
+    networkInfo: ref.read(networkInfoProvider),
+  ),
 );
 
+// Use case providers
 final loginWithEmailUseCaseProvider = Provider<LoginWithEmailUseCase>(
-  (ref) => LoginWithEmailUseCase(ref.read(authRepositoryProvider)),
-);
-
-final sendPasswordResetUseCaseProvider = Provider<SendPasswordResetUseCase>(
-  (ref) => SendPasswordResetUseCase(ref.read(authRepositoryProvider)),
+  (ref) => sl<LoginWithEmailUseCase>(),
 );
 
 final signUpWithEmailUseCaseProvider = Provider<SignUpWithEmailUseCase>(
-  (ref) => SignUpWithEmailUseCase(ref.read(authRepositoryProvider)),
+  (ref) => sl<SignUpWithEmailUseCase>(),
 );
 
-class LoginState {
-  final bool isLoading;
-  final String? errorMessage;
+final signOutUseCaseProvider = Provider<SignOutUseCase>(
+  (ref) => sl<SignOutUseCase>(),
+);
 
-  LoginState({this.isLoading = false, this.errorMessage});
+final signInWithGoogleUseCaseProvider = Provider<SignInWithGoogleUseCase>(
+  (ref) => sl<SignInWithGoogleUseCase>(),
+);
 
-  LoginState copyWith({bool? isLoading, String? errorMessage}) {
-    return LoginState(
-      isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
-    );
-  }
-}
+final verifyPhoneNumberUseCaseProvider = Provider<VerifyPhoneNumberUseCase>(
+  (ref) => sl<VerifyPhoneNumberUseCase>(),
+);
 
-class AuthController extends StateNotifier<LoginState> {
-  final LoginWithEmailUseCase _loginWithEmailUseCase;
+final verifyOtpUseCaseProvider = Provider<VerifyOtpUseCase>(
+  (ref) => sl<VerifyOtpUseCase>(),
+);
 
-  AuthController(this._loginWithEmailUseCase) : super(LoginState());
-
-  Future<UserEntity?> loginWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    if (email.isEmpty || password.isEmpty) {
-      state = state.copyWith(errorMessage: "Please enter email and password");
-      return null;
-    }
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final user = await _loginWithEmailUseCase.call(
-        email.trim(),
-        password.trim(),
-      );
-      state = state.copyWith(isLoading: false);
-      return user;
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
-      print(e);
-
-      return null;
-    }
-  }
-
-  void clearError() {
-    state = state.copyWith(errorMessage: null);
-  }
-}
-
-final authControllerProvider =
-    StateNotifierProvider<AuthController, LoginState>(
-      (ref) => AuthController(ref.read(loginWithEmailUseCaseProvider)),
-    );
+final sendPasswordResetUseCaseProvider = Provider<SendPasswordResetUseCase>(
+  (ref) => sl<SendPasswordResetUseCase>(),
+);

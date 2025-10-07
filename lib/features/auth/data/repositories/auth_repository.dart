@@ -1,69 +1,258 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:sync_event/features/auth/domain/entities/user_entitiy.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sync_event/core/error/exceptions.dart';
+import 'package:sync_event/core/error/failures.dart';
+import 'package:sync_event/core/network/network_info.dart';
+import 'package:sync_event/features/auth/data/datasources/auth_local_datasource.dart';
+import 'package:sync_event/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:sync_event/features/auth/data/models/user_model.dart';
+import 'package:sync_event/features/auth/domain/entities/user_entity.dart';
 import 'package:sync_event/features/auth/domain/repo/auth_repo.dart';
-import '../datasources/auth_remote_datasource.dart';
-import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource dataSource;
-  final FirebaseFirestore _firestore;
+  final AuthRemoteDataSource remoteDataSource;
+  final AuthLocalDataSource localDataSource;
+  final NetworkInfo networkInfo;
+  final FirebaseFirestore firestore;
 
-  AuthRepositoryImpl(this.dataSource, {FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  AuthRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+    required this.networkInfo,
+    FirebaseFirestore? firestore,
+  }) : firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<UserEntity?> signUpWithEmail(
+  Future<Either<Failure, UserEntity>> signUpWithEmail(
     String email,
     String password,
     String name,
     String? imagePath,
   ) async {
-    try {
-      final user = await dataSource.signUpWithEmail(email, password);
-      if (user != null) {
-        await dataSource.updateUserName(name);
-        String? imageUrl;
-        if (imagePath != null) {
-          final file = File(imagePath);
-          final extension = imagePath.split('.').last;
-          final storageRef = FirebaseStorage.instance.ref(
-            'users/${user.uid}/profile.$extension',
-          );
-          await storageRef.putFile(file);
-          imageUrl = await storageRef.getDownloadURL();
-          await dataSource.updateProfilePhoto(imageUrl);
+    if (await networkInfo.isConnected) {
+      try {
+        final user = await remoteDataSource.signUpWithEmail(email, password);
+        if (user != null) {
+          await remoteDataSource.updateUserName(name);
+
+          String? imageUrl;
+          if (imagePath != null) {
+            final file = File(imagePath);
+            imageUrl = await remoteDataSource.uploadProfileImage(
+              file,
+              user.uid,
+            );
+            await remoteDataSource.updateProfilePhoto(imageUrl);
+          }
+
+          await firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': email,
+            'name': name,
+            'image': imageUrl,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          final userEntity = UserModel.fromFirebase(user);
+          await localDataSource.cacheUserData(userEntity.toJson().toString());
+
+          return Right(userEntity);
         }
-        await _firestore.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'email': email,
-          'name': name,
-          'image': imageUrl,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        return UserModel.fromFirebase(user);
+        return const Left(ServerFailure(message: 'Failed to create user'));
+      } on FirebaseAuthException catch (e) {
+        return Left(AuthFailure(message: _mapFirebaseAuthException(e)));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } catch (e) {
+        return Left(UnknownFailure(message: e.toString()));
       }
-      return null;
-    } on FirebaseAuthException catch (e) {
-      throw _mapFirebaseAuthException(e);
-    } catch (e) {
-      throw Exception('An unexpected error occurred during signup.');
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
     }
   }
 
   @override
-  Future<UserEntity?> loginWithEmail(String email, String password) async {
-    try {
-      final user = await dataSource.loginWithEmail(email, password);
-      return user != null ? UserModel.fromFirebase(user) : null;
-    } on FirebaseAuthException catch (e) {
-      throw _mapFirebaseAuthException(e);
-    } catch (e) {
-      throw Exception('An unexpected error occurred during login.');
+  Future<Either<Failure, UserEntity>> loginWithEmail(
+    String email,
+    String password,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final user = await remoteDataSource.loginWithEmail(email, password);
+        if (user != null) {
+          final userEntity = UserModel.fromFirebase(user);
+          await localDataSource.cacheUserData(userEntity.toJson().toString());
+          return Right(userEntity);
+        }
+        return const Left(AuthFailure(message: 'Login failed'));
+      } on FirebaseAuthException catch (e) {
+        return Left(AuthFailure(message: _mapFirebaseAuthException(e)));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } catch (e) {
+        return Left(UnknownFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
     }
+  }
+
+  @override
+  Future<Either<Failure, void>> sendPasswordResetEmail(String email) async {
+    if (await networkInfo.isConnected) {
+      try {
+        await remoteDataSource.sendPasswordResetEmail(email);
+        return const Right(null);
+      } on FirebaseAuthException catch (e) {
+        return Left(AuthFailure(message: _mapFirebaseAuthException(e)));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } catch (e) {
+        return Left(UnknownFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
+    }
+  }
+
+ @override
+Future<Either<Failure, UserEntity>> signInWithGoogle(
+  bool forceAccountChooser,
+) async {
+  if (await networkInfo.isConnected) {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      if (forceAccountChooser) {
+        await googleSignIn.signOut(); // Forces account chooser on next sign-in
+      }
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        return const Left(AuthFailure(message: 'Google Sign-In cancelled'));
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        // Check if user exists in Firestore; create if not
+        final userDoc = await firestore.collection('users').doc(user.uid).get();
+        if (!userDoc.exists) {
+          await firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': user.email,
+            'name': user.displayName ?? 'Anonymous',
+            'image': user.photoURL,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        final userEntity = UserModel.fromFirebase(user);
+        await localDataSource.cacheUserData(userEntity.toJson().toString());
+        return Right(userEntity);
+      }
+
+      return const Left(AuthFailure(message: 'Google Sign-In failed'));
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(message: _mapFirebaseAuthException(e)));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(UnknownFailure(message: e.toString()));
+    }
+  } else {
+    return const Left(NetworkFailure(message: 'No internet connection'));
+  }
+}
+
+  @override
+  Future<Either<Failure, void>> verifyPhoneNumber(
+    String phoneNumber,
+    Function(String, int?) codeSent,
+    Function(String) codeAutoRetrievalTimeout,
+    Function(UserEntity) verificationCompleted,
+    Function(String) verificationFailed,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        await remoteDataSource.verifyPhoneNumber(
+          phoneNumber,
+          codeSent,
+          codeAutoRetrievalTimeout,
+          (user) async {
+            final userEntity = UserModel.fromFirebase(user);
+            await localDataSource.cacheUserData(userEntity.toJson().toString());
+            verificationCompleted(userEntity);
+          },
+          verificationFailed,
+        );
+        return const Right(null);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } catch (e) {
+        return Left(UnknownFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> verifyOtp(String otp) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final user = await remoteDataSource.verifyOtp(otp);
+        if (user != null) {
+          final userEntity = UserModel.fromFirebase(user);
+          await localDataSource.cacheUserData(userEntity.toJson().toString());
+          return Right(userEntity);
+        }
+        return const Left(AuthFailure(message: 'OTP verification failed'));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } catch (e) {
+        return Left(UnknownFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> signOut() async {
+    try {
+      await remoteDataSource.signOut();
+      await localDataSource.clearUserData();
+      return const Right(null);
+    } catch (e) {
+      return Left(UnknownFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Stream<Either<Failure, UserEntity?>> get authStateChanges {
+    return FirebaseAuth.instance
+        .authStateChanges()
+        .map((user) {
+          if (user != null) {
+            return Right<Failure, UserEntity?>(UserModel.fromFirebase(user));
+          } else {
+            return const Right<Failure, UserEntity?>(null);
+          }
+        })
+        .handleError((error) {
+          return Left(UnknownFailure(message: error.toString()));
+        });
   }
 
   String _mapFirebaseAuthException(FirebaseAuthException e) {
@@ -81,91 +270,9 @@ class AuthRepositoryImpl implements AuthRepository {
       case 'user-disabled':
         return 'This account has been disabled.';
       default:
-        return 'Login failed: ${e.message ?? "An error occurred"}';
+        return 'Authentication failed: ${e.message ?? "An error occurred"}';
     }
   }
 
-  @override
-  Future<void> sendPasswordResetEmail(String email) async {
-    try {
-      await dataSource.sendPasswordResetEmail(email);
-    } on FirebaseAuthException catch (e) {
-      throw _mapFirebaseAuthException(e);
-    } catch (e) {
-      throw Exception(
-        'An unexpected error occurred while sending password reset email.',
-      );
-    }
-  }
-
-  @override
-  Future<bool> signInWithGoogle(bool forceAccountChooser) async {
-    try {
-      return await dataSource.signInWithGoogle(forceAccountChooser);
-    } on FirebaseAuthException catch (e) {
-      throw _mapFirebaseAuthException(e);
-    } catch (e) {
-      throw Exception('An unexpected error occurred during Google sign-in.');
-    }
-  }
-
-  @override
-  Future<void> verifyPhoneNumber(
-    String phoneNumber,
-    Function(String, int?) codeSent,
-    Function(String) codeAutoRetrievalTimeout,
-    Function(UserEntity) verificationCompleted,
-    Function(String) verificationFailed,
-  ) async {
-    try {
-      await dataSource.verifyPhoneNumber(
-        phoneNumber,
-        codeSent,
-        codeAutoRetrievalTimeout,
-        (credential) async {
-          final user = await dataSource.signInWithCredential(credential);
-          if (user != null) {
-            verificationCompleted(UserModel.fromFirebase(user));
-          } else {
-            verificationFailed('Failed to sign in with credential');
-          }
-        },
-        (e) => verificationFailed(_mapFirebaseAuthException(e)),
-      );
-    } catch (e) {
-      verificationFailed(
-        'An unexpected error occurred during phone verification.',
-      );
-    }
-  }
-
-  @override
-  Future<UserEntity?> verifyOtp(String otp) async {
-    try {
-      final user = await dataSource.verifyOtp(otp);
-      return user != null ? UserModel.fromFirebase(user) : null;
-    } on FirebaseAuthException catch (e) {
-      throw _mapFirebaseAuthException(e);
-    } catch (e) {
-      throw Exception(e);
-    }
-  }
-
-  @override
-  Future<void> signOut() async {
-    try {
-      await dataSource.signOut();
-    } catch (e) {
-      throw Exception('An unexpected error occurred during sign out.');
-    }
-  }
-
-  Future<Map<String, dynamic>?> getUserData(String uid) async {
-    try {
-      final doc = await _firestore.collection('users').doc(uid).get();
-      return doc.data();
-    } catch (e) {
-      throw Exception('An unexpected error occurred while fetching user data.');
-    }
-  }
+  
 }

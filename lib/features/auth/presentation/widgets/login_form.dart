@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../providers/auth_providers.dart';
+import 'package:sync_event/features/auth/presentation/providers/login_notifier.dart'; // Updated import
+// Ensure this includes loginNotifierProvider
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_font_size.dart';
 import 'auth_text_field.dart';
@@ -24,7 +25,9 @@ class LoginForm extends ConsumerWidget {
     final theme = Theme.of(context);
     final emailController = ref.watch(emailControllerProvider);
     final passwordController = ref.watch(passwordControllerProvider);
-    final loginState = ref.watch(authControllerProvider);
+    final loginState = ref.watch(
+      loginNotifierProvider,
+    ); // Changed to loginNotifierProvider
     final autoValidate = ref.watch(autoValidateProvider);
     final formKey = GlobalKey<FormState>();
 
@@ -34,12 +37,15 @@ class LoginForm extends ConsumerWidget {
       ).showSnackBar(SnackBar(content: Text(message)));
     }
 
-    ref.listen<LoginState>(authControllerProvider, (previous, next) {
+    ref.listen<LoginState>(loginNotifierProvider, (previous, next) {
+      // Changed to loginNotifierProvider
       if (next.errorMessage != null) {
         showSnackBar(
           next.errorMessage!,
         ); // Show errors like "Incorrect email or password"
-        ref.read(authControllerProvider.notifier).clearError();
+        ref
+            .read(loginNotifierProvider.notifier)
+            .clearError(); // Changed to loginNotifierProvider
       }
     });
 
@@ -58,14 +64,15 @@ class LoginForm extends ConsumerWidget {
       }
 
       final user = await ref
-          .read(authControllerProvider.notifier)
+          .read(loginNotifierProvider.notifier)
           .loginWithEmail(
+            // Changed to loginNotifierProvider
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
       if (user != null && context.mounted) {
         showSnackBar("Login successful!");
-        context.go('/home');
+        context.go('/root');
       }
     }
 

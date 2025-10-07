@@ -47,7 +47,7 @@ class SocialButtons extends ConsumerWidget {
                             backgroundColor: theme.colorScheme.primary,
                           ),
                         );
-                        context.go('/home');
+                        context.go('/root');
                       } else if (authState.error != null && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -85,8 +85,7 @@ class SocialButtons extends ConsumerWidget {
                           children: [
                             FaIcon(
                               FontAwesomeIcons.google,
-                              color: AppColors
-                                  .textSecondaryLight, 
+                              color: AppColors.textSecondaryLight,
                               size: 22,
                             ),
                             SizedBox(width: 16.w),
@@ -106,9 +105,7 @@ class SocialButtons extends ConsumerWidget {
                         children: [
                           FaIcon(
                             FontAwesomeIcons.google,
-                            color: theme
-                                .colorScheme
-                                .error, 
+                            color: theme.colorScheme.error,
                             size: 22,
                           ),
                           SizedBox(width: 16.w),
@@ -161,9 +158,7 @@ class SocialButtons extends ConsumerWidget {
                   children: [
                     Icon(
                       Icons.phone,
-                      color: theme
-                          .colorScheme
-                          .primary, // Maps to success-like color
+                      color: theme.colorScheme.primary,
                       size: 22,
                     ),
                     SizedBox(width: 16.w),

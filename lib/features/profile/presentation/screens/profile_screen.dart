@@ -1,19 +1,22 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/di/injection_container.dart';
+import 'package:sync_event/features/auth/domain/repo/auth_repo.dart';
 
-// StreamProvider for listening to Firebase user changes
-final userChangesProvider = StreamProvider<User?>((ref) {
-  return FirebaseAuth.instance.userChanges();
+final authStateProvider = StreamProvider((ref) {
+  final authRepository = sl<AuthRepository>();
+  return authRepository.authStateChanges;
 });
 
-// Provider for user stats (following and followers)
 final userStatsProvider = Provider<Map<String, String>>((ref) {
   return {'following': '950', 'followers': '550'};
 });
 
-// Provider for user interests
 final interestsProvider = StateProvider<List<Map<String, dynamic>>>((ref) {
   return [
     {'label': 'Games', 'icon': Icons.videogame_asset, 'color': Colors.blue},
@@ -35,7 +38,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userAsync = ref.watch(userChangesProvider);
+    final authStateAsync = ref.watch(authStateProvider);
     final userStats = ref.watch(userStatsProvider);
     final theme = Theme.of(context);
 
@@ -49,6 +52,7 @@ class ProfileScreen extends ConsumerWidget {
           "Profile",
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
+            fontSize: 24.sp,
           ),
         ),
         backgroundColor: theme.colorScheme.surface,
@@ -61,42 +65,55 @@ class ProfileScreen extends ConsumerWidget {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: userAsync.when(
-          data: (user) => user == null
-              ? Center(
-                  child: Text(
-                    "No user logged in",
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+        child: authStateAsync.when(
+          data: (authState) => authState.fold(
+            (failure) => Center(
+              child: Text(
+                "Failed to load profile. Please try again.",
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.error,
+                  fontSize: 16.sp,
+                ),
+              ),
+            ),
+            (user) => user == null
+                ? Center(
+                    child: Text(
+                      "Please sign in to view your profile",
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 16.sp,
+                      ),
+                    ),
+                  )
+                : Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildProfileAvatar(user.image, theme),
+                        SizedBox(height: _spacingMedium.h),
+                        _buildUserDetails(
+                          user,
+                          userStats,
+                          navigateToEditProfile,
+                          theme,
+                        ),
+                        SizedBox(height: _spacingLarge.h),
+                        _buildAboutSection(theme),
+                        SizedBox(height: _spacingSmall.h),
+                        _buildInterestSection(ref, theme),
+                      ],
                     ),
                   ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildProfileAvatar(user.photoURL, theme),
-                      SizedBox(height: _spacingMedium),
-                      _buildUserDetails(
-                        user,
-                        userStats,
-                        navigateToEditProfile,
-                        theme,
-                      ),
-                      SizedBox(height: _spacingLarge),
-                      _buildAboutSection(theme),
-                      SizedBox(height: _spacingSmall),
-                      _buildInterestSection(ref, theme),
-                    ],
-                  ),
-                ),
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
             child: Text(
-              "Error loading user data: $error",
+              "Failed to load profile. Please try again.",
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.error,
+                fontSize: 16.sp,
               ),
             ),
           ),
@@ -110,19 +127,22 @@ class ProfileScreen extends ConsumerWidget {
       child: photoURL != null
           ? CircleAvatar(
               backgroundImage: NetworkImage(photoURL),
-              radius: _avatarRadius,
+              radius: _avatarRadius.r,
               backgroundColor: theme.colorScheme.surface,
-              child: CircleAvatar(
-                radius: _avatarRadius - 2,
-                backgroundColor: Colors.transparent,
+              child: Hero(
+                tag: 'profile',
+                child: CircleAvatar(
+                  radius: (_avatarRadius - 2).r,
+                  backgroundColor: Colors.transparent,
+                ),
               ),
             )
           : CircleAvatar(
-              radius: _avatarRadius,
+              radius: _avatarRadius.r,
               backgroundColor: theme.colorScheme.surfaceContainer,
               child: Icon(
                 Icons.person,
-                size: 40,
+                size: 40.sp,
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
@@ -130,7 +150,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildUserDetails(
-    User user,
+    user,
     Map<String, String> stats,
     VoidCallback onEditPressed,
     ThemeData theme,
@@ -139,52 +159,61 @@ class ProfileScreen extends ConsumerWidget {
       child: Column(
         children: [
           Text(
-            user.displayName ?? 'N/A',
+            user.name ?? 'N/A',
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w900,
               color: theme.colorScheme.onSurface,
+              fontSize: 20.sp,
             ),
           ),
-          SizedBox(height: _spacingLarge + 15),
+          SizedBox(height: (_spacingLarge + 15).h),
           IntrinsicHeight(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildStatColumn(stats['following']!, "Following", theme),
-                const SizedBox(width: 40),
+                SizedBox(width: 40.w),
                 Padding(
-                  padding: const EdgeInsets.only(top: 10.0, bottom: 10),
+                  padding: EdgeInsets.only(
+                    top: 10.h,
+                    bottom: 10.h,
+                  ),
                   child: VerticalDivider(
                     color: theme.colorScheme.onSurface.withOpacity(0.4),
                     thickness: 1,
-                    width: 20,
+                    width: 20.w,
                   ),
                 ),
-                const SizedBox(width: 40),
+                SizedBox(width: 40.w),
                 _buildStatColumn(stats['followers']!, "Followers", theme),
               ],
             ),
           ),
-          SizedBox(height: _spacingSmall + 5),
+          SizedBox(height: (_spacingSmall + 5).h),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              minimumSize: const Size(190, 45),
+              minimumSize: Size(190.w, 45.h),
               side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
               ),
             ),
             onPressed: onEditPressed,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.edit, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
+                Icon(
+                  Icons.edit,
+                  color: theme.colorScheme.primary,
+                  size: 18.sp,
+                ),
+                SizedBox(width: 8.w),
                 Text(
                   "Edit Profile",
                   style: TextStyle(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w400,
+                    fontSize: 14.sp,
                   ),
                 ),
               ],
@@ -202,10 +231,14 @@ class ProfileScreen extends ConsumerWidget {
           count,
           style: theme.textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.bold,
+            fontSize: 16.sp,
           ),
         ),
-        SizedBox(height: _spacingSmall),
-        Text(label, style: theme.textTheme.bodyMedium),
+        SizedBox(height: _spacingSmall.h),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12.sp),
+        ),
       ],
     );
   }
@@ -218,12 +251,15 @@ class ProfileScreen extends ConsumerWidget {
           "About Me",
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
+            fontSize: 16.sp,
           ),
         ),
-        SizedBox(height: _spacingSmall),
+        SizedBox(height: _spacingSmall.h),
         Text(
           "I am someone who enjoys being around happy people who love hosting and attending parties and events, so I often host lovely events.",
-          style: theme.textTheme.bodyMedium,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontSize: 12.sp,
+          ),
         ),
       ],
     );
@@ -242,28 +278,29 @@ class ProfileScreen extends ConsumerWidget {
               "Interest",
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
               ),
             ),
             SizedBox(
-              width: 100,
-              height: 30,
+              width: 100.w,
+              height: 30.h,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primaryContainer,
                   foregroundColor: theme.colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
                     vertical: 0,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
                   textStyle: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w600,
+                    fontSize: 10.sp,
                   ),
                 ),
                 onPressed: () {
-                  // Example: Add a new interest
                   ref.read(interestsProvider.notifier).state = [
                     ...interests,
                     {
@@ -275,16 +312,23 @@ class ProfileScreen extends ConsumerWidget {
                 },
                 child: Row(
                   children: [
-                    Icon(Icons.edit, size: 12),
-                    const SizedBox(width: 8),
-                    Text("CHANGE", style: theme.textTheme.labelSmall),
+                    Icon(
+                      Icons.edit,
+                      size: 12.sp,
+                      color: AppColors.backgroundLight,
+                    ),
+                    SizedBox(width: 10.w),
+                    Text(
+                      "CHANGE",
+                      style: TextStyle(color: AppColors.backgroundLight),
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
-        SizedBox(height: _spacingLarge),
+        SizedBox(height: _spacingLarge.h),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -294,7 +338,7 @@ class ProfileScreen extends ConsumerWidget {
                 .entries
                 .map(
                   (entry) => Padding(
-                    padding: const EdgeInsets.only(right: 20),
+                    padding: EdgeInsets.only(right: 20.w),
                     child: _buildInterestBox(
                       entry.value['label'],
                       entry.value['icon'],
@@ -320,15 +364,16 @@ class ProfileScreen extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         CircleAvatar(
-          radius: 28,
+          radius: 28.r,
           backgroundColor: color.withOpacity(0.3),
-          child: Icon(icon, color: color, size: 22),
+          child: Icon(icon, color: color, size: 22.sp),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6.h),
         Text(
           label,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
+            fontSize: 12.sp,
           ),
         ),
       ],

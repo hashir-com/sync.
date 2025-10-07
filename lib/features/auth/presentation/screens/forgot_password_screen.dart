@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_font_size.dart';
+import 'package:sync_event/features/auth/domain/usecases/send_password_reset_usecase.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_providers.dart';
 
 final emailProvider = StateProvider<TextEditingController>(
@@ -42,12 +43,15 @@ class ForgotPasswordScreen extends ConsumerWidget {
       }
       ref.read(isLoadingProvider.notifier).state = true;
       try {
-        await sendResetUseCase.call(email);
-        showSnackBar(
-          "Password reset link has been sent to your email. Check inbox.",
+        final result = await sendResetUseCase.call(
+          SendPasswordResetParams(email: email),
         );
-      } catch (e) {
-        showSnackBar("Error: $e", isError: true);
+        result.fold(
+          (failure) => showSnackBar("Error: ${failure.message}", isError: true),
+          (success) => showSnackBar(
+            "Password reset link has been sent to your email. Check inbox.",
+          ),
+        );
       } finally {
         ref.read(isLoadingProvider.notifier).state = false;
       }
