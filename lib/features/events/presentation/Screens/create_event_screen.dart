@@ -8,7 +8,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/domain/usecases/create_event_usecase.dart';
-import 'package:sync_event/features/events/presentation/Screens/location_picker_screen.dart';
 import '../../../../core/di/injection_container.dart';
 
 final createEventProvider = Provider<CreateEventUseCase>(

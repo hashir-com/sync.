@@ -342,37 +342,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
     const initialPosition = LatLng(11.8705, 75.3679); // Kannur, India
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Pick Event Location"),
-        backgroundColor: Colors.white,
-        elevation: 2,
-        titleTextStyle: const TextStyle(
-          color: Colors.black87,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-        actions: [
-          TextButton(
-            onPressed: selectedLocation != null && address != null
-                ? () {
-                    Navigator.pop(context, {
-                      'latitude': selectedLocation!.latitude,
-                      'longitude': selectedLocation!.longitude,
-                      'address': address,
-                    });
-                  }
-                : null,
-            child: const Text(
-              "Done",
-              style: TextStyle(color: Colors.blue, fontSize: 16),
-            ),
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           GoogleMap(
-            mapType: MapType.normal,
+            mapType: MapType.hybrid,
             initialCameraPosition: const CameraPosition(
               target: initialPosition,
               zoom: 15,
@@ -404,26 +377,55 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
                       ),
                     ),
                   },
+            zoomControlsEnabled: false,
           ),
+
           Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextField(
-                controller: searchController,
-                enabled: !isSearching,
-                decoration: InputDecoration(
-                  hintText: 'Enter place or address...',
-                  hintStyle: const TextStyle(color: Colors.grey),
-                  prefixIcon: const Icon(Icons.place, color: Colors.grey),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
+            top: 12,
+            left: 12,
+            right: 12,
+            child: SafeArea(
+              child: Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
                     children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 6.0, right: 8.0),
+                        child: Icon(Icons.place, color: Colors.grey),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: searchController,
+                          enabled: !isSearching,
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: isSearching
+                              ? null
+                              : (value) async {
+                                  final latLng = await _searchPlace(
+                                    value.trim(),
+                                  );
+                                  if (latLng != null) {
+                                    await _moveCamera(latLng);
+                                    FocusScope.of(context).unfocus();
+                                  }
+                                },
+                          decoration: const InputDecoration(
+                            hintText: 'Enter place or address...',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 8,
+                            ),
+                          ),
+                        ),
+                      ),
                       if (searchController.text.isNotEmpty)
                         IconButton(
                           icon: const Icon(Icons.clear, color: Colors.grey),
@@ -432,120 +434,243 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
                             setState(() {});
                           },
                         ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.search,
-                          color: isSearching ? Colors.grey : Colors.blue,
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6.0),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.search,
+                                color: isSearching ? Colors.grey : Colors.blue,
+                              ),
+                              onPressed: isSearching
+                                  ? null
+                                  : () async {
+                                      final latLng = await _searchPlace(
+                                        searchController.text.trim(),
+                                      );
+                                      if (latLng != null) {
+                                        await _moveCamera(latLng);
+                                        FocusScope.of(context).unfocus();
+                                      }
+                                    },
+                            ),
+                            TextButton(
+                              onPressed:
+                                  selectedLocation != null && address != null
+                                  ? () {
+                                      Navigator.pop(context, {
+                                        'latitude': selectedLocation!.latitude,
+                                        'longitude':
+                                            selectedLocation!.longitude,
+                                        'address': address,
+                                      });
+                                    }
+                                  : null,
+                              child: Text(
+                                "Done",
+                                style: TextStyle(
+                                  color:
+                                      selectedLocation != null &&
+                                          address != null
+                                      ? Colors.blue
+                                      : Colors.grey,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        onPressed: isSearching
-                            ? null
-                            : () async {
-                                final latLng = await _searchPlace(
-                                  searchController.text.trim(),
-                                );
-                                if (latLng != null) {
-                                  await _moveCamera(latLng);
-                                  FocusScope.of(context).unfocus();
-                                }
-                              },
                       ),
                     ],
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
                 ),
-                onSubmitted: isSearching
-                    ? null
-                    : (value) async {
-                        final latLng = await _searchPlace(value.trim());
-                        if (latLng != null) {
-                          await _moveCamera(latLng);
-                          FocusScope.of(context).unfocus();
-                        }
-                      },
               ),
             ),
           ),
+
           if (isSearching)
             const Positioned.fill(
-              child: Center(child: CircularProgressIndicator()),
+              child: ColoredBox(
+                color: Color.fromRGBO(0, 0, 0, 0.15),
+                child: Center(child: CircularProgressIndicator()),
+              ),
             ),
+
+          // Right-side control buttons (just like Google Maps)
           Positioned(
-            bottom: 16,
-            right: 16,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton(
-                  heroTag: 'locateMe',
-                  onPressed: _locateMe,
-                  mini: true,
-                  backgroundColor: Colors.white,
-                  elevation: 2,
-                  child: const Icon(Icons.my_location, color: Colors.blue),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton(
-                  heroTag: 'zoomIn',
-                  onPressed: _zoomIn,
-                  mini: true,
-                  backgroundColor: Colors.white,
-                  elevation: 2,
-                  child: const Icon(Icons.zoom_in, color: Colors.blue),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton(
-                  heroTag: 'zoomOut',
-                  onPressed: _zoomOut,
-                  mini: true,
-                  backgroundColor: Colors.white,
-                  elevation: 2,
-                  child: const Icon(Icons.zoom_out, color: Colors.blue),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton(
-                  heroTag: 'toggle3D',
-                  onPressed: _toggle3D,
-                  mini: true,
-                  backgroundColor: Colors.white,
-                  elevation: 2,
-                  child: Icon(
-                    is3D ? Icons.threed_rotation : Icons.two_k,
-                    color: Colors.blue,
+            right: 12,
+            bottom: 120,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12.0, bottom: 12.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 50,
+                    width: 50,
+                    child: _MapButton(
+                      icon: Icons.threed_rotation,
+                      label: "3D",
+                      onPressed: _toggle3D,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(14),
+                          ),
+                          onTap: _zoomIn,
+                          child: Container(
+                            height: 46,
+                            width: 46,
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.black12,
+                                  width: 0.8,
+                                ),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: Color.fromARGB(221, 112, 112, 112),
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(14),
+                          ),
+                          onTap: _zoomOut,
+                          child: Container(
+                            height: 46,
+                            width: 46,
+                            child: const Icon(
+                              Icons.remove,
+                              color: Color.fromARGB(221, 116, 116, 116),
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 50,
+                    width: 50,
+                    child: _MapButton(
+                      icon: Icons.my_location,
+                      onPressed: _locateMe,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+
+          // Address info just below the control buttons
           if (address != null)
             Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    "📍 $address",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+              right: 12,
+              bottom: 20,
+              left: 12,
+              child: SafeArea(
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.place, color: Colors.blue),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            address!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _MapButton extends StatelessWidget {
+  final IconData icon;
+  final String? label;
+  final VoidCallback onPressed;
+
+  const _MapButton({required this.icon, required this.onPressed, this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onPressed,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Center(
+          child: label != null
+              ? Text(
+                  label!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color.fromARGB(221, 104, 104, 104),
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              : Icon(
+                  icon,
+                  color: const Color.fromARGB(221, 118, 118, 118),
+                  size: 24,
+                ),
+        ),
       ),
     );
   }
