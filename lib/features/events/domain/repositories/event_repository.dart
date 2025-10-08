@@ -1,20 +1,19 @@
-import 'package:dartz/dartz.dart';
-import 'package:sync_event/core/error/failures.dart';
-import 'package:sync_event/features/events/domain/entities/event_entity.dart';
+import '../entities/event_entity.dart';
+import 'dart:io';
 
 abstract class EventRepository {
-  Future<Either<Failure, List<EventEntity>>> getEvents();
-  Future<Either<Failure, EventEntity>> getEventById(String eventId);
-  Future<Either<Failure, String>> createEvent(Map<String, dynamic> eventData);
-  Future<Either<Failure, EventEntity>> updateEvent(
-    String eventId,
-    Map<String, dynamic> eventData,
-  );
-  Future<Either<Failure, void>> deleteEvent(String eventId);
-  Future<Either<Failure, void>> joinEvent(String eventId, String userId);
-  Future<Either<Failure, void>> leaveEvent(String eventId, String userId);
-  Future<Either<Failure, String>> uploadEventImage(
-    String eventId,
-    String imagePath,
-  );
+  /// Create a new event (pending approval)
+  Future<void> createEvent(EventEntity event, {File? docFile, File? coverFile});
+
+  /// Approve an event (admin action)
+  Future<void> approveEvent(String eventId, {required String approvedBy});
+
+  /// Get all approved events (for users)
+  Future<List<EventEntity>> getApprovedEvents();
+
+  /// Get all pending events (for admin dashboard)
+  Future<List<EventEntity>> getPendingEvents();
+
+  /// Join an event (add user to attendees)
+  Future<void> joinEvent(String eventId, String userId);
 }

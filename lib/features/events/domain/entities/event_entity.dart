@@ -5,36 +5,42 @@ class EventEntity extends Equatable {
   final String title;
   final String description;
   final String location;
+  final double? latitude;
+  final double? longitude;
   final DateTime startTime;
   final DateTime endTime;
   final String? imageUrl;
+  final String? documentUrl;
   final String organizerId;
   final String organizerName;
   final List<String> attendees;
   final int maxAttendees;
   final String category;
-  final double? latitude;
-  final double? longitude;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final double? ticketPrice;
+  
+
 
   const EventEntity({
     required this.id,
     required this.title,
     required this.description,
     required this.location,
+    this.latitude,
+    this.longitude,
     required this.startTime,
     required this.endTime,
     this.imageUrl,
+    this.documentUrl,
     required this.organizerId,
     required this.organizerName,
     this.attendees = const [],
     required this.maxAttendees,
     required this.category,
-    this.latitude,
-    this.longitude,
     required this.createdAt,
     required this.updatedAt,
+    this.ticketPrice,
   });
 
   @override
@@ -43,6 +49,8 @@ class EventEntity extends Equatable {
     title,
     description,
     location,
+    latitude,
+    longitude,
     startTime,
     endTime,
     imageUrl,
@@ -51,8 +59,6 @@ class EventEntity extends Equatable {
     attendees,
     maxAttendees,
     category,
-    latitude,
-    longitude,
     createdAt,
     updatedAt,
   ];

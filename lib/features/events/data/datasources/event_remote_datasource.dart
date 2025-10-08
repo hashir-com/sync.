@@ -1,16 +1,14 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io';
+import '../models/event_model.dart';
 
 abstract class EventRemoteDataSource {
-  Future<List<Map<String, dynamic>>> getEvents();
-  Future<Map<String, dynamic>> getEventById(String eventId);
-  Future<String> createEvent(Map<String, dynamic> eventData);
-  Future<void> updateEvent(String eventId, Map<String, dynamic> eventData);
-  Future<void> deleteEvent(String eventId);
+  Future<void> createEvent(EventModel event, {File? docFile, File? coverFile});
+  Future<List<EventModel>> getApprovedEvents();
+
+  /// Add a user to event attendees
   Future<void> joinEvent(String eventId, String userId);
-  Future<void> leaveEvent(String eventId, String userId);
-  Future<String> uploadEventImage(File imageFile, String eventId);
 }
 
 class EventRemoteDataSourceImpl implements EventRemoteDataSource {
@@ -23,73 +21,68 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
   });
 
   @override
-  Future<List<Map<String, dynamic>>> getEvents() async {
-    final querySnapshot = await firebaseFirestore
-        .collection('events')
-        .orderBy('startTime', descending: false)
-        .get();
+  Future<void> createEvent(
+    EventModel event, {
+    File? docFile,
+    File? coverFile,
+  }) async {
+    final docRef = firebaseFirestore.collection('events').doc();
+    await docRef.set(event.toMap());
 
-    return querySnapshot.docs
-        .map((doc) => {'id': doc.id, ...doc.data()})
-        .toList();
-  }
+    String? docUrl;
+    String? imageUrl;
 
-  @override
-  Future<Map<String, dynamic>> getEventById(String eventId) async {
-    final doc = await firebaseFirestore.collection('events').doc(eventId).get();
-    if (doc.exists) {
-      return {'id': doc.id, ...doc.data()!};
-    } else {
-      throw Exception('Event not found');
+    // Upload document
+    if (docFile != null) {
+      final docSnapshot = await firebaseStorage
+          .ref('event_docs/${docRef.id}/document.pdf')
+          .putFile(docFile);
+      docUrl = await docSnapshot.ref.getDownloadURL();
     }
+
+    // Upload cover image
+    if (coverFile != null) {
+      final imgSnapshot = await firebaseStorage
+          .ref('event_covers/${docRef.id}/cover.jpg')
+          .putFile(coverFile);
+      imageUrl = await imgSnapshot.ref.getDownloadURL();
+    }
+
+    final model = EventModel(
+      id: docRef.id,
+      title: event.title,
+      description: event.description,
+      location: event.location,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      imageUrl: imageUrl,
+      documentUrl: docUrl,
+      organizerId: event.organizerId,
+      organizerName: event.organizerName,
+      attendees: event.attendees,
+      maxAttendees: event.maxAttendees,
+      category: event.category,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      ticketPrice: event.ticketPrice,
+    );
+
+    await docRef.set(model.toMap());
   }
 
   @override
-  Future<String> createEvent(Map<String, dynamic> eventData) async {
-    final docRef = await firebaseFirestore.collection('events').add({
-      ...eventData,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-    return docRef.id;
-  }
-
-  @override
-  Future<void> updateEvent(
-    String eventId,
-    Map<String, dynamic> eventData,
-  ) async {
-    await firebaseFirestore.collection('events').doc(eventId).update({
-      ...eventData,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  @override
-  Future<void> deleteEvent(String eventId) async {
-    await firebaseFirestore.collection('events').doc(eventId).delete();
+  Future<List<EventModel>> getApprovedEvents() async {
+    final query = await firebaseFirestore.collection('events').get();
+    return query.docs.map((e) => EventModel.fromMap(e.data(), e.id)).toList();
   }
 
   @override
   Future<void> joinEvent(String eventId, String userId) async {
-    await firebaseFirestore.collection('events').doc(eventId).update({
+    final docRef = firebaseFirestore.collection('events_approved').doc(eventId);
+    await docRef.update({
       'attendees': FieldValue.arrayUnion([userId]),
-      'updatedAt': FieldValue.serverTimestamp(),
     });
-  }
-
-  @override
-  Future<void> leaveEvent(String eventId, String userId) async {
-    await firebaseFirestore.collection('events').doc(eventId).update({
-      'attendees': FieldValue.arrayRemove([userId]),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  @override
-  Future<String> uploadEventImage(File imageFile, String eventId) async {
-    final ref = firebaseStorage.ref().child('events/$eventId/image.jpg');
-    await ref.putFile(imageFile);
-    return await ref.getDownloadURL();
   }
 }

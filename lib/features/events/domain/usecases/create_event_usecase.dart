@@ -1,25 +1,14 @@
-import 'package:dartz/dartz.dart';
-import 'package:equatable/equatable.dart';
-import 'package:sync_event/core/error/failures.dart';
-import 'package:sync_event/core/usecases/usecase.dart';
-import 'package:sync_event/features/events/domain/repositories/event_repository.dart';
+import '../../domain/entities/event_entity.dart';
+import '../repositories/event_repository.dart';
+import 'dart:io';
 
-class CreateEventUseCase implements UseCase<String, CreateEventParams> {
+class CreateEventUseCase {
   final EventRepository repository;
 
   CreateEventUseCase(this.repository);
 
-  @override
-  Future<Either<Failure, String>> call(CreateEventParams params) async {
-    return await repository.createEvent(params.eventData);
+  /// Creates a new event (saved as pending)
+  Future<void> call(EventEntity event, {File? docFile, File? coverFile}) {
+    return repository.createEvent(event, docFile: docFile, coverFile: coverFile);
   }
-}
-
-class CreateEventParams extends Equatable {
-  final Map<String, dynamic> eventData;
-
-  const CreateEventParams({required this.eventData});
-
-  @override
-  List<Object> get props => [eventData];
 }

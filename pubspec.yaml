@@ -67,6 +67,22 @@ dependencies:
   
   # Navigation
   go_router: ^16.2.4
+
+  # Utilities
+  file_picker: ^10.3.3
+  
+  intl: ^0.20.2
+  google_maps_flutter: ^2.13.1
+  location: ^8.0.1
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  http: ^1.5.0
+  google_maps_flutter_platform_interface: ^2.14.0
+  flutter_typeahead: 
+  autocomplete_textfield: ^2.0.1
+
+  # Maps and Location
+ 
   
 
 dev_dependencies:

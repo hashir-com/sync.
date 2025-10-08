@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, avoid_print
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -159,13 +159,13 @@ class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
           print('VerifyOtpUseCase failed: ${failure.message}'); // Debug print
           String errorMessage;
           switch (failure.runtimeType) {
-            case AuthFailure:
+            case const (AuthFailure):
               errorMessage = 'Authentication failed. Please try again.';
               break;
-            case ServerFailure:
+            case const (ServerFailure):
               errorMessage = 'Server error. Please try again later.';
               break;
-            case NetworkFailure:
+            case NetworkFailure _:
               errorMessage =
                   'No internet connection. Please check your network.';
               break;
