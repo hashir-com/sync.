@@ -1,4 +1,7 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -145,7 +148,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
           ),
         );
       }
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
     }
   }
 
@@ -554,7 +559,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
                             bottom: Radius.circular(14),
                           ),
                           onTap: _zoomOut,
-                          child: Container(
+                          child: SizedBox(
                             height: 46,
                             width: 46,
                             child: const Icon(
