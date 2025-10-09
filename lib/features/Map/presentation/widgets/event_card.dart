@@ -19,9 +19,9 @@ class EventDetailCard extends ConsumerWidget {
     final colors = AppColors(isDark);
 
     return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 400),
       tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeOut,
+      curve: Curves.easeInOutCubic,
       builder: (context, value, child) {
         return Transform.scale(
           scale: 0.8 + (0.2 * value),
@@ -29,13 +29,17 @@ class EventDetailCard extends ConsumerWidget {
         );
       },
       child: Padding(
-        padding: EdgeInsets.all(28.w),
+        padding: EdgeInsets.all(20.w),
         child: Container(
           decoration: BoxDecoration(
             color: colors.cardBackground,
-            borderRadius: BorderRadius.circular(22.r),
+            borderRadius: BorderRadius.circular(26.r),
             boxShadow: [
-              BoxShadow(color: colors.shadow, blurRadius: 12.r, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: colors.shadow,
+                blurRadius: 12.r,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: Padding(
@@ -74,11 +78,8 @@ class EventDetailCard extends ConsumerWidget {
                 width: 80.w,
                 height: 80.h,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Icon(
-                  Icons.event,
-                  size: 80.sp,
-                  color: colors.textSecondary,
-                ),
+                errorBuilder: (_, __, ___) =>
+                    Icon(Icons.event, size: 80.sp, color: colors.textSecondary),
               ),
             ),
           ),
@@ -109,7 +110,10 @@ class EventDetailCard extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [colors.primary.withOpacity(0.1), colors.primary.withOpacity(0.2)],
+              colors: [
+                colors.primary.withOpacity(0.1),
+                colors.primary.withOpacity(0.2),
+              ],
             ),
             borderRadius: BorderRadius.circular(8.r),
           ),
@@ -164,10 +168,7 @@ class EventDetailCard extends ConsumerWidget {
   Widget _buildFooter(AppColors colors) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildAttendeeInfo(colors),
-        _buildViewDetailsButton(colors),
-      ],
+      children: [_buildAttendeeInfo(colors), _buildViewDetailsButton(colors)],
     );
   }
 
@@ -209,7 +210,11 @@ class EventDetailCard extends ConsumerWidget {
             color: colors.primary,
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
-              BoxShadow(color: colors.shadow, blurRadius: 6.r, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: colors.shadow,
+                blurRadius: 6.r,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           child: Row(

@@ -15,8 +15,9 @@ class BuildMarkersUseCase {
 
   Future<Set<Marker>> execute(
     List<EventEntity> events,
-    Function(EventEntity) onMarkerTap,
-  ) async {
+    void Function(EventEntity) onMarkerTap, {
+    void Function(Set<Marker>)? onBatchUpdated,
+  }) async {
     if (!MarkerCache.needsRebuild(events)) {
       return MarkerCache.markers;
     }
@@ -32,7 +33,8 @@ class BuildMarkersUseCase {
         Marker(
           markerId: MarkerId(event.id),
           position: LatLng(event.latitude!, event.longitude!),
-          icon: cachedIcon ??
+          icon:
+              cachedIcon ??
               BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           anchor: const Offset(0.5, 1.0),
           onTap: () => onMarkerTap(event),
@@ -43,15 +45,16 @@ class BuildMarkersUseCase {
     MarkerCache.setMarkers(newMarkers);
 
     // Load icons asynchronously in batches
-    _loadMarkerIcons(validEvents, onMarkerTap);
+    _loadMarkerIcons(validEvents, onMarkerTap, onBatchUpdated: onBatchUpdated);
 
     return newMarkers;
   }
 
   Future<void> _loadMarkerIcons(
     List<EventEntity> validEvents,
-    Function(EventEntity) onMarkerTap,
-  ) async {
+    void Function(EventEntity) onMarkerTap, {
+    void Function(Set<Marker>)? onBatchUpdated,
+  }) async {
     final markersNeedingIcons = validEvents
         .where((event) => repository.getCachedIcon(event.id) == null)
         .toList();
@@ -76,7 +79,8 @@ class BuildMarkersUseCase {
           Marker(
             markerId: MarkerId(event.id),
             position: LatLng(event.latitude!, event.longitude!),
-            icon: icon ??
+            icon:
+                icon ??
                 BitmapDescriptor.defaultMarkerWithHue(
                   BitmapDescriptor.hueAzure,
                 ),
@@ -87,8 +91,10 @@ class BuildMarkersUseCase {
       }
 
       MarkerCache.setMarkers(updatedMarkers);
+      if (onBatchUpdated != null) onBatchUpdated(updatedMarkers);
     }
 
     MarkerCache.markBuilt();
+    if (onBatchUpdated != null) onBatchUpdated(MarkerCache.markers);
   }
 }

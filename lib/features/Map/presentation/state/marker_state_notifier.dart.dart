@@ -11,7 +11,7 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
   final Ref ref;
 
   MarkerStateNotifier(this.buildMarkersUseCase, this.ref)
-      : super(MarkerCache.markers);
+    : super(MarkerCache.markers);
 
   Future<void> buildMarkers(List<EventEntity> events) async {
     if (!MarkerCache.needsRebuild(events) ||
@@ -25,6 +25,10 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
       final markers = await buildMarkersUseCase.execute(
         events,
         (event) => _onMarkerTap(event),
+        onBatchUpdated: (updated) {
+          // push progressive updates so custom icons appear as they load
+          state = updated;
+        },
       );
       state = markers;
     } finally {
@@ -34,14 +38,17 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
 
   void _onMarkerTap(EventEntity event) {
     ref.read(selectedEventProvider.notifier).state = event;
-    ref.read(mapControllerProvider.notifier).state?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(event.latitude!, event.longitude!),
-          zoom: 18,
-          tilt: 60,
-        ),
-      ),
-    );
+    ref
+        .read(mapControllerProvider.notifier)
+        .state
+        ?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(event.latitude!, event.longitude!),
+              zoom: 18,
+              tilt: 60,
+            ),
+          ),
+        );
   }
 }

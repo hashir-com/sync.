@@ -21,6 +21,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final LocationService _locationService = LocationService();
+  bool _listenerSetup = false;
 
   @override
   void initState() {
@@ -49,7 +50,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final eventsAsync = ref.watch(eventsMapProvider);
     final selectedEvent = ref.watch(selectedEventProvider);
 
-    _setupEventListener();
+    // Setup listener only once
+    if (!_listenerSetup) {
+      _setupEventListener();
+      _listenerSetup = true;
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -72,12 +77,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               right: 16.w,
               child: const SearchResultsWidget(),
             ),
-            Positioned(
-              bottom: 80.h,
-              left: 0,
-              right: 0,
-              child: const Center(child: LoadingIndicatorWidget()),
-            ),
+            // Positioned(
+            //   bottom: 180.h,
+            //   left: 0,
+            //   right: 0,
+            //   child: const Center(child: LoadingIndicatorWidget()),
+            // ),
             if (selectedEvent != null)
               Positioned(
                 bottom: 0,
@@ -90,8 +95,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   transitionBuilder: (child, animation) {
                     return SlideTransition(
                       position: Tween<Offset>(
-                        begin: Offset.zero,
-                        end: const Offset(0, 1.5),
+                        begin: const Offset(0, 1.0),
+                        end: Offset.zero,
                       ).animate(animation),
                       child: FadeTransition(opacity: animation, child: child),
                     );
