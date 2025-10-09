@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 const kGoogleApiKey = "AIzaSyA6iYBIGA19w4RqJn4LhQqGx6GBUi1_6OQ";
 
@@ -35,13 +35,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this); // Add observer
+    WidgetsBinding.instance.addObserver(this);
     _checkAndRequestLocationServices();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // Remove observer
+    WidgetsBinding.instance.removeObserver(this);
     mapController?.dispose();
     searchController.dispose();
     super.dispose();
@@ -64,7 +64,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // Optionally, handle cancellation (e.g., navigate back or disable features)
                   },
                   child: const Text('Cancel'),
                 ),
@@ -72,7 +71,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
                   onPressed: () async {
                     Navigator.of(context).pop();
                     await Geolocator.openLocationSettings();
-                    // Recheck location services and permissions after returning
                     await _handleLocationServicesOnReturn();
                   },
                   child: const Text('Turn On'),
@@ -83,7 +81,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
         }
       } else {
         await _requestPermissions();
-        // Automatically locate the user if permissions are granted
         if (await Permission.location.isGranted) {
           await _locateMe();
         }
@@ -110,7 +107,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
           await _locateMe();
         }
       } else {
-        // If location services are still disabled, show dialog again
         await _checkAndRequestLocationServices();
       }
     } catch (e) {
@@ -164,7 +160,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
     }
     setState(() => isSearching = true);
     final url =
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$kGoogleApiKey&types=geocode&components=country:IN";
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$kGoogleApiKey&types=geocode";
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -339,7 +335,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
 
   @override
   Widget build(BuildContext context) {
-    const initialPosition = LatLng(11.8705, 75.3679); // Kannur, India
+    const initialPosition = LatLng(0, 0); // Default to global center
 
     return Scaffold(
       body: Stack(
@@ -348,7 +344,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
             mapType: MapType.hybrid,
             initialCameraPosition: const CameraPosition(
               target: initialPosition,
-              zoom: 15,
+              zoom: 2, // Lower zoom for global view
               tilt: 60,
             ),
             onMapCreated: (controller) {
@@ -497,7 +493,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
               ),
             ),
 
-          // Right-side control buttons (just like Google Maps)
           Positioned(
             right: 12,
             bottom: 120,
@@ -572,7 +567,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 10),
                   SizedBox(
                     height: 50,
@@ -587,7 +581,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
             ),
           ),
 
-          // Address info just below the control buttons
           if (address != null)
             Positioned(
               right: 12,

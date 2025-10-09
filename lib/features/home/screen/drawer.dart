@@ -184,7 +184,7 @@ class CustomDrawer extends ConsumerWidget {
                           context,
                           Icons.event_note_outlined,
                           'My Events',
-                          '/my-events',
+                          '/my_events',
                         ),
 
                         const Spacer(),

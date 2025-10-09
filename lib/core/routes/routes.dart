@@ -7,6 +7,7 @@ import 'package:sync_event/features/auth/presentation/screens/otp_verification_s
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
+import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/location_picker_screen.dart';
 import 'package:sync_event/features/home/screen/home.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
@@ -86,6 +87,11 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/location-picker',
       builder: (context, state) => const LocationPickerScreen(),
+    ),
+
+    GoRoute(
+      path: '/my_events',
+      builder: (context, state) => const EventsScreen(),
     ),
   ],
 );

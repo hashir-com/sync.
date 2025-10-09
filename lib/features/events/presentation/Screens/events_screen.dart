@@ -17,7 +17,7 @@ final joinEventProvider = Provider<JoinEventUseCase>(
 );
 
 class EventsScreen extends ConsumerWidget {
-  const EventsScreen({Key? key}) : super(key: key);
+  const EventsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

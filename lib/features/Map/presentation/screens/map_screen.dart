@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
@@ -10,7 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:sync_event/features/Map/presentation/provider/events_map_provider.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 
-// MarkerCache class remains unchanged
+// MarkerCache class (unchanged)
 class _MarkerCache {
   static final Map<String, BitmapDescriptor> _icons = {};
   static final Set<Marker> _markers = {};
@@ -18,7 +19,7 @@ class _MarkerCache {
   static String _lastEventHash = '';
 
   static bool needsRebuild(List<EventEntity> events) {
-    final currentHash = events.map((e) => e.id).join(',');
+    final currentHash = '${events.length}:${events.map((e) => e.id).join(',')}';
     if (_lastEventHash != currentHash) {
       _lastEventHash = currentHash;
       _isBuilt = false;
@@ -42,14 +43,17 @@ class _MarkerCache {
   }
 }
 
-// Providers for state management
+// Providers (unchanged)
 final selectedEventProvider = StateProvider<EventEntity?>((ref) => null);
 final filteredEventsProvider = StateProvider<List<EventEntity>>((ref) => []);
 final isLoadingMarkersProvider = StateProvider<bool>((ref) => false);
-final hasInitializedProvider = StateProvider<bool>((ref) => false);
 final searchQueryProvider = StateProvider<String>((ref) => '');
+final mapControllerProvider = StateProvider<GoogleMapController?>(
+  (ref) => null,
+);
+final allEventsProvider = StateProvider<List<EventEntity>>((ref) => []);
 
-// StateNotifier for managing marker building
+// StateNotifier for managing marker building (unchanged)
 class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
   MarkerStateNotifier(this.ref) : super(_MarkerCache.markers);
 
@@ -163,37 +167,38 @@ final markerStateProvider =
       (ref) => MarkerStateNotifier(ref),
     );
 
-// Provider for GoogleMapController
-final mapControllerProvider = StateProvider<GoogleMapController?>(
-  (ref) => null,
-);
-
-// Provider for all events (to avoid passing through widget)
-final allEventsProvider = StateProvider<List<EventEntity>>((ref) => []);
-
-// Image processing function (unchanged)
+// Image processing (unchanged)
 Future<Uint8List> _processImageInIsolate(Uint8List imageData) async {
   final decodedImage = img.decodeImage(imageData);
   if (decodedImage == null) throw Exception('Failed to decode image');
 
+  // Get device pixel ratio (passed via isolate or default to 2.0)
+  const pixelRatio = 1.0; // Fallback; ideally pass from context
+  const baseSize = 150.0;
+  final scaledSize = (baseSize * pixelRatio)
+      .toInt(); // Scale based on pixel ratio
+
   final resizedImage = img.copyResize(
     decodedImage,
-    width: 120,
-    height: 120,
-    interpolation: img.Interpolation.linear,
+    width: scaledSize,
+    height: scaledSize,
+    interpolation: img.Interpolation.linear, // Higher quality resizing
   );
 
-  const padding = 5;
+  const padding = 15;
   const imageWidth = 120;
-  const finalWidth = imageWidth + 2 * padding;
-  const finalHeight = imageWidth + 2 * padding;
+  final scaledImageWidth = (imageWidth * pixelRatio).toInt();
+  final scaledPadding = (padding * pixelRatio).toInt();
+  final finalWidth = scaledImageWidth + 2 * scaledPadding;
+  final finalHeight = scaledImageWidth + 2 * scaledPadding;
+
   final canvas = img.Image(
     width: finalWidth,
     height: finalHeight,
     numChannels: 4,
   );
 
-  const cornerRadius = 30;
+  const cornerRadius = 130;
   img.fillRect(
     canvas,
     x1: 0,
@@ -201,32 +206,51 @@ Future<Uint8List> _processImageInIsolate(Uint8List imageData) async {
     x2: finalWidth - 1,
     y2: finalHeight - 1,
     color: img.ColorRgba8(224, 224, 224, 255),
-    radius: cornerRadius.toDouble(),
+    radius: cornerRadius.toDouble() * pixelRatio, // Scale radius
   );
 
-  final mask = img.Image(width: imageWidth, height: imageWidth, numChannels: 4);
+  final mask = img.Image(
+    width: scaledImageWidth,
+    height: scaledImageWidth,
+    numChannels: 4,
+  );
   img.fillRect(
     mask,
     x1: 0,
     y1: 0,
-    x2: imageWidth - 1,
-    y2: imageWidth - 1,
+    x2: scaledImageWidth - 1,
+    y2: scaledImageWidth - 1,
     color: img.ColorRgba8(255, 255, 255, 255),
-    radius: cornerRadius.toDouble(),
+    radius: cornerRadius.toDouble() * pixelRatio,
   );
 
   final roundRectImage = img.compositeImage(
-    img.Image(width: imageWidth, height: imageWidth, numChannels: 4),
+    img.Image(
+      width: scaledImageWidth,
+      height: scaledImageWidth,
+      numChannels: 4,
+    ),
     resizedImage,
     mask: mask,
   );
 
-  img.compositeImage(canvas, roundRectImage, dstX: padding, dstY: padding);
+  img.compositeImage(
+    canvas,
+    roundRectImage,
+    dstX: scaledPadding,
+    dstY: scaledPadding,
+  );
 
-  return Uint8List.fromList(img.encodePng(canvas));
+  final encodedImage = img.encodePng(canvas);
+  if (kDebugMode) {
+    print(
+      'Processed marker image: width=$finalWidth, height=$finalHeight, pixelRatio=$pixelRatio',
+    );
+  }
+  return Uint8List.fromList(encodedImage);
 }
 
-// Marker icon fetching function (modified to use ref)
+// Updated _getMarkerIcon to clear cache and add debug logs
 Future<BitmapDescriptor> _getMarkerIcon(
   String? imageUrl,
   String eventId,
@@ -240,11 +264,16 @@ Future<BitmapDescriptor> _getMarkerIcon(
   try {
     if (imageUrl != null && imageUrl.isNotEmpty) {
       final cacheKey = 'marker_${eventId}_v3';
+      // Clear cache for testing (remove after debugging)
+      await cacheManager.removeFile(cacheKey);
+      if (kDebugMode) print('Cleared cache for marker_$eventId');
+
       final cachedFile = await cacheManager.getFileFromCache(cacheKey);
 
       Uint8List? imageData;
       if (cachedFile != null) {
         imageData = await cachedFile.file.readAsBytes();
+        if (kDebugMode) print('Loaded cached image for marker_$eventId');
       } else {
         final response = await http.get(Uri.parse(imageUrl));
         if (response.statusCode == 200) {
@@ -252,6 +281,8 @@ Future<BitmapDescriptor> _getMarkerIcon(
           final finalData = await compute(_processImageInIsolate, imageData);
           await cacheManager.putFile(cacheKey, finalData, fileExtension: 'png');
           imageData = finalData;
+          if (kDebugMode)
+            print('Processed and cached new image for marker_$eventId');
         }
       }
 
@@ -272,41 +303,54 @@ Future<BitmapDescriptor> _getMarkerIcon(
   return defaultIcon;
 }
 
-class MapScreen extends ConsumerWidget {
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends ConsumerState<MapScreen> {
+  final TextEditingController searchController = TextEditingController();
+  final FocusNode searchFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Sync controller with provider
+    searchController.addListener(() {
+      final currentText = searchController.text;
+      if (ref.read(searchQueryProvider) != currentText) {
+        ref.read(searchQueryProvider.notifier).state = currentText;
+      }
+    });
+    // Debug focus changes
+    searchFocusNode.addListener(() {
+      if (kDebugMode) {
+        print('TextField focus changed: ${searchFocusNode.hasFocus}');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsMapProvider);
-    final searchController = TextEditingController();
     final allEvents = ref.watch(allEventsProvider);
 
-    // Listen to search controller changes
-    searchController.addListener(() {
-      ref.read(searchQueryProvider.notifier).state = searchController.text;
-      final query = ref.read(searchQueryProvider).toLowerCase();
-      ref.read(filteredEventsProvider.notifier).state = query.isNotEmpty
-          ? allEvents
-                .where(
-                  (e) =>
-                      e.title.toLowerCase().contains(query) ||
-                      e.category.toLowerCase().contains(query),
-                )
-                .toList()
-          : [];
-    });
-
     // Initialize markers when events load
-    ref.listen(eventsMapProvider, (_, state) {
+    ref.listen(eventsMapProvider, (previous, state) {
       state.whenData((events) {
         ref.read(allEventsProvider.notifier).state = events;
-        if (!ref.read(hasInitializedProvider) &&
-            _MarkerCache.needsRebuild(events)) {
-          ref.read(hasInitializedProvider.notifier).state = true;
-          Future.microtask(
-            () => ref.read(markerStateProvider.notifier).buildMarkers(events),
-          );
-        }
+        Future.microtask(
+          () => ref.read(markerStateProvider.notifier).buildMarkers(events),
+        );
       });
     });
 
@@ -364,6 +408,8 @@ class MapScreen extends ConsumerWidget {
     void onSearchResultTap(EventEntity event) {
       ref.read(selectedEventProvider.notifier).state = event;
       searchController.clear();
+      ref.read(searchQueryProvider.notifier).state = '';
+      searchFocusNode.unfocus();
       if (event.latitude != null && event.longitude != null) {
         ref
             .read(mapControllerProvider.notifier)
@@ -408,273 +454,867 @@ class MapScreen extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
+            // Animated Search Bar
             Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+              top: 16.h,
+              left: 16.w,
+              right: 16.w,
+              child: TweenAnimationBuilder<double>(
+                key: const ValueKey('search_bar'),
+                duration: const Duration(milliseconds: 600),
+                tween: Tween(begin: 0.0, end: 1.0),
+                curve: Curves.easeOut,
+                builder: (context, value, child) {
+                  final safeValue = value.clamp(0.0, 1.0);
+                  if (kDebugMode) {
+                    print('Search bar animation value: $safeValue');
+                  }
+                  return Transform.scale(
+                    scale: safeValue,
+                    child: Opacity(opacity: safeValue, child: child),
+                  );
+                },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          textSelectionTheme: const TextSelectionThemeData(
+                            cursorColor: Colors.blue,
+                            selectionColor: Colors.blueAccent,
+                            selectionHandleColor: Colors.blue,
                           ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search events...',
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: Colors.grey,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: ref.watch(searchQueryProvider).isNotEmpty
+                                    ? Colors.blue.withOpacity(0.3)
+                                    : Colors.black.withOpacity(0.1),
+                                blurRadius:
+                                    ref.watch(searchQueryProvider).isNotEmpty
+                                    ? 15.r
+                                    : 10.r,
+                                offset: const Offset(0, 4),
+                                spreadRadius:
+                                    ref.watch(searchQueryProvider).isNotEmpty
+                                    ? 2
+                                    : 0,
+                              ),
+                            ],
                           ),
-                          suffixIcon: ref.watch(searchQueryProvider).isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(
-                                    Icons.clear,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: searchController.clear,
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 15,
+                          child: TextField(
+                            key: const ValueKey('search_textfield'),
+                            controller: searchController,
+                            focusNode: searchFocusNode,
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            cursorColor: Colors.blue,
+                            decoration: InputDecoration(
+                              hintText: 'Search events...',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              prefixIcon: AnimatedRotation(
+                                duration: const Duration(milliseconds: 300),
+                                turns: ref.watch(searchQueryProvider).isNotEmpty
+                                    ? 0.5
+                                    : 0,
+                                child: Icon(
+                                  Icons.search,
+                                  color: Colors.grey.shade600,
+                                  size: 22.sp,
+                                ),
+                              ),
+                              suffixIcon:
+                                  ref.watch(searchQueryProvider).isNotEmpty
+                                  ? ScaleTransition(
+                                      scale: Tween<double>(begin: 0, end: 1)
+                                          .animate(
+                                            CurvedAnimation(
+                                              parent: kAlwaysCompleteAnimation,
+                                              curve: Curves.elasticOut,
+                                            ),
+                                          ),
+                                      child: IconButton(
+                                        icon: Icon(
+                                          Icons.clear,
+                                          color: Colors.grey.shade600,
+                                          size: 22.sp,
+                                        ),
+                                        onPressed: () {
+                                          searchController.clear();
+                                          ref
+                                                  .read(
+                                                    searchQueryProvider
+                                                        .notifier,
+                                                  )
+                                                  .state =
+                                              '';
+                                          searchFocusNode.unfocus();
+                                          if (kDebugMode) {
+                                            print('Search cleared');
+                                          }
+                                        },
+                                      ),
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 20.w,
+                                vertical: 15.h,
+                              ),
+                            ),
+                            onChanged: (value) {
+                              if (kDebugMode) {
+                                print('TextField input: $value');
+                                print(
+                                  'Controller text: ${searchController.text}',
+                                );
+                              }
+                              ref.read(searchQueryProvider.notifier).state =
+                                  value;
+                              final query = value.toLowerCase();
+                              ref
+                                  .read(filteredEventsProvider.notifier)
+                                  .state = query.isNotEmpty
+                                  ? allEvents
+                                        .where(
+                                          (e) =>
+                                              e.title.toLowerCase().contains(
+                                                query,
+                                              ) ||
+                                              e.category.toLowerCase().contains(
+                                                query,
+                                              ),
+                                        )
+                                        .toList()
+                                  : [];
+                            },
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                    SizedBox(width: 12.w),
+                    TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 700),
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      curve: Curves.easeOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(scale: value, child: child);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.2),
+                              blurRadius: 10.r,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(50),
+                            onTap: locateMe,
+                            child: Padding(
+                              padding: EdgeInsets.all(12.w),
+                              child: Icon(
+                                Icons.my_location,
+                                color: Colors.blue,
+                                size: 24.sp,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.my_location, color: Colors.blue),
-                      onPressed: locateMe,
-                      tooltip: 'My Location',
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+            // Animated Search Results (Updated for Clean, Minimal UI)
             if (ref.watch(searchQueryProvider).isNotEmpty &&
                 ref.watch(filteredEventsProvider).isNotEmpty)
               Positioned(
-                top: 80,
-                left: 16,
-                right: 16,
-                child: Container(
-                  constraints: const BoxConstraints(maxHeight: 300),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: ref.watch(filteredEventsProvider).length,
-                    itemBuilder: (context, index) {
-                      final event = ref.watch(filteredEventsProvider)[index];
-                      return ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            event.imageUrl ?? 'https://via.placeholder.com/50',
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                const Icon(Icons.event, size: 50),
-                          ),
-                        ),
-                        title: Text(
-                          event.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          event.category,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onTap: () => onSearchResultTap(event),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            if (ref.watch(isLoadingMarkersProvider))
-              Positioned(
-                bottom: 80,
-                left: 0,
-                right: 0,
-                child: Center(
+                top: 90.h,
+                left: 16.w,
+                right: 16.w,
+                child: TweenAnimationBuilder<double>(
+                  key: ValueKey(ref.watch(filteredEventsProvider).length),
+                  duration: const Duration(milliseconds: 400),
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Transform.translate(
+                      offset: Offset(0, -20 * (1 - value)),
+                      child: Opacity(opacity: value, child: child),
+                    );
+                  },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
+                    constraints: BoxConstraints(
+                      maxHeight: 300.h,
+                    ), // Reduced for less intrusion
                     decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Loading markers...',
-                          style: TextStyle(color: Colors.white),
+                      color: Colors.white, // Solid white background
+                      borderRadius: BorderRadius.circular(22.r),
+                      border: Border.all(
+                        color: Colors.grey.shade200, // Thinner, lighter border
+                        width: 1.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(
+                            0.05,
+                          ), // Softer shadow
+                          blurRadius: 8.r,
+                          offset: const Offset(0, 2),
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ),
-            if (ref.watch(selectedEventProvider) != null)
-              Positioned(
-                bottom: 16,
-                left: 16,
-                right: 16,
-                child: Card(
-                  elevation: 16,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: Image.network(
-                                ref.watch(selectedEventProvider)!.imageUrl ??
-                                    'https://via.placeholder.com/80',
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.event,
-                                  size: 80,
-                                  color: Colors.grey,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(22.r),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white, // Solid white, no gradient
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    ref.watch(selectedEventProvider)!.title,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.search_rounded,
+                                  color: Colors.grey.shade600, // Neutral color
+                                  size: 18.sp, // Smaller icon
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  '${ref.watch(filteredEventsProvider).length} result${ref.watch(filteredEventsProvider).length != 1 ? 's' : ''} found',
+                                  style: TextStyle(
+                                    fontSize: 12.sp, // Smaller font
+                                    fontWeight:
+                                        FontWeight.w500, // Consistent weight
+                                    color:
+                                        Colors.grey.shade600, // Neutral color
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    ref.watch(selectedEventProvider)!.category,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () =>
-                                  ref
-                                          .read(selectedEventProvider.notifier)
-                                          .state =
-                                      null,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          ref.watch(selectedEventProvider)!.description,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
                           ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${ref.watch(selectedEventProvider)!.attendees.length}/${ref.watch(selectedEventProvider)!.maxAttendees} attending',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Navigate to event details
+                          Flexible(
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: ref
+                                  .watch(filteredEventsProvider)
+                                  .length,
+                              itemBuilder: (context, index) {
+                                final event = ref.watch(
+                                  filteredEventsProvider,
+                                )[index];
+                                return TweenAnimationBuilder<double>(
+                                  duration: Duration(
+                                    milliseconds: 200 + (index * 80),
+                                  ),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, animValue, child) {
+                                    return Transform.translate(
+                                      offset: Offset(50 * (1 - animValue), 0),
+                                      child: Opacity(
+                                        opacity: animValue,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => onSearchResultTap(event),
+                                      splashColor:
+                                          Colors.grey.shade100, // Subtle splash
+                                      highlightColor: Colors.grey.shade50,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 16.w,
+                                          vertical: 12.h,
+                                        ), // Slightly larger padding
+                                        decoration: BoxDecoration(
+                                          border:
+                                              index !=
+                                                  ref
+                                                          .watch(
+                                                            filteredEventsProvider,
+                                                          )
+                                                          .length -
+                                                      1
+                                              ? Border(
+                                                  bottom: BorderSide(
+                                                    color: Colors.grey.shade200,
+                                                    width: 1,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Hero(
+                                              tag: 'search_${event.id}',
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        12.r,
+                                                      ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.05),
+                                                      blurRadius: 6.r,
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        18.r,
+                                                      ),
+                                                  child: Image.network(
+                                                    event.imageUrl ??
+                                                        'https://via.placeholder.com/50',
+                                                    width: 50
+                                                        .w, // Slightly smaller
+                                                    height: 50.h,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          _,
+                                                          __,
+                                                          ___,
+                                                        ) => Container(
+                                                          width: 50.w,
+                                                          height: 50.h,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .shade200,
+                                                              ),
+                                                          child: Icon(
+                                                            Icons.event,
+                                                            size: 24.sp,
+                                                            color: Colors
+                                                                .grey
+                                                                .shade600,
+                                                          ),
+                                                        ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 12.w),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    event.title,
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 14.sp,
+                                                      color: Colors.black87,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  SizedBox(height: 4.h),
+                                                  Row(
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                              horizontal: 8.w,
+                                                              vertical: 3.h,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          gradient:
+                                                              LinearGradient(
+                                                                colors: [
+                                                                  Colors
+                                                                      .blue
+                                                                      .shade50,
+                                                                  Colors
+                                                                      .blue
+                                                                      .shade100,
+                                                                ],
+                                                              ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8.r,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          event.category,
+                                                          style: TextStyle(
+                                                            color: Colors
+                                                                .blue
+                                                                .shade700,
+                                                            fontSize: 10.sp,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: EdgeInsets.all(
+                                                6.w,
+                                              ), // Smaller padding
+                                              child: Icon(
+                                                Icons.arrow_forward_ios,
+                                                size: 12.sp, // Smaller icon
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                              child: const Text('View Details'),
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
+            // Animated Loading Indicator
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: ref.watch(isLoadingMarkersProvider)
+                  ? Positioned(
+                      key: const ValueKey('loading'),
+                      bottom: 80.h,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 500),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          curve: Curves.easeOut,
+                          builder: (context, value, child) {
+                            return Transform.scale(scale: value, child: child);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 14.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors
+                                  .blue
+                                  .shade600, // Simplified to solid color
+                              borderRadius: BorderRadius.circular(30.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                    0.1,
+                                  ), // Softer shadow
+                                  blurRadius: 8.r,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 18.w,
+                                  height: 18.h,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor: AlwaysStoppedAnimation(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Text(
+                                  'Loading markers...',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14.sp,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('not_loading')),
+            ),
+            // Animated Bottom Card (Tweaked for Minimal UI)
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset.zero,
+                    end: const Offset(0, 1.5),
+                  ).animate(animation),
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              },
+              child: ref.watch(selectedEventProvider) != null
+                  ? Container(
+                      key: ValueKey(ref.watch(selectedEventProvider)!.id),
+
+                      child: TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 600),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        curve: Curves.easeOut,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: 0.8 + (0.2 * value),
+                            child: Opacity(opacity: value, child: child),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(28.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white, // Solid white, no gradient
+                                borderRadius: BorderRadius.circular(22.r),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(
+                                  16.w,
+                                ), // Slightly smaller padding
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Hero(
+                                          tag: ref
+                                              .watch(selectedEventProvider)!
+                                              .id,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(16.r),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.05),
+                                                  blurRadius: 6.r,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                              child: Image.network(
+                                                ref
+                                                        .watch(
+                                                          selectedEventProvider,
+                                                        )!
+                                                        .imageUrl ??
+                                                    'https://via.placeholder.com/80',
+                                                width: 80.w, // Slightly smaller
+                                                height: 80.h,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) =>
+                                                    Icon(
+                                                      Icons.event,
+                                                      size: 80.sp,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 22.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                ref
+                                                    .watch(
+                                                      selectedEventProvider,
+                                                    )!
+                                                    .title,
+                                                style: TextStyle(
+                                                  fontSize:
+                                                      16.sp, // Smaller font
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black87,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              SizedBox(height: 6.h),
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 18.w,
+                                                  vertical: 4.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      Colors.blue.shade50,
+                                                      Colors.blue.shade100,
+                                                    ],
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        8.r,
+                                                      ),
+                                                ),
+                                                child: Text(
+                                                  ref
+                                                      .watch(
+                                                        selectedEventProvider,
+                                                      )!
+                                                      .category,
+                                                  style: TextStyle(
+                                                    fontSize: 11.sp,
+                                                    color: const Color.fromARGB(
+                                                      255,
+                                                      0,
+                                                      0,
+                                                      82,
+                                                    ),
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                            onTap: () =>
+                                                ref
+                                                        .read(
+                                                          selectedEventProvider
+                                                              .notifier,
+                                                        )
+                                                        .state =
+                                                    null,
+                                            child: Container(
+                                              padding: EdgeInsets.all(8.w),
+                                              child: Icon(
+                                                Icons.close,
+                                                size: 20.sp, // Smaller icon
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    Container(
+                                      padding: EdgeInsets.all(10.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors
+                                            .grey
+                                            .shade50, // Subtle background
+                                        borderRadius: BorderRadius.circular(
+                                          10.r,
+                                        ),
+                                        border: Border.all(
+                                          color: Colors.grey.shade200,
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        ref
+                                            .watch(selectedEventProvider)!
+                                            .description,
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: Colors.grey.shade600,
+                                          height: 1.4,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 12.w,
+                                            vertical: 6.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade50,
+                                            borderRadius: BorderRadius.circular(
+                                              16.r,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.people,
+                                                size: 16.sp,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                              SizedBox(width: 6.w),
+                                              Text(
+                                                '${ref.watch(selectedEventProvider)!.attendees.length}/${ref.watch(selectedEventProvider)!.maxAttendees}',
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  color: Colors.grey.shade600,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        TweenAnimationBuilder<double>(
+                                          duration: const Duration(
+                                            milliseconds: 400,
+                                          ),
+                                          tween: Tween(begin: 0.0, end: 1.0),
+                                          curve: Curves.easeOut,
+                                          builder: (context, value, child) {
+                                            return Transform.scale(
+                                              scale: 0.9 + (0.1 * value),
+                                              child: child,
+                                            );
+                                          },
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius:
+                                                  BorderRadius.circular(20.r),
+                                              onTap: () {
+                                                // Navigate to event details
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 20.w,
+                                                  vertical: 10.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors
+                                                      .blue
+                                                      .shade600, // Solid color
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        20.r,
+                                                      ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.1),
+                                                      blurRadius: 6.r,
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      'View Details',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        fontSize: 13.sp,
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 6.w),
+                                                    Icon(
+                                                      Icons.arrow_forward,
+                                                      color: Colors.white,
+                                                      size: 16.sp,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no_event')),
+            ),
           ],
         ),
       ),
