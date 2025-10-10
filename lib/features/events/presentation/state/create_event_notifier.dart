@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/domain/usecases/create_event_usecase.dart';
+
+import '../../domain/entities/event_entity.dart';
 
 class CreateEventState {
   final String title;
@@ -83,23 +84,36 @@ class CreateEventState {
 class CreateEventNotifier extends StateNotifier<CreateEventState> {
   final CreateEventUseCase createEventUseCase;
   CreateEventNotifier({required this.createEventUseCase})
-      : super(const CreateEventState());
+    : super(const CreateEventState());
 
   void setTitle(String v) => state = state.copyWith(title: v);
   void setDescription(String v) => state = state.copyWith(description: v);
   void setCover(File? f) => state = state.copyWith(coverFile: f);
   void setDoc(File? f) => state = state.copyWith(docFile: f);
   void setCategory(String v) => state = state.copyWith(category: v);
-  void setFree(bool v) => state = state.copyWith(isFreeEvent: v, ticketPrice: v ? '0' : state.ticketPrice);
-  void setOpenCapacity(bool v) => state = state.copyWith(isOpenCapacity: v, maxAttendees: v ? '' : state.maxAttendees);
+  void setFree(bool v) => state = state.copyWith(
+    isFreeEvent: v,
+    ticketPrice: v ? '0' : state.ticketPrice,
+  );
+  void setOpenCapacity(bool v) => state = state.copyWith(
+    isOpenCapacity: v,
+    maxAttendees: v ? '' : state.maxAttendees,
+  );
   void setTicketPrice(String v) => state = state.copyWith(ticketPrice: v);
   void setMaxAttendees(String v) => state = state.copyWith(maxAttendees: v);
-  void setLocation({required String label, required double lat, required double lng}) {
-  state = state.copyWith(locationLabel: label, latitude: lat, longitude: lng);
-  if (kDebugMode) {
-    print('CreateEventNotifier: Location set - label=$label, lat=$lat, lng=$lng');
+  void setLocation({
+    required String label,
+    required double lat,
+    required double lng,
+  }) {
+    state = state.copyWith(locationLabel: label, latitude: lat, longitude: lng);
+    if (kDebugMode) {
+      print(
+        'CreateEventNotifier: Location set - label=$label, lat=$lat, lng=$lng',
+      );
+    }
   }
-}
+
   void setStart(DateTime d) => state = state.copyWith(startTime: d);
   void setEnd(DateTime d) => state = state.copyWith(endTime: d);
 
@@ -107,7 +121,9 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
     if (state.title.trim().isEmpty) return 'Please enter event title';
     if (state.description.trim().isEmpty) return 'Please add event description';
     if (state.coverFile == null) return 'Please select a cover image';
-    if (state.locationLabel.isEmpty || state.latitude == null || state.longitude == null) {
+    if (state.locationLabel.isEmpty ||
+        state.latitude == null ||
+        state.longitude == null) {
       return 'Please select event location';
     }
     if (state.startTime == null || state.endTime == null) {
@@ -119,20 +135,25 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
     if (!state.isOpenCapacity && state.maxAttendees.trim().isEmpty) {
       return 'Please enter max attendees or select open capacity';
     }
-    if (!state.isOpenCapacity && (int.tryParse(state.maxAttendees.trim()) ?? 0) <= 0) {
+    if (!state.isOpenCapacity &&
+        (int.tryParse(state.maxAttendees.trim()) ?? 0) <= 0) {
       return 'Max attendees must be greater than 0';
     }
     if (!state.isFreeEvent && state.ticketPrice.trim().isEmpty) {
       return 'Please enter ticket price or mark as free';
     }
-    if (!state.isFreeEvent && (double.tryParse(state.ticketPrice.trim()) ?? -1) < 0) {
+    if (!state.isFreeEvent &&
+        (double.tryParse(state.ticketPrice.trim()) ?? -1) < 0) {
       return 'Ticket price must be 0 or greater';
     }
     if (state.category.trim().isEmpty) return 'Please select event type';
     return null;
   }
 
-  Future<String?> submit({required String organizerId, required String organizerName}) async {
+  Future<String?> submit({
+    required String organizerId,
+    required String organizerName,
+  }) async {
     final validation = validate();
     if (validation != null) return validation;
     state = state.copyWith(isSubmitting: true, error: null);
@@ -175,4 +196,3 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
     }
   }
 }
-

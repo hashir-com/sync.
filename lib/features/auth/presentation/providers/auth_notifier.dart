@@ -26,12 +26,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final SignOutUseCase _signOutUseCase;
 
   AuthNotifier(this._signInWithGoogleUseCase, this._signOutUseCase)
-      : super(AuthState());
+    : super(AuthState());
 
   Future<bool> signInWithGoogle({bool forceAccountChooser = true}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final params = GoogleSignInParams(forceAccountChooser: forceAccountChooser);
+      final params = GoogleSignInParams(
+        forceAccountChooser: forceAccountChooser,
+      );
       final result = await _signInWithGoogleUseCase.call(params);
       return result.fold(
         (failure) {
@@ -44,7 +46,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       );
     } on FirebaseAuthException catch (e) {
-      state = state.copyWith(isLoading: false, error: _mapFirebaseAuthException(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _mapFirebaseAuthException(e),
+      );
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
