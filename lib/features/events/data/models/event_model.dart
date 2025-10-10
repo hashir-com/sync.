@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/event_entity.dart';
 
 class EventModel extends EventEntity {
-  const EventModel({
+   const EventModel({
     required super.id,
     required super.title,
     required super.description,
@@ -21,6 +21,7 @@ class EventModel extends EventEntity {
     required super.createdAt,
     required super.updatedAt,
     super.ticketPrice,
+    super.status,
   });
 
   factory EventModel.fromMap(Map<String, dynamic> map, String id) {
@@ -43,6 +44,7 @@ class EventModel extends EventEntity {
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
       ticketPrice: (map['ticketPrice'] as num?)?.toDouble(),
+      status: map['status'] ?? "pending",
     );
   }
 
@@ -65,6 +67,7 @@ class EventModel extends EventEntity {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'ticketPrice': ticketPrice,
+      'status': status,
     };
   }
 
@@ -87,6 +90,7 @@ class EventModel extends EventEntity {
     DateTime? createdAt,
     DateTime? updatedAt,
     double? ticketPrice,
+    String? status,
   }) {
     return EventModel(
       id: id ?? this.id,
@@ -107,6 +111,7 @@ class EventModel extends EventEntity {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       ticketPrice: ticketPrice ?? this.ticketPrice,
+      status: status ?? this.status,
     );
   }
 }

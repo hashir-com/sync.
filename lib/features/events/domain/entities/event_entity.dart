@@ -19,6 +19,7 @@ class EventEntity extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
   final double? ticketPrice;
+  final String status;
   
 
 
@@ -41,6 +42,7 @@ class EventEntity extends Equatable {
     required this.createdAt,
     required this.updatedAt,
     this.ticketPrice,
+    this.status = "pending",
   });
 
   @override
@@ -61,5 +63,8 @@ class EventEntity extends Equatable {
     category,
     createdAt,
     updatedAt,
+    ticketPrice,
+    documentUrl,
+    status,
   ];
 }

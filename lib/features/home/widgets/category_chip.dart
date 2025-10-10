@@ -10,10 +10,12 @@ class CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label tapped'))),
+      onTap: () => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$label tapped'))),
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: 6),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: color.withOpacity(0.12),
@@ -24,7 +26,7 @@ class CategoryChip extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(6),
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              child: Icon(Icons.category, size: 14, color: Colors.white),
+              child: Icon(Icons.category, size: 54, color: Colors.white),
             ),
             SizedBox(width: 10),
             Text(label, style: TextStyle(fontWeight: FontWeight.w600)),

@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/map/presentation/provider/map_providers.dart'; // Note: Duplicate import path variation; use consistent one.
@@ -52,7 +53,7 @@ class EventDetailCard extends ConsumerWidget {
                 SizedBox(height: 12.h),
                 _buildDescription(colors),
                 SizedBox(height: 12.h),
-                _buildFooter(colors),
+                _buildFooter(colors, context, ref),
               ],
             ),
           ),
@@ -72,7 +73,7 @@ class EventDetailCard extends ConsumerWidget {
               boxShadow: [BoxShadow(color: colors.shadow, blurRadius: 6.r)],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(26.r),
               child: Image.network(
                 event.imageUrl ?? 'https://via.placeholder.com/80',
                 width: 80.w,
@@ -165,10 +166,13 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildFooter(AppColors colors) {
+  Widget _buildFooter(AppColors colors, BuildContext context, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [_buildAttendeeInfo(colors), _buildViewDetailsButton(colors)],
+      children: [
+        _buildAttendeeInfo(colors),
+        _buildViewDetailsButton(colors, context, ref),
+      ],
     );
   }
 
@@ -196,13 +200,17 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildViewDetailsButton(AppColors colors) {
+  Widget _buildViewDetailsButton(
+    AppColors colors,
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(20.r),
         onTap: () {
-          // Navigate to event details
+          context.push('/event-detail', extra: event);
         },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),

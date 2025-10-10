@@ -67,6 +67,7 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       ticketPrice: event.ticketPrice,
+      status: event.status,
     );
 
     await docRef.set(model.toMap());
@@ -74,13 +75,16 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
 
   @override
   Future<List<EventModel>> getApprovedEvents() async {
-    final query = await firebaseFirestore.collection('events').get();
+    final query = await firebaseFirestore
+        .collection('events')
+        .where('status', isEqualTo: 'approved')
+        .get();
     return query.docs.map((e) => EventModel.fromMap(e.data(), e.id)).toList();
   }
 
   @override
   Future<void> joinEvent(String eventId, String userId) async {
-    final docRef = firebaseFirestore.collection('events_approved').doc(eventId);
+    final docRef = firebaseFirestore.collection('events').doc(eventId);
     await docRef.update({
       'attendees': FieldValue.arrayUnion([userId]),
     });

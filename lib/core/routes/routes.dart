@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+
+    import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/features/auth/presentation/providers/phone_auth.dart';
 import 'package:sync_event/features/auth/presentation/screens/forgot_password_screen.dart';
@@ -8,7 +9,9 @@ import 'package:sync_event/features/auth/presentation/screens/phone_signin_scree
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
+import 'package:sync_event/features/events/presentation/Screens/event_detail_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/location_picker_screen.dart';
+import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/home/screen/home.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
@@ -93,5 +96,35 @@ final GoRouter appRouter = GoRouter(
       path: '/my_events',
       builder: (context, state) => const EventsScreen(),
     ),
+    GoRoute(
+      path: '/event-detail',
+      pageBuilder: (context, state) {
+        final event = state.extra as EventEntity;
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: EventDetailScreen(event: event),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Hero-like animation
+            const begin = Offset(0.0, 1.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOutCubic;
+
+            var tween = Tween(begin: begin, end: end).chain(
+              CurveTween(curve: curve),
+            );
+
+            return SlideTransition(
+              position: animation.drive(tween),
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+        );
+      },
+    ),
   ],
 );
+
+  

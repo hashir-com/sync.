@@ -12,7 +12,7 @@ class InviteBanner extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFD5F5F6),
+          color: const Color(0xFFE0F4FF),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -21,26 +21,42 @@ class InviteBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Invite your friends',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF120D26))),
+                  const Text(
+                    'Invite your friends',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF120D26),
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  const Text('Get ₹20 for ticket',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF484D70))),
+                  const Text(
+                    'Get ₹20 for ticket',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF484D70)),
+                  ),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00F8FF),
+                      backgroundColor: const Color(0xFF66B2FF),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       elevation: 0,
                     ),
-                    child: const Text('INVITE', style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      letterSpacing: 1,
-                    )),
+                    child: const Text(
+                      'INVITE',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -58,7 +74,11 @@ class InviteBanner extends StatelessWidget {
                     color: Colors.white.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.card_giftcard, size: 40, color: Color(0xFF00D9A5)),
+                  child: const Icon(
+                    Icons.card_giftcard,
+                    size: 40,
+                    color: Color(0xFFFFC107),
+                  ),
                 );
               },
             ),

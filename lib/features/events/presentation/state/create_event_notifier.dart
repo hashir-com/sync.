@@ -20,8 +20,10 @@ class CreateEventState {
   final String ticketPrice;
   final String maxAttendees;
   final String category;
+  final String status;
   final String? error;
   final bool isSubmitting;
+  
 
   const CreateEventState({
     this.title = '',
@@ -38,8 +40,10 @@ class CreateEventState {
     this.ticketPrice = '',
     this.maxAttendees = '',
     this.category = '',
+    this.status = "pending",
     this.error,
     this.isSubmitting = false,
+
   });
 
   CreateEventState copyWith({
@@ -57,6 +61,7 @@ class CreateEventState {
     String? ticketPrice,
     String? maxAttendees,
     String? category,
+    String? status,
     String? error,
     bool? isSubmitting,
   }) {
@@ -75,6 +80,7 @@ class CreateEventState {
       ticketPrice: ticketPrice ?? this.ticketPrice,
       maxAttendees: maxAttendees ?? this.maxAttendees,
       category: category ?? this.category,
+      status: status ?? this.status,
       error: error,
       isSubmitting: isSubmitting ?? this.isSubmitting,
     );
@@ -91,6 +97,7 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
   void setCover(File? f) => state = state.copyWith(coverFile: f);
   void setDoc(File? f) => state = state.copyWith(docFile: f);
   void setCategory(String v) => state = state.copyWith(category: v);
+  void setStatus(String v) => state = state.copyWith(status: v);
   void setFree(bool v) => state = state.copyWith(
     isFreeEvent: v,
     ticketPrice: v ? '0' : state.ticketPrice,
@@ -176,6 +183,7 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
             ? 999999
             : (int.tryParse(state.maxAttendees.trim()) ?? 100),
         category: state.category.trim(),
+        status: state.status,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         ticketPrice: state.isFreeEvent

@@ -41,6 +41,7 @@ class EventRepositoryImpl implements EventRepository {
       ticketPrice: event.ticketPrice,
       imageUrl: event.imageUrl,
       documentUrl: event.documentUrl,
+      status: event.status,
     );
 
     return remoteDataSource.createEvent(
