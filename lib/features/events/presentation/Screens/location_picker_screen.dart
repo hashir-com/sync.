@@ -3,31 +3,30 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
+import 'package:sync_event/features/events/presentation/state/location_picker_notifier.dart';
+import 'package:sync_event/features/events/presentation/widgets/location_picker_ui.dart';
 
 const kGoogleApiKey = "AIzaSyA6iYBIGA19w4RqJn4LhQqGx6GBUi1_6OQ";
 
-class LocationPickerScreen extends StatefulWidget {
+class LocationPickerScreen extends ConsumerStatefulWidget {
   const LocationPickerScreen({super.key});
 
   @override
-  State<LocationPickerScreen> createState() => _LocationPickerScreenState();
+  ConsumerState<LocationPickerScreen> createState() =>
+      _LocationPickerScreenState();
 }
 
-class _LocationPickerScreenState extends State<LocationPickerScreen>
+class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen>
     with WidgetsBindingObserver {
   GoogleMapController? mapController;
-  LatLng? selectedLocation;
-  String? address;
   final TextEditingController searchController = TextEditingController();
-  bool is3D = true;
-  bool isSearching = false;
-  List<PlaceSuggestion> suggestions = [];
-  bool showSuggestions = false;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -58,10 +57,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
 
   void _onSearchChanged() {
     if (searchController.text.isEmpty) {
-      setState(() {
-        suggestions = [];
-        showSuggestions = false;
-      });
+      ref.read(locationPickerNotifierProvider.notifier).clearSuggestions();
     } else if (searchController.text.length >= 3) {
       _getAutocompleteSuggestions(searchController.text);
     }
@@ -192,22 +188,22 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
         final data = json.decode(response.body);
         if (data['places'] != null) {
           final places = data['places'] as List;
-          setState(() {
-            suggestions = places.map((place) {
-              return PlaceSuggestion(
-                placeId: place['id'] ?? '',
-                displayName: place['displayName']?['text'] ?? 'Unknown',
-                formattedAddress: place['formattedAddress'] ?? '',
-                location: place['location'] != null
-                    ? LatLng(
-                        place['location']['latitude'] ?? 0.0,
-                        place['location']['longitude'] ?? 0.0,
-                      )
-                    : null,
-              );
-            }).toList();
-            showSuggestions = suggestions.isNotEmpty;
-          });
+          final items = places.map((place) {
+            return PlaceSuggestion(
+              placeId: place['id'] ?? '',
+              displayName: place['displayName']?['text'] ?? 'Unknown',
+              formattedAddress: place['formattedAddress'] ?? '',
+              location: place['location'] != null
+                  ? LatLng(
+                      place['location']['latitude'] ?? 0.0,
+                      place['location']['longitude'] ?? 0.0,
+                    )
+                  : null,
+            );
+          }).toList();
+          ref
+              .read(locationPickerNotifierProvider.notifier)
+              .setSuggestions(items);
         }
       } else {
         if (kDebugMode) {
@@ -225,7 +221,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
 
   // New Places API - Get Place Details
   Future<LatLng?> _getPlaceDetails(String placeId) async {
-    setState(() => isSearching = true);
+    ref.read(locationPickerNotifierProvider.notifier).setSearching(true);
     try {
       final url = 'https://places.googleapis.com/v1/$placeId';
       final response = await http.get(
@@ -253,7 +249,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
       }
       return null;
     } finally {
-      setState(() => isSearching = false);
+      ref.read(locationPickerNotifierProvider.notifier).setSearching(false);
     }
   }
 
@@ -261,7 +257,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
     try {
       await mapController?.animateCamera(
         CameraUpdate.newCameraPosition(
-          CameraPosition(target: newPos, zoom: 15, tilt: is3D ? 60 : 0),
+          CameraPosition(
+            target: newPos,
+            zoom: 15,
+            tilt: ref.read(locationPickerNotifierProvider).is3D ? 60 : 0,
+          ),
         ),
       );
       final placemarks = await placemarkFromCoordinates(
@@ -270,18 +270,15 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
       );
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        setState(() {
-          selectedLocation = newPos;
-          address =
-              [
-                    place.name,
-                    place.locality,
-                    place.administrativeArea,
-                    place.country,
-                  ]
-                  .where((element) => element != null && element.isNotEmpty)
-                  .join(', ');
-        });
+        final addr = [
+          place.name,
+          place.locality,
+          place.administrativeArea,
+          place.country,
+        ].where((e) => e != null && e.isNotEmpty).join(', ');
+        ref
+            .read(locationPickerNotifierProvider.notifier)
+            .setLocation(newPos, addr);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -310,7 +307,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
           desiredAccuracy: LocationAccuracy.high,
         );
         final latLng = LatLng(position.latitude, position.longitude);
-        await _moveCamera(latLng);
+          await _moveCamera(latLng);
+          // Ensure state carries the address for Done button enablement
+          final placemarks = await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+          if (placemarks.isNotEmpty) {
+            final p = placemarks.first;
+            final addr = [p.name, p.locality, p.administrativeArea, p.country]
+                .where((e) => e != null && e.isNotEmpty)
+                .join(', ');
+            ref.read(locationPickerNotifierProvider.notifier).setLocation(latLng, addr);
+          }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -338,20 +344,23 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
   }
 
   void _toggle3D() {
-    setState(() {
-      is3D = !is3D;
-    });
-    if (selectedLocation != null) {
-      _moveCamera(selectedLocation!);
+    final current = ref.read(locationPickerNotifierProvider).is3D;
+    ref.read(locationPickerNotifierProvider.notifier).set3D(!current);
+    final loc = ref.read(locationPickerNotifierProvider).selectedLocation;
+    if (loc != null) {
+      _moveCamera(loc);
     }
   }
 
   void _onSuggestionTapped(PlaceSuggestion suggestion) async {
     searchController.text = suggestion.displayName;
-    setState(() {
-      showSuggestions = false;
-      address = suggestion.formattedAddress;
-    });
+    ref
+        .read(locationPickerNotifierProvider.notifier)
+        .setLocation(
+          suggestion.location ?? const LatLng(0, 0),
+          suggestion.formattedAddress,
+        );
+    ref.read(locationPickerNotifierProvider.notifier).clearSuggestions();
 
     LatLng? location = suggestion.location;
     if (location == null && suggestion.placeId.isNotEmpty) {
@@ -367,6 +376,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
   @override
   Widget build(BuildContext context) {
     const initialPosition = LatLng(0, 0);
+    final lpState = ref.watch(locationPickerNotifierProvider);
 
     return Scaffold(
       body: Stack(
@@ -379,29 +389,28 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
               tilt: 60,
             ),
             onMapCreated: (controller) {
-              setState(() {
-                mapController = controller;
-              });
+              mapController = controller;
             },
             onTap: (position) async {
-              setState(() {
-                selectedLocation = position;
-                address = null;
-                showSuggestions = false;
-              });
+              ref
+                  .read(locationPickerNotifierProvider.notifier)
+                  .setLocation(position, null);
+              ref
+                  .read(locationPickerNotifierProvider.notifier)
+                  .clearSuggestions();
               await _moveCamera(position);
             },
-            markers: selectedLocation == null
+            markers: lpState.selectedLocation == null
                 ? {}
                 : {
                     Marker(
                       markerId: const MarkerId("picked_location"),
-                      position: selectedLocation!,
+                      position: lpState.selectedLocation!,
                       icon: BitmapDescriptor.defaultMarkerWithHue(
                         BitmapDescriptor.hueRed,
                       ),
                       infoWindow: InfoWindow(
-                        title: address ?? "Selected Location",
+                        title: lpState.address ?? "Selected Location",
                       ),
                     ),
                   },
@@ -416,134 +425,43 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
             child: SafeArea(
               child: Column(
                 children: [
-                  Card(
-                    elevation: 6,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 6.0, right: 8.0),
-                            child: Icon(Icons.place, color: Colors.grey),
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: searchController,
-                              enabled: !isSearching,
-                              textInputAction: TextInputAction.search,
-                              onTap: () {
-                                if (suggestions.isNotEmpty) {
-                                  setState(() {
-                                    showSuggestions = true;
-                                  });
-                                }
-                              },
-                              decoration: const InputDecoration(
-                                hintText: 'Search places...',
-                                hintStyle: TextStyle(color: Colors.grey),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 12,
-                                  horizontal: 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (searchController.text.isNotEmpty)
-                            IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.grey),
-                              onPressed: () {
-                                searchController.clear();
-                                setState(() {
-                                  suggestions = [];
-                                  showSuggestions = false;
-                                });
-                              },
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 6.0),
-                            child: TextButton(
-                              onPressed:
-                                  selectedLocation != null && address != null
-                                  ? () {
-                                      Navigator.pop(context, {
-                                        'latitude': selectedLocation!.latitude,
-                                        'longitude':
-                                            selectedLocation!.longitude,
-                                        'address': address,
-                                      });
-                                    }
-                                  : null,
-                              child: Text(
-                                "Done",
-                                style: TextStyle(
-                                  color:
-                                      selectedLocation != null &&
-                                          address != null
-                                      ? Colors.blue
-                                      : Colors.grey,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  LocationSearchBar(
+                    controller: searchController,
+                    enabled: !lpState.isSearching,
+                    onTap: () {
+                      final has = ref
+                          .read(locationPickerNotifierProvider)
+                          .suggestions
+                          .isNotEmpty;
+                      if (has) {
+                        ref
+                            .read(locationPickerNotifierProvider.notifier)
+                            .setSuggestions(
+                              ref
+                                  .read(locationPickerNotifierProvider)
+                                  .suggestions,
+                            );
+                      }
+                    },
+                    onClear: () {
+                      searchController.clear();
+                      ref
+                          .read(locationPickerNotifierProvider.notifier)
+                          .clearSuggestions();
+                    },
                   ),
 
                   // Suggestions List
-                  if (showSuggestions && suggestions.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      constraints: const BoxConstraints(maxHeight: 300),
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          itemCount: suggestions.length,
-                          separatorBuilder: (context, index) =>
-                              const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final suggestion = suggestions[index];
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.location_on,
-                                color: Colors.blue,
-                              ),
-                              title: Text(
-                                suggestion.displayName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              subtitle: Text(
-                                suggestion.formattedAddress,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              onTap: () => _onSuggestionTapped(suggestion),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+                  SuggestionsList(
+                    onTap: (index) =>
+                        _onSuggestionTapped(lpState.suggestions[index]),
+                  ),
                 ],
               ),
             ),
           ),
 
-          if (isSearching)
+          if (lpState.isSearching)
             const Positioned.fill(
               child: ColoredBox(
                 color: Color.fromRGBO(0, 0, 0, 0.15),
@@ -641,61 +559,17 @@ class _LocationPickerScreenState extends State<LocationPickerScreen>
           ),
 
           // Selected Address Display
-          if (address != null)
-            Positioned(
+          if (lpState.address != null)
+            const Positioned(
               right: 12,
               bottom: 20,
               left: 12,
-              child: SafeArea(
-                child: Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.place, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            address!,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              child: SafeArea(child: SelectedAddressCard()),
             ),
         ],
       ),
     );
   }
-}
-
-class PlaceSuggestion {
-  final String placeId;
-  final String displayName;
-  final String formattedAddress;
-  final LatLng? location;
-
-  PlaceSuggestion({
-    required this.placeId,
-    required this.displayName,
-    required this.formattedAddress,
-    this.location,
-  });
 }
 
 class _MapButton extends StatelessWidget {

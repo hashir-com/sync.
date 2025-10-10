@@ -82,7 +82,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/create-event',
-      builder: (context, state) => const CreateEventScreen(),
+      builder: (context, state) =>  CreateEventScreen(),
     ),
     GoRoute(
       path: '/location-picker',
