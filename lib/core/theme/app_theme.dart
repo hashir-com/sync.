@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Light Theme Colors
-  static const Color lightPrimary = Color(0xFF2196F3);
+  static const Color lightPrimary = Color(0xFF04007C);
   static const Color lightSecondary = Color(0xFF64B5F6);
   static const Color lightBackground = Color(0xFFFFFFFF);
   static const Color lightSurface = Color(0xFFF5F5F5);
@@ -13,7 +13,7 @@ class AppTheme {
   static const Color lightCardBackground = Color(0xFFFFFFFF);
 
   // Dark Theme Colors
-  static const Color darkPrimary = Color(0xFF42A5F5);
+  static const Color darkPrimary = Color.fromARGB(255, 78, 66, 245);
   static const Color darkSecondary = Color(0xFF90CAF9);
   static const Color darkBackground = Color(0xFF121212);
   static const Color darkSurface = Color(0xFF1E1E1E);
@@ -40,8 +40,14 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     textTheme: const TextTheme(
-      titleLarge: TextStyle(color: lightTextPrimary, fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(color: lightTextPrimary, fontWeight: FontWeight.w500),
+      titleLarge: TextStyle(
+        color: lightTextPrimary,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: TextStyle(
+        color: lightTextPrimary,
+        fontWeight: FontWeight.w500,
+      ),
       bodyLarge: TextStyle(color: lightTextPrimary),
       bodyMedium: TextStyle(color: lightTextSecondary),
     ),
@@ -64,8 +70,14 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     textTheme: const TextTheme(
-      titleLarge: TextStyle(color: darkTextPrimary, fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(color: darkTextPrimary, fontWeight: FontWeight.w500),
+      titleLarge: TextStyle(
+        color: darkTextPrimary,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: TextStyle(
+        color: darkTextPrimary,
+        fontWeight: FontWeight.w500,
+      ),
       bodyLarge: TextStyle(color: darkTextPrimary),
       bodyMedium: TextStyle(color: darkTextSecondary),
     ),
@@ -78,12 +90,17 @@ class AppColors {
   AppColors(this.isDark);
 
   Color get primary => isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary;
-  Color get secondary => isDark ? AppTheme.darkSecondary : AppTheme.lightSecondary;
-  Color get background => isDark ? AppTheme.darkBackground : AppTheme.lightBackground;
+  Color get secondary =>
+      isDark ? AppTheme.darkSecondary : AppTheme.lightSecondary;
+  Color get background =>
+      isDark ? AppTheme.darkBackground : AppTheme.lightBackground;
   Color get surface => isDark ? AppTheme.darkSurface : AppTheme.lightSurface;
-  Color get textPrimary => isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary;
-  Color get textSecondary => isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary;
+  Color get textPrimary =>
+      isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary;
+  Color get textSecondary =>
+      isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary;
   Color get border => isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
-  Color get cardBackground => isDark ? AppTheme.darkCardBackground : AppTheme.lightCardBackground;
+  Color get cardBackground =>
+      isDark ? AppTheme.darkCardBackground : AppTheme.lightCardBackground;
   Color get shadow => isDark ? AppTheme.darkShadow : AppTheme.lightShadow;
 }

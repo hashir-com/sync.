@@ -53,9 +53,7 @@ class SearchResultsWidget extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildHeader(filteredEvents.length, colors),
-              Flexible(
-                child: _buildResultsList(filteredEvents, colors, ref),
-              ),
+              Flexible(child: _buildResultsList(filteredEvents, colors, ref)),
             ],
           ),
         ),
@@ -138,7 +136,11 @@ class SearchResultsWidget extends ConsumerWidget {
                 _buildEventImage(event, colors),
                 SizedBox(width: 12.w),
                 Expanded(child: _buildEventInfo(event, colors)),
-                Icon(Icons.arrow_forward_ios, size: 12.sp, color: colors.textSecondary),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12.sp,
+                  color: colors.textSecondary,
+                ),
               ],
             ),
           ),
@@ -166,7 +168,10 @@ class SearchResultsWidget extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [colors.primary.withOpacity(0.1), colors.primary.withOpacity(0.2)],
+              colors: [
+                colors.primary.withOpacity(0.1),
+                colors.primary.withOpacity(0.2),
+              ],
             ),
             borderRadius: BorderRadius.circular(8.r),
           ),
@@ -202,7 +207,11 @@ class SearchResultsWidget extends ConsumerWidget {
               width: 50.w,
               height: 50.h,
               color: colors.surface,
-              child: Icon(Icons.event, size: 24.sp, color: colors.textSecondary),
+              child: Icon(
+                Icons.event,
+                size: 24.sp,
+                color: colors.textSecondary,
+              ),
             ),
           ),
         ),
@@ -213,17 +222,20 @@ class SearchResultsWidget extends ConsumerWidget {
   void _onResultTap(EventEntity event, WidgetRef ref) {
     ref.read(selectedEventProvider.notifier).state = event;
     ref.read(searchQueryProvider.notifier).state = '';
-    
+
     if (event.latitude != null && event.longitude != null) {
-      ref.read(mapControllerProvider.notifier).state?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(event.latitude!, event.longitude!),
-            zoom: 18,
-            tilt: 60,
-          ),
-        ),
-      );
+      ref
+          .read(mapControllerProvider.notifier)
+          .state
+          ?.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: LatLng(event.latitude!, event.longitude!),
+                zoom: 18,
+                tilt: 60,
+              ),
+            ),
+          );
     }
   }
 }

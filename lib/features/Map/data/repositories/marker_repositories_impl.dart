@@ -54,7 +54,7 @@ class MarkerRepositoryImpl implements MarkerRepository {
     }
 
     final defaultIcon = BitmapDescriptor.defaultMarkerWithHue(
-      BitmapDescriptor.hueAzure,
+      BitmapDescriptor.hueBlue,
     );
     MarkerCache.setIcon(eventId, defaultIcon);
     return defaultIcon;

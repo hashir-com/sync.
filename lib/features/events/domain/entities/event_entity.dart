@@ -31,7 +31,7 @@ class EventEntity extends Equatable {
     this.longitude,
     required this.startTime,
     required this.endTime,
-    this.imageUrl,
+    required this.imageUrl,
     this.documentUrl,
     required this.organizerId,
     required this.organizerName,

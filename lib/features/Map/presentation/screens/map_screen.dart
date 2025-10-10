@@ -77,12 +77,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               right: 16.w,
               child: const SearchResultsWidget(),
             ),
-            // Positioned(
-            //   bottom: 180.h,
-            //   left: 0,
-            //   right: 0,
-            //   child: const Center(child: LoadingIndicatorWidget()),
-            // ),
+            Positioned(
+              bottom: 100.h,
+              left: 0,
+              right: 0,
+              child: const Center(child: LoadingIndicatorWidget()),
+            ),
             if (selectedEvent != null)
               Positioned(
                 bottom: 0,

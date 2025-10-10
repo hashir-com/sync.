@@ -35,7 +35,7 @@ class BuildMarkersUseCase {
           position: LatLng(event.latitude!, event.longitude!),
           icon:
               cachedIcon ??
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           anchor: const Offset(0.5, 1.0),
           onTap: () => onMarkerTap(event),
         ),

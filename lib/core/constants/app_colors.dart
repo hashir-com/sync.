@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Brand colors
-  static const primary = Color(0xFF0057FF); 
-  static const secondary = Color(0xFF1A1A1A); 
+  static const primary = Color.fromARGB(255, 0, 39, 116);
+  static const secondary = Color(0xFF1A1A1A);
 
   // Light mode
-  static const backgroundLight = Color(0xFFFFFFFF); 
+  static const backgroundLight = Color(0xFFFFFFFF);
   static const surfaceLight = Color(0xFFF5F5F5); // Cards, sheets
   static const textPrimaryLight = Color(0xFF000000); // Black text
   static const textSecondaryLight = Color(0xFF444444); // Muted black/gray
 
   // Dark mode
-  static const backgroundDark = Color(0xFF121212); 
+  static const backgroundDark = Color(0xFF121212);
   static const surfaceDark = Color(0xFF1E1E1E); // Dark cards, sheets
   static const textPrimaryDark = Color(0xFFFFFFFF); // White text
   static const textSecondaryDark = Color(0xFFB3B3B3); // Muted white/gray
