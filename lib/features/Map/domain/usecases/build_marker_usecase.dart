@@ -2,9 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sync_event/features/map/data/cache/marker_cache.dart';
+import 'package:sync_event/features/Map/data/cache/marker_cache.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
-import 'package:sync_event/features/map/domain/repositories/marker_repository.dart';
+import 'package:sync_event/features/Map/domain/repositories/marker_repository.dart';
 
 /// UseCase for building map markers from events
 class BuildMarkersUseCase {

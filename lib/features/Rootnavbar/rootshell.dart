@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/features/map/presentation/screens/map_screen.dart';
+import 'package:sync_event/features/Map/presentation/screens/map_screen.dart';
 import 'package:sync_event/features/Rootnavbar/root_tab_notifier.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
 import 'package:sync_event/features/home/screen/home.dart';

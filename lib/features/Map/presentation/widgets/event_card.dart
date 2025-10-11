@@ -7,7 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
-import 'package:sync_event/features/map/presentation/provider/map_providers.dart'; // Note: Duplicate import path variation; use consistent one.
+import 'package:sync_event/features/Map/presentation/provider/map_providers.dart'; // Note: Duplicate import path variation; use consistent one.
 
 class EventDetailCard extends ConsumerWidget {
   final EventEntity event;
