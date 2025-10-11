@@ -86,8 +86,10 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen>
                 TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    await Geolocator.openLocationSettings();
-                    await _handleLocationServicesOnReturn();
+                    if (!kIsWeb) {
+                      await Geolocator.openLocationSettings();
+                      await _handleLocationServicesOnReturn();
+                    }
                   },
                   child: const Text('Turn On'),
                 ),
@@ -140,6 +142,10 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen>
 
   Future<void> _requestPermissions() async {
     try {
+      if (kIsWeb) {
+        // Browser prompts are handled by geolocator on call; no explicit permission_handler on web
+        return;
+      }
       if (await Permission.location.request().isDenied) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -302,7 +308,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen>
         );
         return;
       }
-      if (await Permission.location.isGranted) {
+      if (kIsWeb || await Permission.location.isGranted) {
         final position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
