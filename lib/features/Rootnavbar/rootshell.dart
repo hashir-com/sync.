@@ -23,7 +23,7 @@ class RootShell extends ConsumerWidget {
       body: pages[selectedIndex],
       bottomNavigationBar: BottomAppBar(
         elevation: 8,
-        shape: CircularNotchedRectangle(),
+        shape: const CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 6),
           child: Row(

@@ -1,13 +1,12 @@
-// Note: This alias seems unused; consider removing if not needed elsewhere.
-// ignore_for_file: deprecated_member_use, unnecessary_underscores
-
+// File: features/map/presentation/widgets/event_card.dart
+// Purpose: Display event details when a marker is tapped
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
-import 'package:sync_event/features/Map/presentation/provider/map_providers.dart'; // Note: Duplicate import path variation; use consistent one.
+import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
 
 class EventDetailCard extends ConsumerWidget {
   final EventEntity event;
@@ -19,6 +18,7 @@ class EventDetailCard extends ConsumerWidget {
     final isDark = ref.watch(themeProvider);
     final colors = AppColors(isDark);
 
+    print('EventDetailCard: Building for ${event.title}, id=${event.id}');
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 400),
       tween: Tween(begin: 0.0, end: 1.0),
@@ -62,6 +62,7 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
+  // BuildHeader: Display event image, title, and close button
   Widget _buildHeader(AppColors colors, WidgetRef ref) {
     return Row(
       children: [
@@ -92,6 +93,7 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
+  // BuildEventTitle: Display event title and category
   Widget _buildEventTitle(AppColors colors) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,12 +133,20 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
+  // BuildCloseButton: Button to clear selected event and hide card
   Widget _buildCloseButton(AppColors colors, WidgetRef ref) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => ref.read(selectedEventProvider.notifier).state = null,
+        borderRadius: BorderRadius.circular(30.r),
+        onTap: () {
+          print(
+            'EventDetailCard: Close button tapped for event ${event.title}, id=${event.id}',
+          );
+          ref.read(selectedEventProvider.notifier).state = null;
+          ref.invalidate(selectedEventProvider);
+        },
+        splashColor: colors.primary.withOpacity(0.2),
         child: Container(
           padding: EdgeInsets.all(8.w),
           child: Icon(Icons.close, size: 20.sp, color: colors.textSecondary),
@@ -145,6 +155,7 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
+  // BuildDescription: Display event description
   Widget _buildDescription(AppColors colors) {
     return Container(
       padding: EdgeInsets.all(10.w),
@@ -166,6 +177,7 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
+  // BuildFooter: Display attendee info and view details button
   Widget _buildFooter(AppColors colors, BuildContext context, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -176,6 +188,7 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
+  // BuildAttendeeInfo: Show current/max attendees
   Widget _buildAttendeeInfo(AppColors colors) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
@@ -200,6 +213,7 @@ class EventDetailCard extends ConsumerWidget {
     );
   }
 
+  // BuildViewDetailsButton: Navigate to event details page
   Widget _buildViewDetailsButton(
     AppColors colors,
     BuildContext context,
@@ -211,6 +225,7 @@ class EventDetailCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20.r),
         onTap: () {
           context.push('/event-detail', extra: event);
+          print('EventDetailCard: Navigated to details for ${event.title}');
         },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),

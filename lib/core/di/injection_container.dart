@@ -28,7 +28,9 @@ import 'package:sync_event/features/events/data/repositories/event_repository_im
 import 'package:sync_event/features/events/domain/repositories/event_repository.dart';
 import 'package:sync_event/features/events/domain/usecases/create_event_usecase.dart';
 import 'package:sync_event/features/events/domain/usecases/approved_event_usecase.dart';
+import 'package:sync_event/features/events/domain/usecases/get_user_events_usecase.dart';
 import 'package:sync_event/features/events/domain/usecases/join_event_usecase.dart';
+import 'package:sync_event/features/events/domain/usecases/update_event_usecase.dart';
 
 // Profile
 import 'package:sync_event/features/profile/data/datasources/profile_local_datasource.dart';
@@ -37,6 +39,8 @@ import 'package:sync_event/features/profile/data/repositories/profile_repository
 import 'package:sync_event/features/profile/domain/repositories/profile_repository.dart';
 import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
+
+import '../../features/events/domain/usecases/delete_event_usecase.dart';
 
 final sl = GetIt.instance;
 
@@ -168,4 +172,9 @@ void _initEvents() {
   sl.registerLazySingleton<JoinEventUseCase>(
     () => JoinEventUseCase(sl<EventRepository>()),
   );
+
+  // Add these registrations
+sl.registerLazySingleton(() => GetUserEventsUseCase(sl<EventRepository>()));
+sl.registerLazySingleton(() => UpdateEventUseCase(sl<EventRepository>()));
+sl.registerLazySingleton(() => DeleteEventUseCase(sl<EventRepository>()));
 }

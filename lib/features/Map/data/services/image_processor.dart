@@ -1,97 +1,27 @@
-import 'package:flutter/foundation.dart';
+// File: features/map/data/services/image_processor.dart
+// Purpose: Process images for marker icons in an isolate to avoid UI blocking
+
 import 'package:image/image.dart' as img;
+import 'package:flutter/foundation.dart';
 
-/// Service for processing marker images
 class ImageProcessor {
-  /// Process image in isolate for better performance
-  static Future<Uint8List> processImageInIsolate(Uint8List imageData) async {
-    return compute(_processImage, imageData);
-  }
+  static Future<Uint8List> processImageInIsolate(Uint8List input, {int targetSize = 64}) async {
+    print('ImageProcessor: Processing image, targetSize=$targetSize');
+    try {
+      final image = img.decodeImage(input);
+      if (image == null) {
+        print('ImageProcessor: Failed to decode image');
+        throw Exception('Failed to decode image');
+      }
 
-  /// Internal image processing function
-  static Uint8List _processImage(Uint8List imageData) {
-    final decodedImage = img.decodeImage(imageData);
-    if (decodedImage == null) throw Exception('Failed to decode image');
-
-    const pixelRatio = 1.0;
-    const baseSize = 120.0;
-    final scaledSize = (baseSize * pixelRatio).toInt();
-
-    final resizedImage = img.copyResize(
-      decodedImage,
-      width: scaledSize,
-      height: scaledSize,
-      interpolation: img.Interpolation.linear,
-    );
-
-    const padding = 8;
-    const imageWidth = 120;
-    final scaledImageWidth = (imageWidth * pixelRatio).toInt();
-    final scaledPadding = (padding * pixelRatio).toInt();
-    final finalWidth = scaledImageWidth + 2 * scaledPadding;
-    final finalHeight = scaledImageWidth + 2 * scaledPadding;
-
-    final canvas = img.Image(
-      width: finalWidth,
-      height: finalHeight,
-      numChannels: 4,
-    );
-
-    // rounded rectangle with proper corner radius (50px)
-    const cornerRadius = 50;
-
-    // White background with shadow effect
-    img.fillRect(
-      canvas,
-      x1: 0,
-      y1: 0,
-      x2: finalWidth - 1,
-      y2: finalHeight - 1,
-      color: img.ColorRgba8(255, 255, 255, 255),
-      radius: cornerRadius.toDouble() * pixelRatio,
-    );
-
-    // Create rounded mask for the image
-    final mask = img.Image(
-      width: scaledImageWidth,
-      height: scaledImageWidth,
-      numChannels: 4,
-    );
-    img.fillRect(
-      mask,
-      x1: 0,
-      y1: 0,
-      x2: scaledImageWidth - 1,
-      y2: scaledImageWidth - 1,
-      color: img.ColorRgba8(255, 255, 255, 255),
-      radius: (cornerRadius - 2).toDouble() * pixelRatio,
-    );
-
-    // Apply rounded corners to the image
-    final roundRectImage = img.compositeImage(
-      img.Image(
-        width: scaledImageWidth,
-        height: scaledImageWidth,
-        numChannels: 4,
-      ),
-      resizedImage,
-      mask: mask,
-    );
-
-    // Composite the rounded image onto the canvas
-    img.compositeImage(
-      canvas,
-      roundRectImage,
-      dstX: scaledPadding,
-      dstY: scaledPadding,
-    );
-
-    final encodedImage = img.encodePng(canvas);
-    if (kDebugMode) {
-      print(
-        'Processed marker: ${finalWidth}x$finalHeight with ${cornerRadius}px corners',
-      );
+      // Resize to target size while maintaining aspect ratio
+      final resized = img.copyResize(image, width: targetSize, height: targetSize);
+      final bytes = img.encodePng(resized);
+      print('ImageProcessor: Image resized to ${resized.width}x${resized.height}');
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      print('ImageProcessor: Error processing image: $e');
+      rethrow;
     }
-    return Uint8List.fromList(encodedImage);
   }
 }

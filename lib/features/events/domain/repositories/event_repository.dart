@@ -16,4 +16,10 @@ abstract class EventRepository {
 
   /// Join an event (add user to attendees)
   Future<void> joinEvent(String eventId, String userId);
+  Stream<List<EventEntity>> getApprovedEventsStream();
+
+ Stream<List<EventEntity>> getUserEventsStream(String userId);
+  Future<void> updateEvent(EventEntity event, {File? docFile, File? coverFile});
+  Future<void> deleteEvent(String eventId);
+
 }

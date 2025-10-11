@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final themeProvider = StateProvider<bool>((ref) => false);
 class AppTheme {
   // Light Theme Colors
   static const Color lightPrimary = Color(0xFF04007C);

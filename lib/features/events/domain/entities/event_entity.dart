@@ -9,7 +9,7 @@ class EventEntity extends Equatable {
   final double? longitude;
   final DateTime startTime;
   final DateTime endTime;
-  final String? imageUrl;
+  final String? imageUrl; // Changed to nullable
   final String? documentUrl;
   final String organizerId;
   final String organizerName;
@@ -20,8 +20,8 @@ class EventEntity extends Equatable {
   final DateTime updatedAt;
   final double? ticketPrice;
   final String status;
-  
-
+  final String? approvalReason;
+  final String? rejectionReason;
 
   const EventEntity({
     required this.id,
@@ -32,7 +32,7 @@ class EventEntity extends Equatable {
     this.longitude,
     required this.startTime,
     required this.endTime,
-    required this.imageUrl,
+    this.imageUrl,
     this.documentUrl,
     required this.organizerId,
     required this.organizerName,
@@ -42,29 +42,33 @@ class EventEntity extends Equatable {
     required this.createdAt,
     required this.updatedAt,
     this.ticketPrice,
-    this.status = "pending",
+    this.status = 'pending',
+    this.approvalReason,
+    this.rejectionReason,
   });
 
   @override
   List<Object?> get props => [
-    id,
-    title,
-    description,
-    location,
-    latitude,
-    longitude,
-    startTime,
-    endTime,
-    imageUrl,
-    organizerId,
-    organizerName,
-    attendees,
-    maxAttendees,
-    category,
-    createdAt,
-    updatedAt,
-    ticketPrice,
-    documentUrl,
-    status,
-  ];
+        id,
+        title,
+        description,
+        location,
+        latitude,
+        longitude,
+        startTime,
+        endTime,
+        imageUrl,
+        documentUrl,
+        organizerId,
+        organizerName,
+        attendees,
+        maxAttendees,
+        category,
+        createdAt,
+        updatedAt,
+        ticketPrice,
+        status,
+        approvalReason,
+        rejectionReason,
+      ];
 }

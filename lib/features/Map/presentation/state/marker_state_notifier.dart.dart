@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sync_event/features/Map/data/cache/marker_cache.dart';
+import 'package:sync_event/features/map/data/cache/marker_cache.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
-import 'package:sync_event/features/Map/domain/usecases/build_marker_usecase.dart';
-import 'package:sync_event/features/Map/presentation/provider/map_providers.dart';
+import 'package:sync_event/features/map/domain/usecases/build_marker_usecase.dart';
+import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
 
-/// State notifier for managing map markers
 class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
   final BuildMarkersUseCase buildMarkersUseCase;
   final Ref ref;
@@ -14,8 +13,15 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
     : super(MarkerCache.markers);
 
   Future<void> buildMarkers(List<EventEntity> events) async {
-    if (!MarkerCache.needsRebuild(events) ||
-        ref.read(isLoadingMarkersProvider)) {
+    print('MarkerStateNotifier: Building markers for ${events.length} events');
+    for (var event in events) {
+      print(
+        'MarkerStateNotifier: Event ${event.title}: id=${event.id}, lat=${event.latitude}, lng=${event.longitude}, status=${event.status}',
+      );
+    }
+
+    if (ref.read(isLoadingMarkersProvider)) {
+      print('MarkerStateNotifier: Skipped due to loading');
       return;
     }
 
@@ -26,17 +32,23 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
         events,
         (event) => _onMarkerTap(event),
         onBatchUpdated: (updated) {
-          // push progressive updates so custom icons appear as they load
+          print(
+            'MarkerStateNotifier: Batch updated with ${updated.length} markers',
+          );
           state = updated;
         },
       );
+      print('MarkerStateNotifier: Built ${markers.length} markers');
       state = markers;
+    } catch (e) {
+      print('MarkerStateNotifier: Error building markers: $e');
     } finally {
       ref.read(isLoadingMarkersProvider.notifier).state = false;
     }
   }
 
   void _onMarkerTap(EventEntity event) {
+    print('MarkerStateNotifier: Tapped marker for ${event.title}');
     ref.read(selectedEventProvider.notifier).state = event;
     ref
         .read(mapControllerProvider.notifier)
@@ -45,7 +57,7 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
           CameraUpdate.newCameraPosition(
             CameraPosition(
               target: LatLng(event.latitude!, event.longitude!),
-              zoom: 18,
+              zoom: 15,
               tilt: 60,
             ),
           ),

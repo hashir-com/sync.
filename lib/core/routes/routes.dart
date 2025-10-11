@@ -1,6 +1,6 @@
-
-    import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sync_event/features/auth/presentation/providers/phone_auth.dart';
 import 'package:sync_event/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/login_screen.dart';
@@ -8,10 +8,12 @@ import 'package:sync_event/features/auth/presentation/screens/otp_verification_s
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
+import 'package:sync_event/features/events/presentation/Screens/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/event_detail_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/location_picker_screen.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
+import 'package:sync_event/features/events/presentation/Screens/my_events.dart';
 import 'package:sync_event/features/home/screen/home.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
@@ -21,6 +23,34 @@ import 'package:sync_event/features/Rootnavbar/rootshell.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
+  redirect: (context, state) {
+    final user = FirebaseAuth.instance.currentUser;
+    final isLoggedIn = user != null;
+
+    // List of public routes (no auth required)
+    final publicRoutes = [
+      '/',
+      '/onboarding',
+      '/login',
+      '/signup',
+      '/phone',
+      '/otp',
+      '/forgot-password',
+    ];
+    final isPublicRoute = publicRoutes.contains(state.matchedLocation);
+
+    // If user is logged in and trying to access public routes, redirect to home
+    if (isLoggedIn && isPublicRoute) {
+      return '/root';
+    }
+
+    // If user is not logged in and trying to access protected routes
+    if (!isLoggedIn && !isPublicRoute) {
+      return '/login';
+    }
+
+    return null; // No redirect needed
+  },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
@@ -85,16 +115,25 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/create-event',
-      builder: (context, state) =>  CreateEventScreen(),
+      builder: (context, state) => CreateEventScreen(),
     ),
     GoRoute(
       path: '/location-picker',
       builder: (context, state) => const LocationPickerScreen(),
     ),
 
+    GoRoute(path: '/events', builder: (context, state) => const EventsScreen()),
+
     GoRoute(
-      path: '/my_events',
-      builder: (context, state) => const EventsScreen(),
+      path: '/my-events',
+      builder: (context, state) => const MyEventsScreen(),
+    ),
+    GoRoute(
+      path: '/edit-event',
+      builder: (context, state) {
+        final event = state.extra as EventEntity;
+        return EditEventScreen(event: event);
+      },
     ),
     GoRoute(
       path: '/event-detail',
@@ -104,21 +143,18 @@ final GoRouter appRouter = GoRouter(
           key: state.pageKey,
           child: EventDetailScreen(event: event),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Hero-like animation
             const begin = Offset(0.0, 1.0);
             const end = Offset.zero;
             const curve = Curves.easeInOutCubic;
 
-            var tween = Tween(begin: begin, end: end).chain(
-              CurveTween(curve: curve),
-            );
+            var tween = Tween(
+              begin: begin,
+              end: end,
+            ).chain(CurveTween(curve: curve));
 
             return SlideTransition(
               position: animation.drive(tween),
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
+              child: FadeTransition(opacity: animation, child: child),
             );
           },
         );
@@ -126,5 +162,3 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
-
-  

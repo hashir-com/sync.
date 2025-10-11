@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/features/events/domain/usecases/create_event_usecase.dart';
-
 import '../../domain/entities/event_entity.dart';
 
 class CreateEventState {
@@ -23,7 +22,6 @@ class CreateEventState {
   final String status;
   final String? error;
   final bool isSubmitting;
-  
 
   const CreateEventState({
     this.title = '',
@@ -43,7 +41,6 @@ class CreateEventState {
     this.status = "pending",
     this.error,
     this.isSubmitting = false,
-
   });
 
   CreateEventState copyWith({
@@ -196,8 +193,12 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
         docFile: state.docFile,
         coverFile: state.coverFile,
       );
+
+      // Clear all fields after successful submission
+      state = const CreateEventState();
       return null;
     } catch (e) {
+      state = state.copyWith(error: e.toString());
       return e.toString();
     } finally {
       state = state.copyWith(isSubmitting: false);

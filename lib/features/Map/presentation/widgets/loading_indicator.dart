@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
-import 'package:sync_event/features/Map/presentation/provider/map_providers.dart';
+import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
+import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
 
 class LoadingIndicatorWidget extends ConsumerWidget {
   const LoadingIndicatorWidget({super.key});

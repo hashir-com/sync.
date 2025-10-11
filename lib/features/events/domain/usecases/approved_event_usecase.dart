@@ -6,8 +6,8 @@ class GetApprovedEventsUseCase {
 
   GetApprovedEventsUseCase(this.repository);
 
-  /// Returns a list of all approved events (visible to users)
-  Future<List<EventEntity>> call() {
-    return repository.getApprovedEvents();
+  /// Returns a stream of all approved events (visible to users)
+  Stream<List<EventEntity>> call() {
+    return repository.getApprovedEventsStream();
   }
 }
