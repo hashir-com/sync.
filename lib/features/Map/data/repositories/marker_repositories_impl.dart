@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:sync_event/features/map/data/cache/marker_cache.dart';
-import 'package:sync_event/features/map/data/services/image_processor.dart';
-import 'package:sync_event/features/map/domain/repositories/marker_repository.dart';
+import 'package:sync_event/features/Map/data/cache/marker_cache.dart';
+import 'package:sync_event/features/Map/data/services/image_processor.dart';
+import 'package:sync_event/features/Map/domain/repositories/marker_repository.dart';
 
 /// Implementation of marker repository
 class MarkerRepositoryImpl implements MarkerRepository {
