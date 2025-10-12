@@ -98,7 +98,7 @@ class MarkerRepositoryImpl implements MarkerRepository {
     final canvas = ui.Canvas(recorder);
     final size = 180.sp; // Larger total marker size (including border)
     final imageSize = 170.sp; // Larger inner image size
-    final borderWidth = 6.sp; // Thicker white border
+// Thicker white border
 
     // Draw white circular border
     final borderPaint = ui.Paint()

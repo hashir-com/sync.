@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
-import '../../../map/presentation/provider/map_providers.dart';
 import '../providers/event_providers.dart';
 
 class DescriptionDialog {
@@ -67,17 +66,19 @@ class MaxAttendeesDialog {
     final colors = AppColors(isDark);
     final notifier = ref.read(createEventNotifierProvider.notifier);
     final state = ref.read(createEventNotifierProvider);
-    final tempController = TextEditingController(text: state.maxAttendees);
     bool tempIsOpen = state.isOpenCapacity;
+    final tempControllers = {
+      'vip': TextEditingController(text: state.categoryCapacities['vip']?.toString() ?? ''),
+      'premium': TextEditingController(text: state.categoryCapacities['premium']?.toString() ?? ''),
+      'regular': TextEditingController(text: state.categoryCapacities['regular']?.toString() ?? ''),
+    };
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: colors.cardBackground,
-          title: Text(
-            'Max Attendees',
-            style: TextStyle(color: colors.textPrimary),
-          ),
+          title: Text('Max Attendees per Category', style: TextStyle(color: colors.textPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,66 +90,73 @@ class MaxAttendeesDialog {
                     onChanged: (v) {
                       setDialogState(() {
                         tempIsOpen = v ?? false;
-                        if (tempIsOpen) tempController.clear();
+                        if (tempIsOpen) {
+                          tempControllers.forEach((_, ctrl) => ctrl.clear());
+                        }
                       });
                     },
                     activeColor: colors.primary,
                   ),
-                  Text(
-                    'Open Capacity',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
+                  Text('Open Capacity (Unlimited)', style: TextStyle(color: colors.textPrimary)),
                 ],
               ),
               const SizedBox(height: 12),
-              if (!tempIsOpen)
+              if (!tempIsOpen) ...[
+                // Human: Input for VIP capacity
                 TextFormField(
-                  controller: tempController,
+                  controller: tempControllers['vip'],
                   decoration: InputDecoration(
-                    hintText: 'Enter max attendees...',
+                    hintText: 'VIP (e.g., 50)',
                     hintStyle: TextStyle(color: colors.textSecondary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colors.border)),
                   ),
                   style: TextStyle(color: colors.textPrimary),
                   keyboardType: TextInputType.number,
-                  autofocus: !tempIsOpen,
                 ),
+                const SizedBox(height: 8),
+                // Human: Input for Premium capacity
+                TextFormField(
+                  controller: tempControllers['premium'],
+                  decoration: InputDecoration(
+                    hintText: 'Premium (e.g., 100)',
+                    hintStyle: TextStyle(color: colors.textSecondary),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colors.border)),
+                  ),
+                  style: TextStyle(color: colors.textPrimary),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                // Human: Input for Regular capacity
+                TextFormField(
+                  controller: tempControllers['regular'],
+                  decoration: InputDecoration(
+                    hintText: 'Regular (e.g., 200)',
+                    hintStyle: TextStyle(color: colors.textSecondary),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colors.border)),
+                  ),
+                  style: TextStyle(color: colors.textPrimary),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: colors.textSecondary),
-              ),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel', style: TextStyle(color: colors.textSecondary))),
             TextButton(
               onPressed: () {
-                if (!tempIsOpen && tempController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Please enter max attendees or select open capacity',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                if (!tempIsOpen &&
-                    (int.tryParse(tempController.text.trim()) ?? 0) <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Max attendees must be greater than 0'),
-                    ),
-                  );
-                  return;
+                if (!tempIsOpen) {
+                  final vip = int.tryParse(tempControllers['vip']!.text.trim()) ?? 0;
+                  final premium = int.tryParse(tempControllers['premium']!.text.trim()) ?? 0;
+                  final regular = int.tryParse(tempControllers['regular']!.text.trim()) ?? 0;
+                  if (vip + premium + regular <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Total capacity must be >0 or select open')));
+                    return;
+                  }
+                  notifier.setCategoryCapacity('vip', vip);
+                  notifier.setCategoryCapacity('premium', premium);
+                  notifier.setCategoryCapacity('regular', regular);
                 }
                 notifier.setOpenCapacity(tempIsOpen);
-                notifier.setMaxAttendees(tempController.text);
                 Navigator.pop(context);
               },
               child: Text('Save', style: TextStyle(color: colors.primary)),
@@ -166,17 +174,19 @@ class PriceDialog {
     final colors = AppColors(isDark);
     final notifier = ref.read(createEventNotifierProvider.notifier);
     final state = ref.read(createEventNotifierProvider);
-    final tempController = TextEditingController(text: state.ticketPrice);
     bool tempIsFree = state.isFreeEvent;
+    final tempControllers = {
+      'vip': TextEditingController(text: state.categoryPrices['vip']?.toStringAsFixed(2) ?? ''),
+      'premium': TextEditingController(text: state.categoryPrices['premium']?.toStringAsFixed(2) ?? ''),
+      'regular': TextEditingController(text: state.categoryPrices['regular']?.toStringAsFixed(2) ?? ''),
+    };
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: colors.cardBackground,
-          title: Text(
-            'Ticket Price',
-            style: TextStyle(color: colors.textPrimary),
-          ),
+          title: Text('Ticket Price per Category', style: TextStyle(color: colors.textPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,67 +198,76 @@ class PriceDialog {
                     onChanged: (v) {
                       setDialogState(() {
                         tempIsFree = v ?? false;
-                        if (tempIsFree) tempController.clear();
+                        if (tempIsFree) {
+                          tempControllers.forEach((_, ctrl) => ctrl.clear());
+                        }
                       });
                     },
                     activeColor: colors.primary,
                   ),
-                  Text(
-                    'Free Event',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
+                  Text('Free Event', style: TextStyle(color: colors.textPrimary)),
                 ],
               ),
               const SizedBox(height: 12),
-              if (!tempIsFree)
+              if (!tempIsFree) ...[
+                // Human: Input for VIP price
                 TextFormField(
-                  controller: tempController,
+                  controller: tempControllers['vip'],
                   decoration: InputDecoration(
-                    hintText: 'Enter ticket price...',
+                    hintText: 'VIP (e.g., 100.0)',
                     hintStyle: TextStyle(color: colors.textSecondary),
                     prefixText: '₹ ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colors.border)),
                   ),
                   style: TextStyle(color: colors.textPrimary),
-                  keyboardType: TextInputType.number,
-                  autofocus: !tempIsFree,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 ),
+                const SizedBox(height: 8),
+                // Human: Input for Premium price
+                TextFormField(
+                  controller: tempControllers['premium'],
+                  decoration: InputDecoration(
+                    hintText: 'Premium (e.g., 50.0)',
+                    hintStyle: TextStyle(color: colors.textSecondary),
+                    prefixText: '₹ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colors.border)),
+                  ),
+                  style: TextStyle(color: colors.textPrimary),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+                const SizedBox(height: 8),
+                // Human: Input for Regular price
+                TextFormField(
+                  controller: tempControllers['regular'],
+                  decoration: InputDecoration(
+                    hintText: 'Regular (e.g., 20.0)',
+                    hintStyle: TextStyle(color: colors.textSecondary),
+                    prefixText: '₹ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colors.border)),
+                  ),
+                  style: TextStyle(color: colors.textPrimary),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+              ],
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: colors.textSecondary),
-              ),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel', style: TextStyle(color: colors.textSecondary))),
             TextButton(
               onPressed: () {
-                if (!tempIsFree && tempController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Please enter ticket price or mark as free',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                if (!tempIsFree &&
-                    (double.tryParse(tempController.text.trim()) ?? -1) < 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Ticket price must be 0 or greater'),
-                    ),
-                  );
-                  return;
+                if (!tempIsFree) {
+                  final vip = double.tryParse(tempControllers['vip']!.text.trim()) ?? 0.0;
+                  final premium = double.tryParse(tempControllers['premium']!.text.trim()) ?? 0.0;
+                  final regular = double.tryParse(tempControllers['regular']!.text.trim()) ?? 0.0;
+                  if (vip <= 0 && premium <= 0 && regular <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Set price for at least one category or mark free')));
+                    return;
+                  }
+                  notifier.setCategoryPrice('vip', vip);
+                  notifier.setCategoryPrice('premium', premium);
+                  notifier.setCategoryPrice('regular', regular);
                 }
                 notifier.setFree(tempIsFree);
-                notifier.setTicketPrice(tempController.text);
                 Navigator.pop(context);
               },
               child: Text('Save', style: TextStyle(color: colors.primary)),

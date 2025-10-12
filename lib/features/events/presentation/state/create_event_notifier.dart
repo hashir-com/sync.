@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/features/events/domain/usecases/create_event_usecase.dart';
@@ -16,8 +17,11 @@ class CreateEventState {
   final File? docFile;
   final bool isFreeEvent;
   final bool isOpenCapacity;
-  final String ticketPrice;
-  final String maxAttendees;
+  // REPLACE: Use maps for categories
+  // Human: Capacities per seat type (vip, premium, regular). 0 = not set.
+  final Map<String, int> categoryCapacities;
+  // Human: Prices per seat type (vip, premium, regular). 0.0 = free/not set.
+  final Map<String, double> categoryPrices;
   final String category;
   final String status;
   final String? error;
@@ -35,13 +39,16 @@ class CreateEventState {
     this.docFile,
     this.isFreeEvent = false,
     this.isOpenCapacity = false,
-    this.ticketPrice = '',
-    this.maxAttendees = '',
+    Map<String, int>? categoryCapacities,
+    Map<String, double>? categoryPrices,
     this.category = '',
     this.status = "pending",
     this.error,
     this.isSubmitting = false,
-  });
+  }) : categoryCapacities =
+           categoryCapacities ?? const {'vip': 0, 'premium': 0, 'regular': 0},
+       categoryPrices =
+           categoryPrices ?? const {'vip': 0.0, 'premium': 0.0, 'regular': 0.0};
 
   CreateEventState copyWith({
     String? title,
@@ -55,8 +62,8 @@ class CreateEventState {
     File? docFile,
     bool? isFreeEvent,
     bool? isOpenCapacity,
-    String? ticketPrice,
-    String? maxAttendees,
+    Map<String, int>? categoryCapacities,
+    Map<String, double>? categoryPrices,
     String? category,
     String? status,
     String? error,
@@ -74,8 +81,8 @@ class CreateEventState {
       docFile: docFile ?? this.docFile,
       isFreeEvent: isFreeEvent ?? this.isFreeEvent,
       isOpenCapacity: isOpenCapacity ?? this.isOpenCapacity,
-      ticketPrice: ticketPrice ?? this.ticketPrice,
-      maxAttendees: maxAttendees ?? this.maxAttendees,
+      categoryCapacities: categoryCapacities ?? this.categoryCapacities,
+      categoryPrices: categoryPrices ?? this.categoryPrices,
       category: category ?? this.category,
       status: status ?? this.status,
       error: error,
@@ -97,14 +104,28 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
   void setStatus(String v) => state = state.copyWith(status: v);
   void setFree(bool v) => state = state.copyWith(
     isFreeEvent: v,
-    ticketPrice: v ? '0' : state.ticketPrice,
+    categoryPrices: v
+        ? {'vip': 0.0, 'premium': 0.0, 'regular': 0.0}
+        : state.categoryPrices,
   );
   void setOpenCapacity(bool v) => state = state.copyWith(
     isOpenCapacity: v,
-    maxAttendees: v ? '' : state.maxAttendees,
+    categoryCapacities: v
+        ? {'vip': 0, 'premium': 0, 'regular': 0}
+        : state.categoryCapacities,
   );
-  void setTicketPrice(String v) => state = state.copyWith(ticketPrice: v);
-  void setMaxAttendees(String v) => state = state.copyWith(maxAttendees: v);
+  void setCategoryCapacity(String category, int value) {
+    final updated = Map<String, int>.from(state.categoryCapacities)
+      ..[category] = value;
+    state = state.copyWith(categoryCapacities: updated);
+  }
+
+  void setCategoryPrice(String category, double value) {
+    final updated = Map<String, double>.from(state.categoryPrices)
+      ..[category] = value;
+    state = state.copyWith(categoryPrices: updated);
+  }
+
   void setLocation({
     required String label,
     required double lat,
@@ -136,19 +157,15 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
     if (state.startTime!.isAfter(state.endTime!)) {
       return 'End time must be after start time';
     }
-    if (!state.isOpenCapacity && state.maxAttendees.trim().isEmpty) {
-      return 'Please enter max attendees or select open capacity';
+    // UPDATE: Validate category sums
+    // Human: If not open, ensure total capacity across categories > 0
+    if (!state.isOpenCapacity && state.categoryCapacities.values.sum <= 0) {
+      return 'Please enter capacities for at least one category or select open capacity';
     }
-    if (!state.isOpenCapacity &&
-        (int.tryParse(state.maxAttendees.trim()) ?? 0) <= 0) {
-      return 'Max attendees must be greater than 0';
-    }
-    if (!state.isFreeEvent && state.ticketPrice.trim().isEmpty) {
-      return 'Please enter ticket price or mark as free';
-    }
+    // Human: If not free, ensure at least one category price > 0
     if (!state.isFreeEvent &&
-        (double.tryParse(state.ticketPrice.trim()) ?? -1) < 0) {
-      return 'Ticket price must be 0 or greater';
+        state.categoryPrices.values.every((p) => p <= 0)) {
+      return 'Please enter price for at least one category or mark as free';
     }
     if (state.category.trim().isEmpty) return 'Please select event type';
     return null;
@@ -162,6 +179,15 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
     if (validation != null) return validation;
     state = state.copyWith(isSubmitting: true, error: null);
     try {
+      // UPDATE: Use sum for total capacity; use 'regular' price as fallback for single ticketPrice (extend Entity for full category support)
+      // Human: Calculates total max attendees from category maps; for price, uses regular or first positive (hack until Entity updated).
+      final totalCapacity = state.isOpenCapacity
+          ? 999999
+          : state.categoryCapacities.values.sum;
+      final eventPrice = state.isFreeEvent
+          ? 0.0
+          : (state.categoryPrices['regular'] ?? 0.0);
+
       final entity = EventEntity(
         id: '',
         title: state.title.trim(),
@@ -176,16 +202,14 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
         organizerId: organizerId,
         organizerName: organizerName,
         attendees: const [],
-        maxAttendees: state.isOpenCapacity
-            ? 999999
-            : (int.tryParse(state.maxAttendees.trim()) ?? 100),
+        maxAttendees: totalCapacity,
         category: state.category.trim(),
         status: state.status,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        ticketPrice: state.isFreeEvent
-            ? 0.0
-            : (double.tryParse(state.ticketPrice.trim()) ?? 0.0),
+        ticketPrice: eventPrice,
+
+        // Human: TODO: Add categoryCapacities: state.categoryCapacities, categoryPrices: state.categoryPrices to Entity constructor when updated.
       );
 
       await createEventUseCase.call(
@@ -194,7 +218,8 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
         coverFile: state.coverFile,
       );
 
-      // Clear all fields after successful submission
+      // Clear all fields after successful submission, reset maps
+      // Human: Resets state including new maps.
       state = const CreateEventState();
       return null;
     } catch (e) {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 
 class EventsScreen extends ConsumerWidget {

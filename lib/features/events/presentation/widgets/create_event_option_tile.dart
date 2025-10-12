@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
 
-import '../../../map/presentation/provider/map_providers.dart';
 
 class CreateEventOptionTile extends ConsumerWidget {
   final IconData icon;

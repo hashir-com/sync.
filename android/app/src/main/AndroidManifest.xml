@@ -8,7 +8,7 @@
     <application
         android:label="sync_event"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyB-dmFRLtBLjtJ-Vl5gKaKrHlGecZS3DnU" /> <!-- Use the correct key here -->

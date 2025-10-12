@@ -24,9 +24,23 @@ class EventModel extends EventEntity {
     super.status,
     super.approvalReason,
     super.rejectionReason,
+    super.categoryCapacities,
+    super.categoryPrices,
   });
 
   factory EventModel.fromMap(Map<String, dynamic> map, String id) {
+    Map<String, int> capacities = {'vip': 0, 'premium': 0, 'regular': 0};
+    if (map['categoryCapacities'] is Map<String, dynamic>) {
+      (map['categoryCapacities'] as Map<String, dynamic>).forEach((k, v) {
+        capacities[k] = (v as num).toInt();
+      });
+    }
+    Map<String, double> prices = {'vip': 0.0, 'premium': 0.0, 'regular': 0.0};
+    if (map['categoryPrices'] is Map<String, dynamic>) {
+      (map['categoryPrices'] as Map<String, dynamic>).forEach((k, v) {
+        prices[k] = (v as num).toDouble();
+      });
+    }
     return EventModel(
       id: id,
       title: map['title'] ?? '',
@@ -49,6 +63,8 @@ class EventModel extends EventEntity {
       status: map['status'] ?? "pending",
       approvalReason: map['approvalReason'],
       rejectionReason: map['rejectionReason'],
+      categoryCapacities: capacities,
+      categoryPrices: prices,
     );
   }
 
@@ -72,50 +88,57 @@ class EventModel extends EventEntity {
       'updatedAt': Timestamp.fromDate(updatedAt),
       'ticketPrice': ticketPrice,
       'status': status,
+      'categoryCapacities': categoryCapacities,
+      'categoryPrices': categoryPrices,
     };
   }
 
-  EventModel copyWith({
-    String? id,
-    String? title,
-    String? description,
-    String? location,
-    double? latitude,
-    double? longitude,
-    DateTime? startTime,
-    DateTime? endTime,
-    String? imageUrl,
-    String? documentUrl,
-    String? organizerId,
-    String? organizerName,
-    List<String>? attendees,
-    int? maxAttendees,
-    String? category,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    double? ticketPrice,
-    String? status,
-  }) {
-    return EventModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      location: location ?? this.location,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      imageUrl: imageUrl ?? this.imageUrl,
-      documentUrl: documentUrl ?? this.documentUrl,
-      organizerId: organizerId ?? this.organizerId,
-      organizerName: organizerName ?? this.organizerName,
-      attendees: attendees ?? this.attendees,
-      maxAttendees: maxAttendees ?? this.maxAttendees,
-      category: category ?? this.category,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      ticketPrice: ticketPrice ?? this.ticketPrice,
-      status: status ?? this.status,
-    );
+    EventModel copyWith({
+      String? id,
+      String? title,
+      String? description,
+      String? location,
+      double? latitude,
+      double? longitude,
+      DateTime? startTime,
+      DateTime? endTime,
+      String? imageUrl,
+      String? documentUrl,
+      String? organizerId,
+      String? organizerName,
+      List<String>? attendees,
+      int? maxAttendees,
+      String? category,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      double? ticketPrice,
+      String? status,
+      Map<String, int>? categoryCapacities,
+      Map<String, double>? categoryPrices,
+    }) {
+      return EventModel(
+        id: id ?? this.id,
+        title: title ?? this.title,
+        description: description ?? this.description,
+        location: location ?? this.location,
+        latitude: latitude ?? this.latitude,
+        longitude: longitude ?? this.longitude,
+        startTime: startTime ?? this.startTime,
+        endTime: endTime ?? this.endTime,
+        imageUrl: imageUrl ?? this.imageUrl,
+        documentUrl: documentUrl ?? this.documentUrl,
+        organizerId: organizerId ?? this.organizerId,
+        organizerName: organizerName ?? this.organizerName,
+        attendees: attendees ?? this.attendees,
+        maxAttendees: maxAttendees ?? this.maxAttendees,
+        category: category ?? this.category,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        ticketPrice: ticketPrice ?? this.ticketPrice,
+        status: status ?? this.status,
+        categoryCapacities: categoryCapacities ?? this.categoryCapacities,
+        categoryPrices: categoryPrices ?? this.categoryPrices,
+      );
+    }
   }
-}
+

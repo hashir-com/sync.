@@ -9,19 +9,27 @@ class EventEntity extends Equatable {
   final double? longitude;
   final DateTime startTime;
   final DateTime endTime;
-  final String? imageUrl; // Changed to nullable
+  final String? imageUrl;
   final String? documentUrl;
   final String organizerId;
   final String organizerName;
   final List<String> attendees;
-  final int maxAttendees;
+  final int maxAttendees;  // Human: Legacy total; use sum of categoryCapacities in code.
   final String category;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final double? ticketPrice;
+  final double? ticketPrice;  // Human: Legacy single price; use categoryPrices in code.
   final String status;
   final String? approvalReason;
   final String? rejectionReason;
+
+  // ADD: Per-category seats
+  // Human: Map for capacities, e.g., {'vip': 50, 'premium': 100, 'regular': 200}. Defaults to 0. Stored in Firestore as nested map.
+  final Map<String, int> categoryCapacities;
+
+  // ADD: Per-category prices
+  // Human: Map for prices, e.g., {'vip': 100.0, 'premium': 50.0, 'regular': 20.0}. Defaults to 0.0 (free).
+  final Map<String, double> categoryPrices;
 
   const EventEntity({
     required this.id,
@@ -45,6 +53,8 @@ class EventEntity extends Equatable {
     this.status = 'pending',
     this.approvalReason,
     this.rejectionReason,
+    this.categoryCapacities = const {'vip': 0, 'premium': 0, 'regular': 0},
+    this.categoryPrices = const {'vip': 0.0, 'premium': 0.0, 'regular': 0.0},
   });
 
   @override
@@ -70,5 +80,7 @@ class EventEntity extends Equatable {
         status,
         approvalReason,
         rejectionReason,
+        categoryCapacities,
+        categoryPrices,
       ];
 }

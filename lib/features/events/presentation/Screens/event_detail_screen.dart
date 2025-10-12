@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/event_entity.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../map/presentation/provider/map_providers.dart';
 
 class EventDetailScreen extends ConsumerWidget {
   final EventEntity event;

@@ -68,6 +68,8 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       updatedAt: DateTime.now(),
       ticketPrice: event.ticketPrice,
       status: event.status,
+      categoryCapacities: event.categoryCapacities,
+  categoryPrices: event.categoryPrices,
       approvalReason: event.approvalReason,
       rejectionReason: event.rejectionReason,
     );
@@ -187,6 +189,8 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       updatedAt: DateTime.now(),
       ticketPrice: event.ticketPrice,
       status: event.status,
+      categoryCapacities: event.categoryCapacities,
+  categoryPrices: event.categoryPrices,
     );
 
     await firebaseFirestore

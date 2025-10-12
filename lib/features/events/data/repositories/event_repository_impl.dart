@@ -43,6 +43,8 @@ class EventRepositoryImpl implements EventRepository {
       status: event.status,
       approvalReason: event.approvalReason,
       rejectionReason: event.rejectionReason,
+      categoryCapacities: event.categoryCapacities,
+      categoryPrices: event.categoryPrices,
     );
 
     return remoteDataSource.createEvent(

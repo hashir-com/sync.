@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
-import '../../../map/presentation/provider/map_providers.dart';
 import '../providers/event_providers.dart';
 import 'create_event_option_tile.dart';
 
@@ -118,13 +117,17 @@ class LocationTile extends ConsumerWidget {
         if (kDebugMode) {
           print('LocationTile: pickLocation result=$result');
         }
-         if (result != null) {
-           try {
-             final address = result['address'] as String?;
-             final latitude = (result['latitude'] as num?)?.toDouble();
-             final longitude = (result['longitude'] as num?)?.toDouble();
+        if (result != null) {
+          try {
+            final address = result['address'] as String?;
+            final latitude = (result['latitude'] as num?)?.toDouble();
+            final longitude = (result['longitude'] as num?)?.toDouble();
             if (address != null && latitude != null && longitude != null) {
-              createNotifier.setLocation(label: address, lat: latitude, lng: longitude);
+              createNotifier.setLocation(
+                label: address,
+                lat: latitude,
+                lng: longitude,
+              );
               if (kDebugMode) {
                 print(
                   'LocationTile: Called setLocation with address=$address, lat=$latitude, lng=$longitude',
@@ -137,7 +140,7 @@ class LocationTile extends ConsumerWidget {
                 );
               }
             }
-           } catch (e) {
+          } catch (e) {
             if (kDebugMode) {
               print(
                 'LocationTile: Error processing result - $e, result=$result',
@@ -189,9 +192,9 @@ class CapacityTile extends ConsumerWidget {
       icon: Icons.people_outline,
       label: state.isOpenCapacity
           ? 'Open Capacity'
-          : (state.maxAttendees.isEmpty
+          : (state.categoryCapacities.isEmpty
                 ? 'Max Attendees'
-                : 'Max: ${state.maxAttendees} attendees'),
+                : 'Max: ${state.categoryCapacities.values.reduce((a, b) => a + b)} attendees'),
       iconColor: const Color(0xFFFF9800),
       isRequired: true,
       onTap: onTap,
@@ -209,9 +212,9 @@ class PriceTile extends ConsumerWidget {
       icon: Icons.confirmation_number_outlined,
       label: state.isFreeEvent
           ? 'Free Event'
-          : (state.ticketPrice.isEmpty
+          : (state.categoryPrices.isEmpty
                 ? 'Add Ticket Pricing'
-                : '${String.fromCharCode(8377)}${state.ticketPrice}'),
+                : 'Starting from ${state.categoryPrices.values.reduce((a, b) => a < b ? a : b)}'),
       iconColor: const Color(0xFFFFC107),
       isRequired: true,
       onTap: onTap,
