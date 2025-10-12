@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:collection/collection.dart';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/features/events/domain/usecases/create_event_usecase.dart';
@@ -17,10 +17,7 @@ class CreateEventState {
   final File? docFile;
   final bool isFreeEvent;
   final bool isOpenCapacity;
-  // REPLACE: Use maps for categories
-  // Human: Capacities per seat type (vip, premium, regular). 0 = not set.
   final Map<String, int> categoryCapacities;
-  // Human: Prices per seat type (vip, premium, regular). 0.0 = free/not set.
   final Map<String, double> categoryPrices;
   final String category;
   final String status;
@@ -105,13 +102,13 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
   void setFree(bool v) => state = state.copyWith(
     isFreeEvent: v,
     categoryPrices: v
-        ? {'vip': 0.0, 'premium': 0.0, 'regular': 0.0}
+        ? const {'vip': 0.0, 'premium': 0.0, 'regular': 0.0}
         : state.categoryPrices,
   );
   void setOpenCapacity(bool v) => state = state.copyWith(
     isOpenCapacity: v,
     categoryCapacities: v
-        ? {'vip': 0, 'premium': 0, 'regular': 0}
+        ? const {'vip': 0, 'premium': 0, 'regular': 0}
         : state.categoryCapacities,
   );
   void setCategoryCapacity(String category, int value) {
@@ -142,7 +139,7 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
   void setStart(DateTime d) => state = state.copyWith(startTime: d);
   void setEnd(DateTime d) => state = state.copyWith(endTime: d);
 
-  String? validate() {
+  Future<String?> validate() async {
     if (state.title.trim().isEmpty) return 'Please enter event title';
     if (state.description.trim().isEmpty) return 'Please add event description';
     if (state.coverFile == null) return 'Please select a cover image';
@@ -157,76 +154,88 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
     if (state.startTime!.isAfter(state.endTime!)) {
       return 'End time must be after start time';
     }
-    // UPDATE: Validate category sums
-    // Human: If not open, ensure total capacity across categories > 0
-    if (!state.isOpenCapacity && state.categoryCapacities.values.sum <= 0) {
+    final capacityTotal = state.categoryCapacities.values.fold(
+      0,
+      (a, b) => a + b,
+    );
+    if (!state.isOpenCapacity && capacityTotal <= 0) {
       return 'Please enter capacities for at least one category or select open capacity';
     }
-    // Human: If not free, ensure at least one category price > 0
-    if (!state.isFreeEvent &&
-        state.categoryPrices.values.every((p) => p <= 0)) {
+    final positivePrices = state.categoryPrices.values
+        .where((p) => p > 0)
+        .toList();
+    if (!state.isFreeEvent && positivePrices.isEmpty) {
       return 'Please enter price for at least one category or mark as free';
     }
     if (state.category.trim().isEmpty) return 'Please select event type';
+
+    if (state.docFile != null && !await state.docFile!.exists()) {
+      return 'Selected document is no longer available. Please re-select.';
+    }
     return null;
   }
 
-  Future<String?> submit({
-    required String organizerId,
-    required String organizerName,
-  }) async {
-    final validation = validate();
-    if (validation != null) return validation;
-    state = state.copyWith(isSubmitting: true, error: null);
-    try {
-      // UPDATE: Use sum for total capacity; use 'regular' price as fallback for single ticketPrice (extend Entity for full category support)
-      // Human: Calculates total max attendees from category maps; for price, uses regular or first positive (hack until Entity updated).
-      final totalCapacity = state.isOpenCapacity
-          ? 999999
-          : state.categoryCapacities.values.sum;
-      final eventPrice = state.isFreeEvent
-          ? 0.0
-          : (state.categoryPrices['regular'] ?? 0.0);
+ Future<String?> submit({
+  required String organizerId,
+  required String organizerName,
+}) async {
+  final validation = await validate();
+  if (validation != null) return validation;
+  state = state.copyWith(isSubmitting: true, error: null);
+  try {
+    final totalCapacity = state.isOpenCapacity
+        ? 999999
+        : state.categoryCapacities.values.fold(0, (a, b) => a + b);
 
-      final entity = EventEntity(
-        id: '',
-        title: state.title.trim(),
-        description: state.description.trim(),
-        location: state.locationLabel.trim(),
-        latitude: state.latitude,
-        longitude: state.longitude,
-        startTime: state.startTime!,
-        endTime: state.endTime!,
-        imageUrl: null,
-        documentUrl: null,
-        organizerId: organizerId,
-        organizerName: organizerName,
-        attendees: const [],
-        maxAttendees: totalCapacity,
-        category: state.category.trim(),
-        status: state.status,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        ticketPrice: eventPrice,
-
-        // Human: TODO: Add categoryCapacities: state.categoryCapacities, categoryPrices: state.categoryPrices to Entity constructor when updated.
-      );
-
-      await createEventUseCase.call(
-        entity,
-        docFile: state.docFile,
-        coverFile: state.coverFile,
-      );
-
-      // Clear all fields after successful submission, reset maps
-      // Human: Resets state including new maps.
-      state = const CreateEventState();
-      return null;
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-      return e.toString();
-    } finally {
-      state = state.copyWith(isSubmitting: false);
+    // FIX: Handle case where all prices are 0 (free event)
+    double eventPrice = 0.0;
+    if (!state.isFreeEvent) {
+      final positivePrices = state.categoryPrices.values
+          .where((p) => p > 0)
+          .toList();
+      if (positivePrices.isNotEmpty) {
+        eventPrice = positivePrices.reduce(min);
+      }
+      // If no positive prices but not marked as free, default to 0.0
     }
+
+    final entity = EventEntity(
+      id: '',
+      title: state.title.trim(),
+      description: state.description.trim(),
+      location: state.locationLabel.trim(),
+      latitude: state.latitude,
+      longitude: state.longitude,
+      startTime: state.startTime!,
+      endTime: state.endTime!,
+      imageUrl: null,
+      documentUrl: null,
+      organizerId: organizerId,
+      organizerName: organizerName,
+      attendees: const [],
+      maxAttendees: totalCapacity,
+      category: state.category.trim(),
+      status: state.status,
+      categoryCapacities: state.categoryCapacities,
+      categoryPrices: state.categoryPrices,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      ticketPrice: eventPrice,
+    );
+
+    await createEventUseCase.call(
+      entity,
+      docFile: state.docFile,
+      coverFile: state.coverFile,
+    );
+
+    state = const CreateEventState();
+    return null;
+  } catch (e) {
+    state = state.copyWith(error: e.toString());
+    return e.toString();
+  } finally {
+    state = state.copyWith(isSubmitting: false);
   }
+}
 }

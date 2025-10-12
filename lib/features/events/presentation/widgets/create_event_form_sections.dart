@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -188,13 +189,12 @@ class CapacityTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(createEventNotifierProvider);
+    final total = state.categoryCapacities.values.fold(0, (a, b) => a + b);
     return CreateEventOptionTile(
       icon: Icons.people_outline,
       label: state.isOpenCapacity
           ? 'Open Capacity'
-          : (state.categoryCapacities.isEmpty
-                ? 'Max Attendees'
-                : 'Max: ${state.categoryCapacities.values.reduce((a, b) => a + b)} attendees'),
+          : (total <= 0 ? 'Max Attendees' : 'Max: $total attendees'),
       iconColor: const Color(0xFFFF9800),
       isRequired: true,
       onTap: onTap,
@@ -208,13 +208,13 @@ class PriceTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(createEventNotifierProvider);
+    final positivePrices = state.categoryPrices.values.where((p) => p > 0).toList();
+    final minPrice = positivePrices.isNotEmpty ? positivePrices.reduce(min) : null;
     return CreateEventOptionTile(
       icon: Icons.confirmation_number_outlined,
       label: state.isFreeEvent
           ? 'Free Event'
-          : (state.categoryPrices.isEmpty
-                ? 'Add Ticket Pricing'
-                : 'Starting from ${state.categoryPrices.values.reduce((a, b) => a < b ? a : b)}'),
+          : (minPrice == null ? 'Add Ticket Pricing' : 'Starting from ₹${minPrice.toStringAsFixed(2)}'),
       iconColor: const Color(0xFFFFC107),
       isRequired: true,
       onTap: onTap,
@@ -244,26 +244,58 @@ class DocumentTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(createEventNotifierProvider);
-    final isDark = ref.watch(themeProvider); // Read theme here
-    final colors = AppColors(isDark); // Create colors object here
+    final isDark = ref.watch(themeProvider);
+    final colors = AppColors(isDark);
+    final hasDocument = state.docFile != null;
 
     return CreateEventOptionTile(
+      key: ValueKey(hasDocument ? state.docFile!.path : 'no_doc'),  // Force rebuild on change
+      trailing: hasDocument
+          ? IconButton(
+              icon: Icon(Icons.delete, color: colors.primary),
+              onPressed: () {
+                ref.read(createEventNotifierProvider.notifier).setDoc(null);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Document removed')),
+                );
+              },
+              tooltip: 'Remove document',
+            )
+          : null,
       icon: Icons.attach_file,
-      label: state.docFile == null
-          ? 'Add Document (Optional)'
-          : state.docFile!.path.split('/').last,
-      iconColor: colors.textSecondary, // Use the colors object created above
+      label: hasDocument
+          ? state.docFile!.path.split('/').last
+          : 'Add Document (Optional)',
+      iconColor: colors.textSecondary,
       isRequired: false,
       onTap: () async {
         final result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
           allowedExtensions: ['pdf', 'doc', 'docx'],
+          allowMultiple: false,
         );
-        if (result != null && result.files.single.path != null) {
-          ref
-              .read(createEventNotifierProvider.notifier)
-              .setDoc(File(result.files.single.path!));
+
+        if (result == null || result.files.isEmpty || result.files.first.path == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No document selected')),
+          );
+          return;
         }
+
+        final filePath = result.files.first.path!;
+        final selectedFile = File(filePath);
+        if (!await selectedFile.exists()) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Selected file not accessible')),
+          );
+          return;
+        }
+
+        ref.read(createEventNotifierProvider.notifier).setDoc(selectedFile);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document selected successfully')),
+        );
       },
     );
   }
