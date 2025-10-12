@@ -196,7 +196,7 @@ class CreateEventNotifier extends StateNotifier<CreateEventState> {
       if (positivePrices.isNotEmpty) {
         eventPrice = positivePrices.reduce(min);
       }
-      // If no positive prices but not marked as free, default to 0.0
+      // If no positive prices but not marked as free, default to 0
     }
 
     final entity = EventEntity(

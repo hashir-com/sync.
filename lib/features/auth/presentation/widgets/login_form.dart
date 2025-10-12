@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sync_event/features/auth/presentation/providers/login_notifier.dart'; // Updated import
-// Ensure this includes loginNotifierProvider
+import 'package:sync_event/features/auth/presentation/providers/login_notifier.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_font_size.dart';
 import 'auth_text_field.dart';
@@ -25,27 +24,31 @@ class LoginForm extends ConsumerWidget {
     final theme = Theme.of(context);
     final emailController = ref.watch(emailControllerProvider);
     final passwordController = ref.watch(passwordControllerProvider);
-    final loginState = ref.watch(
-      loginNotifierProvider,
-    ); // Changed to loginNotifierProvider
+    final loginState = ref.watch(loginNotifierProvider);
     final autoValidate = ref.watch(autoValidateProvider);
     final formKey = GlobalKey<FormState>();
 
     void showSnackBar(String message) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
 
     ref.listen<LoginState>(loginNotifierProvider, (previous, next) {
-      // Changed to loginNotifierProvider
-      if (next.errorMessage != null) {
-        showSnackBar(
-          next.errorMessage!,
-        ); // Show errors like "Incorrect email or password"
-        ref
-            .read(loginNotifierProvider.notifier)
-            .clearError(); // Changed to loginNotifierProvider
+      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+        print('Login error: ${next.errorMessage}'); // Debug print
+        showSnackBar(next.errorMessage!);
+        ref.read(loginNotifierProvider.notifier).clearError();
+      }
+      if (next.user != null && previous?.user == null) {
+        print('Login successful for user: ${next.user!.email}'); // Debug print
+        showSnackBar("Login successful!");
+        if (context.mounted) {
+          context.go('/root');
+        }
       }
     });
 
@@ -56,24 +59,18 @@ class LoginForm extends ConsumerWidget {
     final forgotPasswordColor = isDarkMode ? Colors.white : AppColors.primary;
 
     Future<void> login() async {
-      ref.read(autoValidateProvider.notifier).state =
-          true; // Enable autovalidation
+      ref.read(autoValidateProvider.notifier).state = true;
 
       if (!formKey.currentState!.validate()) {
+        print('Form validation failed'); // Debug print
         return;
       }
 
-      final user = await ref
-          .read(loginNotifierProvider.notifier)
-          .loginWithEmail(
-            // Changed to loginNotifierProvider
+      print('Attempting login with email: ${emailController.text}'); // Debug print
+      await ref.read(loginNotifierProvider.notifier).loginWithEmail(
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
-      if (user != null && context.mounted) {
-        showSnackBar("Login successful!");
-        context.go('/root');
-      }
     }
 
     return SingleChildScrollView(
@@ -81,6 +78,9 @@ class LoginForm extends ConsumerWidget {
       physics: const BouncingScrollPhysics(),
       child: Form(
         key: formKey,
+        autovalidateMode: autoValidate
+            ? AutovalidateMode.onUserInteraction
+            : AutovalidateMode.disabled,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

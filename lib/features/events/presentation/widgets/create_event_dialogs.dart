@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/features/events/data/models/category_model.dart';
+
+import '../providers/category_providers.dart';
 import '../providers/event_providers.dart';
 
 class DescriptionDialog {
@@ -95,111 +98,113 @@ class MaxAttendeesDialog {
             'Max Attendees per Category',
             style: TextStyle(color: colors.textPrimary),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Checkbox(
-                    value: tempIsOpen,
-                    onChanged: (v) {
-                      setDialogState(() {
-                        tempIsOpen = v ?? false;
-                        if (tempIsOpen) {
-                          tempControllers.forEach((_, ctrl) => ctrl.clear());
-                        }
-                      });
-                    },
-                    activeColor: colors.primary,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Checkbox(
+                      value: tempIsOpen,
+                      onChanged: (v) {
+                        setDialogState(() {
+                          tempIsOpen = v ?? false;
+                          if (tempIsOpen) {
+                            tempControllers.forEach((_, ctrl) => ctrl.clear());
+                          }
+                        });
+                      },
+                      activeColor: colors.primary,
+                    ),
+                    Text(
+                      'Open Capacity (Unlimited)',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (!tempIsOpen) ...[
+                  ExpansionTile(
+                    title: Text(
+                      (state.categoryCapacities['vip'] ?? 0) > 0
+                          ? 'VIP: ${state.categoryCapacities['vip']} seats'
+                          : 'Set VIP Capacity',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                    collapsedBackgroundColor: colors.background,
+                    backgroundColor: colors.background,
+                    children: [
+                      TextFormField(
+                        controller: tempControllers['vip'],
+                        decoration: InputDecoration(
+                          hintText: 'Enter VIP capacity (e.g., 50)',
+                          hintStyle: TextStyle(color: colors.textSecondary),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: colors.border),
+                          ),
+                        ),
+                        style: TextStyle(color: colors.textPrimary),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
                   ),
-                  Text(
-                    'Open Capacity (Unlimited)',
-                    style: TextStyle(color: colors.textPrimary),
+                  const SizedBox(height: 8),
+                  ExpansionTile(
+                    title: Text(
+                      (state.categoryCapacities['premium'] ?? 0) > 0
+                          ? 'Premium: ${state.categoryCapacities['premium']} seats'
+                          : 'Set Premium Capacity',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                    collapsedBackgroundColor: colors.background,
+                    backgroundColor: colors.background,
+                    children: [
+                      TextFormField(
+                        controller: tempControllers['premium'],
+                        decoration: InputDecoration(
+                          hintText: 'Enter Premium capacity (e.g., 100)',
+                          hintStyle: TextStyle(color: colors.textSecondary),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: colors.border),
+                          ),
+                        ),
+                        style: TextStyle(color: colors.textPrimary),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ExpansionTile(
+                    title: Text(
+                      (state.categoryCapacities['regular'] ?? 0) > 0
+                          ? 'Regular: ${state.categoryCapacities['regular']} seats'
+                          : 'Set Regular Capacity',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                    collapsedBackgroundColor: colors.background,
+                    backgroundColor: colors.background,
+                    children: [
+                      TextFormField(
+                        controller: tempControllers['regular'],
+                        decoration: InputDecoration(
+                          hintText: 'Enter Regular capacity (e.g., 200)',
+                          hintStyle: TextStyle(color: colors.textSecondary),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: colors.border),
+                          ),
+                        ),
+                        style: TextStyle(color: colors.textPrimary),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              if (!tempIsOpen) ...[
-                ExpansionTile(
-                  title: Text(
-                    (state.categoryCapacities['vip'] ?? 0) > 0
-                        ? 'VIP: ${state.categoryCapacities['vip']} seats'
-                        : 'Set VIP Capacity',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  collapsedBackgroundColor: colors.background,
-                  backgroundColor: colors.background,
-                  children: [
-                    TextFormField(
-                      controller: tempControllers['vip'],
-                      decoration: InputDecoration(
-                        hintText: 'Enter VIP capacity (e.g., 50)',
-                        hintStyle: TextStyle(color: colors.textSecondary),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                      ),
-                      style: TextStyle(color: colors.textPrimary),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ExpansionTile(
-                  title: Text(
-                    (state.categoryCapacities['premium'] ?? 0) > 0
-                        ? 'Premium: ${state.categoryCapacities['premium']} seats'
-                        : 'Set Premium Capacity',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  collapsedBackgroundColor: colors.background,
-                  backgroundColor: colors.background,
-                  children: [
-                    TextFormField(
-                      controller: tempControllers['premium'],
-                      decoration: InputDecoration(
-                        hintText: 'Enter Premium capacity (e.g., 100)',
-                        hintStyle: TextStyle(color: colors.textSecondary),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                      ),
-                      style: TextStyle(color: colors.textPrimary),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ExpansionTile(
-                  title: Text(
-                    (state.categoryCapacities['regular'] ?? 0) > 0
-                        ? 'Regular: ${state.categoryCapacities['regular']} seats'
-                        : 'Set Regular Capacity',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  collapsedBackgroundColor: colors.background,
-                  backgroundColor: colors.background,
-                  children: [
-                    TextFormField(
-                      controller: tempControllers['regular'],
-                      decoration: InputDecoration(
-                        hintText: 'Enter Regular capacity (e.g., 200)',
-                        hintStyle: TextStyle(color: colors.textSecondary),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                      ),
-                      style: TextStyle(color: colors.textPrimary),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ],
-                ),
               ],
-            ],
+            ),
           ),
           actions: [
             TextButton(
@@ -347,14 +352,17 @@ class PriceDialog {
                             children: [
                               Checkbox(
                                 value: tempIsFreeCategory['vip'],
-                                onChanged: tempIsFree ? null : (v) {
-                                  setDialogState(() {
-                                    tempIsFreeCategory['vip'] = v ?? false;
-                                    if (tempIsFreeCategory['vip']!) {
-                                      tempControllers['vip']!.clear();
-                                    }
-                                  });
-                                },
+                                onChanged: tempIsFree
+                                    ? null
+                                    : (v) {
+                                        setDialogState(() {
+                                          tempIsFreeCategory['vip'] =
+                                              v ?? false;
+                                          if (tempIsFreeCategory['vip']!) {
+                                            tempControllers['vip']!.clear();
+                                          }
+                                        });
+                                      },
                                 activeColor: colors.primary,
                               ),
                               Text(
@@ -368,7 +376,9 @@ class PriceDialog {
                               controller: tempControllers['vip'],
                               decoration: InputDecoration(
                                 hintText: 'Enter VIP price (e.g., 500)',
-                                hintStyle: TextStyle(color: colors.textSecondary),
+                                hintStyle: TextStyle(
+                                  color: colors.textSecondary,
+                                ),
                                 prefixText: '₹ ',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -376,9 +386,10 @@ class PriceDialog {
                                 ),
                               ),
                               style: TextStyle(color: colors.textPrimary),
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                             ),
                         ],
                       ),
@@ -405,14 +416,17 @@ class PriceDialog {
                             children: [
                               Checkbox(
                                 value: tempIsFreeCategory['premium'],
-                                onChanged: tempIsFree ? null : (v) {
-                                  setDialogState(() {
-                                    tempIsFreeCategory['premium'] = v ?? false;
-                                    if (tempIsFreeCategory['premium']!) {
-                                      tempControllers['premium']!.clear();
-                                    }
-                                  });
-                                },
+                                onChanged: tempIsFree
+                                    ? null
+                                    : (v) {
+                                        setDialogState(() {
+                                          tempIsFreeCategory['premium'] =
+                                              v ?? false;
+                                          if (tempIsFreeCategory['premium']!) {
+                                            tempControllers['premium']!.clear();
+                                          }
+                                        });
+                                      },
                                 activeColor: colors.primary,
                               ),
                               Text(
@@ -426,7 +440,9 @@ class PriceDialog {
                               controller: tempControllers['premium'],
                               decoration: InputDecoration(
                                 hintText: 'Enter Premium price (e.g., 200)',
-                                hintStyle: TextStyle(color: colors.textSecondary),
+                                hintStyle: TextStyle(
+                                  color: colors.textSecondary,
+                                ),
                                 prefixText: '₹ ',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -434,9 +450,10 @@ class PriceDialog {
                                 ),
                               ),
                               style: TextStyle(color: colors.textPrimary),
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                             ),
                         ],
                       ),
@@ -463,14 +480,17 @@ class PriceDialog {
                             children: [
                               Checkbox(
                                 value: tempIsFreeCategory['regular'],
-                                onChanged: tempIsFree ? null : (v) {
-                                  setDialogState(() {
-                                    tempIsFreeCategory['regular'] = v ?? false;
-                                    if (tempIsFreeCategory['regular']!) {
-                                      tempControllers['regular']!.clear();
-                                    }
-                                  });
-                                },
+                                onChanged: tempIsFree
+                                    ? null
+                                    : (v) {
+                                        setDialogState(() {
+                                          tempIsFreeCategory['regular'] =
+                                              v ?? false;
+                                          if (tempIsFreeCategory['regular']!) {
+                                            tempControllers['regular']!.clear();
+                                          }
+                                        });
+                                      },
                                 activeColor: colors.primary,
                               ),
                               Text(
@@ -484,7 +504,9 @@ class PriceDialog {
                               controller: tempControllers['regular'],
                               decoration: InputDecoration(
                                 hintText: 'Enter Regular price (e.g., 100)',
-                                hintStyle: TextStyle(color: colors.textSecondary),
+                                hintStyle: TextStyle(
+                                  color: colors.textSecondary,
+                                ),
                                 prefixText: '₹ ',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -492,9 +514,10 @@ class PriceDialog {
                                 ),
                               ),
                               style: TextStyle(color: colors.textPrimary),
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                             ),
                         ],
                       ),
@@ -515,41 +538,69 @@ class PriceDialog {
             TextButton(
               onPressed: () {
                 // Parse prices based on checkbox states
-                final vip = tempIsFreeCategory['vip']! 
-                    ? 0.0 
-                    : (double.tryParse(tempControllers['vip']!.text.trim().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0);
-                final premium = tempIsFreeCategory['premium']! 
-                    ? 0.0 
-                    : (double.tryParse(tempControllers['premium']!.text.trim().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0);
-                final regular = tempIsFreeCategory['regular']! 
-                    ? 0.0 
-                    : (double.tryParse(tempControllers['regular']!.text.trim().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0);
-                
+                final vip = tempIsFreeCategory['vip']!
+                    ? 0.0
+                    : (double.tryParse(
+                            tempControllers['vip']!.text
+                                .trim()
+                                .replaceAll('₹', '')
+                                .replaceAll(',', ''),
+                          ) ??
+                          0.0);
+                final premium = tempIsFreeCategory['premium']!
+                    ? 0.0
+                    : (double.tryParse(
+                            tempControllers['premium']!.text
+                                .trim()
+                                .replaceAll('₹', '')
+                                .replaceAll(',', ''),
+                          ) ??
+                          0.0);
+                final regular = tempIsFreeCategory['regular']!
+                    ? 0.0
+                    : (double.tryParse(
+                            tempControllers['regular']!.text
+                                .trim()
+                                .replaceAll('₹', '')
+                                .replaceAll(',', ''),
+                          ) ??
+                          0.0);
+
                 // Validate: At least one category must be configured
                 // (Either have a capacity set or be explicitly free)
-                final hasVipCapacity = (state.categoryCapacities['vip'] ?? 0) > 0;
-                final hasPremiumCapacity = (state.categoryCapacities['premium'] ?? 0) > 0;
-                final hasRegularCapacity = (state.categoryCapacities['regular'] ?? 0) > 0;
-                
+                final hasVipCapacity =
+                    (state.categoryCapacities['vip'] ?? 0) > 0;
+                final hasPremiumCapacity =
+                    (state.categoryCapacities['premium'] ?? 0) > 0;
+                final hasRegularCapacity =
+                    (state.categoryCapacities['regular'] ?? 0) > 0;
+
                 // Check if prices are set for categories that have capacity
                 bool isValid = true;
                 String errorMessage = '';
-                
+
                 if (hasVipCapacity && !tempIsFreeCategory['vip']! && vip <= 0) {
                   isValid = false;
-                  errorMessage = 'VIP has capacity but no price set. Set price or mark as free.';
-                } else if (hasPremiumCapacity && !tempIsFreeCategory['premium']! && premium <= 0) {
+                  errorMessage =
+                      'VIP has capacity but no price set. Set price or mark as free.';
+                } else if (hasPremiumCapacity &&
+                    !tempIsFreeCategory['premium']! &&
+                    premium <= 0) {
                   isValid = false;
-                  errorMessage = 'Premium has capacity but no price set. Set price or mark as free.';
-                } else if (hasRegularCapacity && !tempIsFreeCategory['regular']! && regular <= 0) {
+                  errorMessage =
+                      'Premium has capacity but no price set. Set price or mark as free.';
+                } else if (hasRegularCapacity &&
+                    !tempIsFreeCategory['regular']! &&
+                    regular <= 0) {
                   isValid = false;
-                  errorMessage = 'Regular has capacity but no price set. Set price or mark as free.';
+                  errorMessage =
+                      'Regular has capacity but no price set. Set price or mark as free.';
                 }
-                
+
                 if (!isValid) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(errorMessage)),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(errorMessage)));
                   return;
                 }
 
@@ -557,11 +608,11 @@ class PriceDialog {
                 notifier.setCategoryPrice('vip', vip);
                 notifier.setCategoryPrice('premium', premium);
                 notifier.setCategoryPrice('regular', regular);
-                
+
                 // Update the global free flag (true only if ALL categories are free)
                 final allFree = vip == 0.0 && premium == 0.0 && regular == 0.0;
                 notifier.setFree(allFree);
-                
+
                 Navigator.pop(context);
               },
               child: Text('Save', style: TextStyle(color: colors.primary)),
@@ -579,43 +630,93 @@ class CategoryDialog {
     final colors = AppColors(isDark);
     final notifier = ref.read(createEventNotifierProvider.notifier);
     final state = ref.read(createEventNotifierProvider);
-    final tempController = TextEditingController(text: state.category);
-    final categories = [
-      'Music',
-      'Sports',
-      'Technology',
-      'Business',
-      'Art & Culture',
-      'Food & Drink',
-      'Health & Wellness',
-      'Education',
-      'Entertainment',
-      'Other',
-    ];
+    final repository = ref.read(categoryRepositoryProvider);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colors.cardBackground,
         title: Text('Event Type', style: TextStyle(color: colors.textPrimary)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ...categories.map(
-                (c) => RadioListTile<String>(
-                  title: Text(c, style: TextStyle(color: colors.textPrimary)),
-                  value: c,
-                  groupValue: tempController.text,
-                  activeColor: colors.primary,
-                  onChanged: (v) {
-                    tempController.text = v ?? '';
-                    Navigator.pop(context);
-                    notifier.setCategory(tempController.text);
-                  },
+        content: StreamBuilder<List<CategoryModel>>(
+          stream: repository.getActiveCategories(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(),
                 ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              print('Error loading categories: ${snapshot.error}');
+              return Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Failed to load categories',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final categories = snapshot.data ?? [];
+
+            if (categories.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text('No categories available'),
+              );
+            }
+
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: categories.map((category) {
+                  return RadioListTile<String>(
+                    title: Row(
+                      children: [
+                        if (category.icon != null &&
+                            category.icon!.isNotEmpty) ...[
+                          Text(
+                            category.icon!,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Text(
+                            category.name,
+                            style: TextStyle(color: colors.textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                    value: category.name,
+                    groupValue: state.category,
+                    activeColor: colors.primary,
+                    onChanged: (String? value) {
+                      if (value != null && value.isNotEmpty) {
+                        notifier.setCategory(value);
+                        Navigator.pop(context);
+                      }
+                    },
+                  );
+                }).toList(),
               ),
-            ],
-          ),
+            );
+          },
         ),
         actions: [
           TextButton(
