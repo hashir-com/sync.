@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/screen/drawer.dart';
 import 'package:sync_event/features/home/widgets/category_section.dart';
@@ -18,15 +19,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedCategory = 0;
 
   Future<void> _handleRefresh() async {
-    // Invalidate providers to trigger refresh
-    // If you have specific providers for events, invalidate them here
-    // Example: ref.invalidate(approvedEventsProvider);
     ref.invalidate(approvedEventsStreamProvider);
-    // Add a small delay for better UX (optional)
+    // Add a small delay for better UX 
     await Future.delayed(const Duration(milliseconds: 500));
 
     // The StreamProvider will automatically refetch data
-    // Show a success message (optional)
+    // Show a success message 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -44,29 +42,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
-        child: SafeArea(
-          child: Column(
-            children: [
-              HeaderSection(),
-              CategorySection(
-                selectedCategory: _selectedCategory,
-                onCategoryTap: (index) =>
-                    setState(() => _selectedCategory = index),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      EventSection(),
-                      InviteBanner(),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+        child: Column(
+          children: [
+            HeaderSection(),
+            CategorySection(
+              selectedCategory: _selectedCategory,
+              onCategoryTap: (index) =>
+                  setState(() => _selectedCategory = index),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    EventSection(),
+                    SizedBox(height: 20.h),
+                    InviteBanner(),
+                    SizedBox(height: 20.h),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       drawer: const CustomDrawer(),

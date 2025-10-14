@@ -133,7 +133,10 @@ class EventsScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${event.attendees.length}/${event.maxAttendees}',
+                                    event.maxAttendees == 0
+                                        ? 'Open'
+                                        : '${event.attendees.length}/${event.maxAttendees}',
+
                                     style: TextStyle(
                                       fontWeight: FontWeight.w500,
                                       color: isFull
@@ -147,11 +150,11 @@ class EventsScreen extends ConsumerWidget {
                                 onPressed: isAttending || isFull
                                     ? null
                                     : () => _joinEvent(
-                                          context,
-                                          ref,
-                                          event.id,
-                                          currentUserId,
-                                        ),
+                                        context,
+                                        ref,
+                                        event.id,
+                                        currentUserId,
+                                      ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isAttending
                                       ? Colors.green
@@ -161,8 +164,8 @@ class EventsScreen extends ConsumerWidget {
                                   isAttending
                                       ? 'Joined'
                                       : isFull
-                                          ? 'Full'
-                                          : 'Join',
+                                      ? 'Full'
+                                      : 'Join',
                                 ),
                               ),
                             ],
@@ -176,9 +179,7 @@ class EventsScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -218,7 +219,7 @@ class EventsScreen extends ConsumerWidget {
   ) async {
     try {
       await ref.read(joinEventUseCaseProvider).call(eventId, userId);
-      
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

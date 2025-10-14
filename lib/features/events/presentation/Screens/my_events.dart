@@ -361,7 +361,9 @@ class _EventCard extends StatelessWidget {
                     Icon(Icons.people, size: 18, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
-                      '${event.attendees.length}/${event.maxAttendees} attendees',
+                      event.maxAttendees == 0
+                          ? 'Open'
+                          : '${event.attendees.length}/${event.maxAttendees}',
                       style: TextStyle(
                         color: Colors.grey[700],
                         fontWeight: FontWeight.w500,

@@ -30,9 +30,9 @@ class RootShell extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavIcon(Icons.explore, 'Explore', 0, ref, context),
-              _NavIcon(Icons.event, 'Events', 1, ref, context),
+              _NavIcon(Icons.paste_rounded, 'Events', 1, ref, context),
               SizedBox(width: 48), // space for FAB
-              _NavIcon(Icons.map, 'Map', 2, ref, context),
+              _NavIcon(Icons.location_on_rounded, 'Map', 2, ref, context),
               _NavIcon(Icons.person, 'Profile', 3, ref, context),
             ],
           ),

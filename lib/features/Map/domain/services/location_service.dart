@@ -3,13 +3,13 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-/// Service for handling location operations
+// Service for handling location operations
 class LocationService {
-  /// Get current location and return camera position
+  // Get current location and return camera position
   Future<CameraPosition?> getCurrentLocation() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
-      
+
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
@@ -36,7 +36,7 @@ class LocationService {
   }
 }
 
-/// Custom exception for location errors
+// Custom exception for location errors
 class LocationException implements Exception {
   final String message;
   LocationException(this.message);

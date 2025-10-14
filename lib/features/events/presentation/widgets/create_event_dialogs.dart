@@ -218,9 +218,9 @@ class MaxAttendeesDialog {
               onPressed: () {
                 if (tempIsOpen) {
                   // Explicitly set capacities to 0 when open (unlimited)
-                  notifier.setCategoryCapacity('vip', 0);
-                  notifier.setCategoryCapacity('premium', 0);
-                  notifier.setCategoryCapacity('regular', 0);
+                  notifier.setCategoryCapacity('vip', 99999);
+                  notifier.setCategoryCapacity('premium', 99999);
+                  notifier.setCategoryCapacity('regular', 99999);
                 } else {
                   final vip =
                       int.tryParse(tempControllers['vip']!.text.trim()) ?? 0;

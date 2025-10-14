@@ -194,7 +194,7 @@ class EventDetailScreen extends ConsumerWidget {
                     colors,
                     Icons.people,
                     'Attendees',
-                    '${event.attendees.length} / ${event.maxAttendees == 999999 ? '∞' : event.maxAttendees}',
+                    '${event.attendees.length} / ${event.maxAttendees == 0 ? '∞' : event.maxAttendees}',
                   ),
                   const SizedBox(height: 16),
 
@@ -204,7 +204,7 @@ class EventDetailScreen extends ConsumerWidget {
                       colors,
                       Icons.confirmation_number,
                       'Price',
-                      '₹${event.ticketPrice!.toStringAsFixed(2)}',
+                      'Starting From ₹${event.ticketPrice!.toStringAsFixed(2)}',
                     ),
                   if (event.ticketPrice != null && event.ticketPrice! > 0)
                     const SizedBox(height: 16),
