@@ -53,6 +53,7 @@ class AppTheme {
       bodyLarge: TextStyle(color: lightTextPrimary),
       bodyMedium: TextStyle(color: lightTextSecondary),
     ),
+    
   );
 
   static ThemeData darkTheme = ThemeData(

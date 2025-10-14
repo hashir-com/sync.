@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sync_event/core/theme/app_theme.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 // Assuming authStateProvider is defined as in the previous response
@@ -185,6 +187,119 @@ class CustomDrawer extends ConsumerWidget {
                           Icons.event_note_outlined,
                           'My Events',
                           '/my-events',
+                        ),
+
+                        // --- Animated Theme Toggle with Haptic Feedback ---
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.brightness_6_outlined,
+                                    color: Colors.black87,
+                                    size: 22.sp,
+                                  ),
+                                  SizedBox(width: 16.w),
+                                  Text(
+                                    'Theme',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final isDark = ref.watch(themeProvider);
+
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      //  Give satisfying vibration feedback
+                                      HapticFeedback.mediumImpact();
+
+                                      // 🔄 Toggle theme and save preference
+                                      ref.read(themeProvider.notifier).state =
+                                          !isDark;
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 400,
+                                      ),
+                                      width: 60.w,
+                                      height: 32.h,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? Colors.black87
+                                            : Colors.grey.shade400,
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          AnimatedAlign(
+                                            duration: const Duration(
+                                              milliseconds: 400,
+                                            ),
+                                            curve: Curves.easeInOut,
+                                            alignment: isDark
+                                                ? Alignment.centerRight
+                                                : Alignment.centerLeft,
+                                            child: Container(
+                                              width: 24.w,
+                                              height: 24.h,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.15),
+                                                    blurRadius: 4,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: AnimatedSwitcher(
+                                                duration: const Duration(
+                                                  milliseconds: 400,
+                                                ),
+                                                transitionBuilder:
+                                                    (child, animation) =>
+                                                        ScaleTransition(
+                                                          scale: animation,
+                                                          child: child,
+                                                        ),
+                                                child: Icon(
+                                                  isDark
+                                                      ? Icons.dark_mode_rounded
+                                                      : Icons
+                                                            .light_mode_rounded,
+                                                  key: ValueKey<bool>(isDark),
+                                                  size: 16.sp,
+                                                  color: isDark
+                                                      ? Colors.black
+                                                      : Colors.orangeAccent,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
 
                         const Spacer(),
