@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/auth/presentation/providers/signup_notifier.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_font_size.dart';
 import 'auth_text_field.dart';
 
 final nameControllerProvider = Provider.autoDispose(
@@ -45,20 +47,36 @@ class SignupForm extends ConsumerWidget {
     final autoValidate = ref.watch(autoValidateProvider);
     final picker = ImagePicker();
     final formKey = GlobalKey<FormState>();
+    final isDark = ThemeUtils.isDark(context);
 
     Future<void> pickImage() async {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         ref.read(profileImageProvider.notifier).state = File(image.path);
-        ref.read(autoValidateProvider.notifier).state =
-            true; 
+        ref.read(autoValidateProvider.notifier).state = true;
       }
     }
 
-    void showSnackBar(String message) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+    void showSnackBar(String message, {bool isError = false}) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: AppTextStyles.bodyMedium(
+              isDark: true,
+            ).copyWith(color: Colors.white),
+          ),
+          backgroundColor: isError
+              ? AppColors.getError(isDark)
+              : AppColors.getSuccess(isDark),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          ),
+          margin: const EdgeInsets.all(AppSizes.paddingLarge),
+        ),
+      );
       if (kDebugMode) {
         print(message);
       }
@@ -66,9 +84,7 @@ class SignupForm extends ConsumerWidget {
 
     ref.listen<SignupState>(signupNotifierProvider, (previous, next) {
       if (next.errorMessage != null) {
-        showSnackBar(
-          next.errorMessage!,
-        ); // Show Firebase or non-validation errors
+        showSnackBar(next.errorMessage!, isError: true);
         signupNotifier.clearError();
       }
       if (kDebugMode) {
@@ -77,13 +93,12 @@ class SignupForm extends ConsumerWidget {
     });
 
     Future<void> signup() async {
-      ref.read(autoValidateProvider.notifier).state =
-          true; // Enable autovalidation on submit
+      ref.read(autoValidateProvider.notifier).state = true;
 
       // Validate form fields and profile image
       bool isValid = formKey.currentState!.validate();
       if (profileImage == null) {
-        showSnackBar("Please select a profile picture");
+        showSnackBar("Please select a profile picture", isError: true);
         isValid = false;
       }
 
@@ -107,90 +122,133 @@ class SignupForm extends ConsumerWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.screenPaddingHorizontal,
+        vertical: AppSizes.paddingXxl,
+      ),
       physics: const BouncingScrollPhysics(),
       child: Form(
         key: formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Profile Image Picker
             Center(
-              child: GestureDetector(
-                onTap: pickImage,
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: profileImage != null
-                      ? FileImage(profileImage)
-                      : null,
-                  child: profileImage == null
-                      ? Icon(
-                          Icons.camera_alt,
-                          size: 40,
-                          color: AppColors.textSecondaryDark,
-                        )
-                      : null,
-                ),
+              child: Stack(
+                children: [
+                  GestureDetector(
+                    onTap: pickImage,
+                    child: CircleAvatar(
+                      radius: AppSizes.avatarLarge,
+                      backgroundColor: AppColors.getShimmerBase(isDark),
+                      backgroundImage: profileImage != null
+                          ? FileImage(profileImage)
+                          : null,
+                      child: profileImage == null
+                          ? Icon(
+                              Icons.camera_alt_rounded,
+                              size: AppSizes.iconXl,
+                              color: AppColors.getTextSecondary(isDark),
+                            )
+                          : null,
+                    ),
+                  ),
+                  if (profileImage == null)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSizes.paddingSmall),
+                        decoration: BoxDecoration(
+                          color: AppColors.getPrimary(isDark),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.getBackground(isDark),
+                            width: AppSizes.borderWidthMedium,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.add,
+                          size: AppSizes.iconSmall,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.spacingXxl),
+
+            // Sign up heading
             Text(
               'Sign up',
-              style: AppTextStyles.headingMedium(AppColors.textPrimaryLight),
+              style: AppTextStyles.headingMedium(isDark: isDark),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.spacingXxl),
+
+            // Full Name field
             AuthTextField(
               controller: nameController,
               label: "Full Name",
-              icon: Icons.person,
+              icon: Icons.person_outline_rounded,
               fieldType: AuthFieldType.name,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.spacingLarge),
+
+            // Email field
             AuthTextField(
               controller: emailController,
               label: "Email",
-              icon: Icons.email,
+              icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
               fieldType: AuthFieldType.email,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.spacingLarge),
+
+            // Password field
             AuthTextField(
               controller: passwordController,
               label: "Password",
-              icon: Icons.lock,
+              icon: Icons.lock_outline_rounded,
               obscureText: true,
               visibilityProvider: passwordVisibilityProvider,
               fieldType: AuthFieldType.password,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.spacingLarge),
+
+            // Confirm Password field
             AuthTextField(
               controller: confirmPasswordController,
               label: "Confirm Password",
-              icon: Icons.lock_outline,
+              icon: Icons.lock_clock_outlined,
               obscureText: true,
               visibilityProvider: confirmPasswordVisibilityProvider,
               fieldType: AuthFieldType.confirmPassword,
               matchController: passwordController,
               autoValidate: autoValidate,
             ),
+            const SizedBox(height: AppSizes.spacingXxl),
 
-            const SizedBox(height: 24),
+            // Sign Up button
             SizedBox(
-              height: 50,
+              height: AppSizes.buttonHeightMedium,
               child: ElevatedButton(
-                onPressed: signupState.isLoading ? null : signup,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  backgroundColor: AppColors.getPrimary(isDark),
                 ),
+                onPressed: signupState.isLoading ? null : signup,
                 child: signupState.isLoading
-                    ? const CircularProgressIndicator(
-                        color: AppColors.backgroundLight,
+                    ? SizedBox(
+                        height: AppSizes.iconMedium,
+                        width: AppSizes.iconMedium,
+                        child: const CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -198,14 +256,14 @@ class SignupForm extends ConsumerWidget {
                           Text(
                             "Sign Up",
                             style: AppTextStyles.button(
-                              AppColors.backgroundLight,
-                            ),
+                              isDark: isDark,
+                            ).copyWith(color: Colors.white),
                           ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: AppColors.backgroundLight,
-                            size: 18,
+                          const SizedBox(width: AppSizes.spacingSmall),
+                          const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: Colors.white,
+                            size: AppSizes.iconSmall,
                           ),
                         ],
                       ),
