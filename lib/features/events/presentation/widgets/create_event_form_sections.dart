@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
 import 'package:sync_event/core/theme/app_theme.dart';
 import '../providers/event_providers.dart';
 import 'create_event_option_tile.dart';
@@ -208,13 +209,19 @@ class PriceTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(createEventNotifierProvider);
-    final positivePrices = state.categoryPrices.values.where((p) => p > 0).toList();
-    final minPrice = positivePrices.isNotEmpty ? positivePrices.reduce(min) : null;
+    final positivePrices = state.categoryPrices.values
+        .where((p) => p > 0)
+        .toList();
+    final minPrice = positivePrices.isNotEmpty
+        ? positivePrices.reduce(min)
+        : null;
     return CreateEventOptionTile(
       icon: Icons.confirmation_number_outlined,
       label: state.isFreeEvent
           ? 'Free Event'
-          : (minPrice == null ? 'Add Ticket Pricing' : 'Starting from ₹${minPrice.toStringAsFixed(2)}'),
+          : (minPrice == null
+                ? 'Add Ticket Pricing'
+                : 'Starting from ₹${minPrice.toStringAsFixed(2)}'),
       iconColor: const Color(0xFFFFC107),
       isRequired: true,
       onTap: onTap,
@@ -249,17 +256,31 @@ class DocumentTile extends ConsumerWidget {
     final hasDocument = state.docFile != null;
 
     return CreateEventOptionTile(
-      key: ValueKey(hasDocument ? state.docFile!.path : 'no_doc'),  // Force rebuild on change
+      key: ValueKey(hasDocument ? state.docFile!.path : 'no_doc'),
       trailing: hasDocument
-          ? IconButton(
-              icon: Icon(Icons.delete, color: colors.primary),
-              onPressed: () {
-                ref.read(createEventNotifierProvider.notifier).setDoc(null);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Document removed')),
-                );
-              },
-              tooltip: 'Remove document',
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // _buildDocumentPreview(context, state.docFile!),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: Icon(Icons.visibility, color: colors.primary),
+                  onPressed: () => _openDocument(context, state.docFile!),
+                  tooltip: 'Preview document',
+                  iconSize: 20,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    ref.read(createEventNotifierProvider.notifier).setDoc(null);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Document removed')),
+                    );
+                  },
+                  tooltip: 'Remove document',
+                  iconSize: 20,
+                ),
+              ],
             )
           : null,
       icon: Icons.attach_file,
@@ -269,34 +290,117 @@ class DocumentTile extends ConsumerWidget {
       iconColor: colors.textSecondary,
       isRequired: false,
       onTap: () async {
-        final result = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: ['pdf', 'doc', 'docx'],
-          allowMultiple: false,
-        );
-
-        if (result == null || result.files.isEmpty || result.files.first.path == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No document selected')),
-          );
-          return;
+        if (hasDocument) {
+          // If document exists, open it for preview
+          _openDocument(context, state.docFile!);
+        } else {
+          // Otherwise, pick a new document
+          await _pickDocument(context, ref);
         }
-
-        final filePath = result.files.first.path!;
-        final selectedFile = File(filePath);
-        if (!await selectedFile.exists()) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Selected file not accessible')),
-          );
-          return;
-        }
-
-        ref.read(createEventNotifierProvider.notifier).setDoc(selectedFile);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Document selected successfully')),
-        );
       },
     );
   }
+
+  Future<void> _pickDocument(BuildContext context, WidgetRef ref) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx'],
+      allowMultiple: false,
+    );
+
+    if (result == null ||
+        result.files.isEmpty ||
+        result.files.first.path == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No document selected')));
+      }
+      return;
+    }
+
+    final filePath = result.files.first.path!;
+    final selectedFile = File(filePath);
+    if (!await selectedFile.exists()) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Selected file not accessible')),
+        );
+      }
+      return;
+    }
+
+    ref.read(createEventNotifierProvider.notifier).setDoc(selectedFile);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document selected successfully')),
+      );
+    }
+  }
+
+  Future<void> _openDocument(BuildContext context, File file) async {
+    try {
+      final result = await OpenFile.open(file.path);
+
+      if (result.type != ResultType.done) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening document: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Widget _buildDocumentPreview(BuildContext context, File file) {
+  //   final extension = file.path.split('.').last.toLowerCase();
+  //   Color bgColor;
+  //   IconData icon;
+  //   Color iconColor;
+
+  //   switch (extension) {
+  //     case 'pdf':
+  //       bgColor = Colors.red.shade50;
+  //       icon = Icons.picture_as_pdf;
+  //       iconColor = const Color.fromARGB(255, 101, 54, 244);
+  //       break;
+  //     case 'doc':
+  //     case 'docx':
+  //       bgColor = Colors.blue.shade50;
+  //       icon = Icons.description;
+  //       iconColor = Colors.blue;
+  //       break;
+  //     default:
+  //       bgColor = Colors.grey.shade50;
+  //       icon = Icons.insert_drive_file;
+  //       iconColor = Colors.grey;
+  //   }
+
+  //   return GestureDetector(
+  //     onTap: () => _openDocument(context, file),
+  //     child: Container(
+  //       width: 50,
+  //       height: 50,
+  //       decoration: BoxDecoration(
+  //         color: bgColor,
+  //         borderRadius: BorderRadius.circular(8),
+  //         border: Border.all(color: Colors.grey.shade300),
+  //       ),
+  //       child: Icon(icon, color: iconColor, size: 24),
+  //     ),
+  //   );
+  // }
 }

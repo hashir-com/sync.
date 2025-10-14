@@ -8,7 +8,7 @@ import 'package:sync_event/features/auth/presentation/screens/otp_verification_s
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
-import 'package:sync_event/features/events/presentation/Screens/edit_event_screen.dart';
+import 'package:sync_event/features/events/presentation/Screens/edit_event/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/event_detail_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/location_picker_screen.dart';
