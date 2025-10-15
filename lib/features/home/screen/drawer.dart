@@ -84,7 +84,9 @@ class CustomDrawer extends ConsumerWidget {
                                   tag: "profile",
                                   child: CircleAvatar(
                                     radius: AppSizes.avatarMedium.r,
-                                    backgroundColor: AppColors.getSurface(isDark),
+                                    backgroundColor: AppColors.getSurface(
+                                      isDark,
+                                    ),
                                     backgroundImage: user?.image != null
                                         ? NetworkImage(user!.image!)
                                         : const AssetImage(
@@ -100,11 +102,13 @@ class CustomDrawer extends ConsumerWidget {
                                   user?.name ??
                                       user?.uid?.split('@').first ??
                                       'User',
-                                  style: AppTextStyles.titleLarge(isDark: isDark)
-                                      .copyWith(
-                                    fontSize: AppSizes.fontXl.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style:
+                                      AppTextStyles.titleLarge(
+                                        isDark: isDark,
+                                      ).copyWith(
+                                        fontSize: AppSizes.fontXl.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                 ),
                               ),
                             ],
@@ -145,12 +149,14 @@ class CustomDrawer extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   'Error loading user',
-                                  style: AppTextStyles.titleLarge(isDark: isDark)
-                                      .copyWith(
-                                    fontSize: AppSizes.fontXl.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.getError(isDark),
-                                  ),
+                                  style:
+                                      AppTextStyles.titleLarge(
+                                        isDark: isDark,
+                                      ).copyWith(
+                                        fontSize: AppSizes.fontXl.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.getError(isDark),
+                                      ),
                                 ),
                               ),
                             ],
@@ -178,7 +184,7 @@ class CustomDrawer extends ConsumerWidget {
                           isDark,
                           Icons.calendar_today_outlined,
                           'Calendar',
-                          '/calendar',
+                          '/wallet',
                         ),
                         _buildItem(
                           context,
@@ -227,11 +233,13 @@ class CustomDrawer extends ConsumerWidget {
                                   SizedBox(width: AppSizes.spacingLarge.w),
                                   Text(
                                     'Theme',
-                                    style: AppTextStyles.bodyLarge(isDark: isDark)
-                                        .copyWith(
-                                      fontSize: AppSizes.fontMedium.sp,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style:
+                                        AppTextStyles.bodyLarge(
+                                          isDark: isDark,
+                                        ).copyWith(
+                                          fontSize: AppSizes.fontMedium.sp,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -281,8 +289,11 @@ class CustomDrawer extends ConsumerWidget {
                                                 shape: BoxShape.circle,
                                                 boxShadow: [
                                                   BoxShadow(
-                                                    color: AppColors.getShadow(isDark),
-                                                    blurRadius: AppSizes.cardElevationLow,
+                                                    color: AppColors.getShadow(
+                                                      isDark,
+                                                    ),
+                                                    blurRadius: AppSizes
+                                                        .cardElevationLow,
                                                     offset: const Offset(0, 2),
                                                   ),
                                                 ],
@@ -300,11 +311,16 @@ class CustomDrawer extends ConsumerWidget {
                                                 child: Icon(
                                                   themeIsDark
                                                       ? Icons.dark_mode_rounded
-                                                      : Icons.light_mode_rounded,
-                                                  key: ValueKey<bool>(themeIsDark),
+                                                      : Icons
+                                                            .light_mode_rounded,
+                                                  key: ValueKey<bool>(
+                                                    themeIsDark,
+                                                  ),
                                                   size: AppSizes.iconSmall.sp,
                                                   color: themeIsDark
-                                                      ? AppColors.getPrimary(isDark)
+                                                      ? AppColors.getPrimary(
+                                                          isDark,
+                                                        )
                                                       : Colors.orangeAccent,
                                                 ),
                                               ),
@@ -332,11 +348,12 @@ class CustomDrawer extends ConsumerWidget {
                           ),
                           title: Text(
                             'Logout',
-                            style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
-                              color: AppColors.getError(isDark),
-                              fontWeight: FontWeight.w500,
-                              fontSize: AppSizes.fontMedium.sp,
-                            ),
+                            style: AppTextStyles.bodyLarge(isDark: isDark)
+                                .copyWith(
+                                  color: AppColors.getError(isDark),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: AppSizes.fontMedium.sp,
+                                ),
                           ),
                           onTap: () async {
                             final shouldLogout = await showDialog<bool>(
@@ -350,17 +367,15 @@ class CustomDrawer extends ConsumerWidget {
                                 ),
                                 title: Text(
                                   'Confirm Logout',
-                                  style: AppTextStyles.headingSmall(isDark: isDark)
-                                      .copyWith(
-                                    fontSize: AppSizes.fontXl.sp,
-                                  ),
+                                  style: AppTextStyles.headingSmall(
+                                    isDark: isDark,
+                                  ).copyWith(fontSize: AppSizes.fontXl.sp),
                                 ),
                                 content: Text(
                                   'Are you sure you want to log out?',
-                                  style: AppTextStyles.bodyMedium(isDark: isDark)
-                                      .copyWith(
-                                    fontSize: AppSizes.fontMedium.sp,
-                                  ),
+                                  style: AppTextStyles.bodyMedium(
+                                    isDark: isDark,
+                                  ).copyWith(fontSize: AppSizes.fontMedium.sp),
                                 ),
                                 actions: [
                                   TextButton(
@@ -368,17 +383,22 @@ class CustomDrawer extends ConsumerWidget {
                                         Navigator.pop(context, false),
                                     child: Text(
                                       'Cancel',
-                                      style: AppTextStyles.labelLarge(
-                                        isDark: isDark,
-                                      ).copyWith(
-                                        fontSize: AppSizes.fontMedium.sp,
-                                        color: AppColors.getTextSecondary(isDark),
-                                      ),
+                                      style:
+                                          AppTextStyles.labelLarge(
+                                            isDark: isDark,
+                                          ).copyWith(
+                                            fontSize: AppSizes.fontMedium.sp,
+                                            color: AppColors.getTextSecondary(
+                                              isDark,
+                                            ),
+                                          ),
                                     ),
                                   ),
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.getError(isDark),
+                                      backgroundColor: AppColors.getError(
+                                        isDark,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(
                                           AppSizes.radiusSmall.r,
@@ -389,12 +409,13 @@ class CustomDrawer extends ConsumerWidget {
                                         Navigator.pop(context, true),
                                     child: Text(
                                       'Logout',
-                                      style: AppTextStyles.labelLarge(
-                                        isDark: false,
-                                      ).copyWith(
-                                        fontSize: AppSizes.fontMedium.sp,
-                                        color: Colors.white,
-                                      ),
+                                      style:
+                                          AppTextStyles.labelLarge(
+                                            isDark: false,
+                                          ).copyWith(
+                                            fontSize: AppSizes.fontMedium.sp,
+                                            color: Colors.white,
+                                          ),
                                     ),
                                   ),
                                 ],
@@ -437,9 +458,9 @@ class CustomDrawer extends ConsumerWidget {
         ),
         title: Text(
           label,
-          style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
-            fontSize: AppSizes.fontMedium.sp,
-          ),
+          style: AppTextStyles.bodyLarge(
+            isDark: isDark,
+          ).copyWith(fontSize: AppSizes.fontMedium.sp),
         ),
         onTap: () {
           context.push(route);

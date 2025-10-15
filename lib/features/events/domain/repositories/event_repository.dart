@@ -21,4 +21,7 @@ abstract class EventRepository {
   Stream<List<EventEntity>> getUserEventsStream(String userId);
   Future<void> updateEvent(EventEntity event, {File? docFile, File? coverFile});
   Future<void> deleteEvent(String eventId);
+
+  // Added: Fetch a single event by ID
+  Future<EventEntity> getEvent(String eventId); // Added
 }

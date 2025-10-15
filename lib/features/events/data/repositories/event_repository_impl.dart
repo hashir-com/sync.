@@ -126,4 +126,10 @@ class EventRepositoryImpl implements EventRepository {
   Future<List<EventEntity>> getPendingEvents() {
     throw UnimplementedError();
   }
+  
+  @override
+  Future<EventEntity> getEvent(String eventId) {
+    // TODO: implement getEvent
+    throw UnimplementedError();
+  }
 }

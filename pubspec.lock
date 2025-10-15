@@ -241,6 +241,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.7"
+  eventify:
+    dependency: transitive
+    description:
+      name: eventify
+      sha256: b829429f08586cc2001c628e7499e3e3c2493a1d895fd73b00ecb23351aa5a66
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   fake_async:
     dependency: transitive
     description:
@@ -584,6 +592,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  fluttertoast:
+    dependency: transitive
+    description:
+      name: fluttertoast
+      sha256: "90778fe0497fe3a09166e8cf2e0867310ff434b794526589e77ec03cf08ba8e8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "8.2.14"
   font_awesome_flutter:
     dependency: "direct main"
     description:
@@ -1040,6 +1056,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
+  mailer:
+    dependency: "direct main"
+    description:
+      name: mailer
+      sha256: db61f51ea301e8dcbfe5894e037ccd30a6246eb0a7bcfa007aefa2fc11a8f96e
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.5.0"
   matcher:
     dependency: transitive
     description:
@@ -1344,6 +1368,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
+  razorpay_flutter:
+    dependency: "direct main"
+    description:
+      name: razorpay_flutter
+      sha256: "7d86b2a2ba2c3a71366bbfb65664236ba4b12fd6aeaed4c13dfc5c998786b2d6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   recase:
     dependency: transitive
     description:

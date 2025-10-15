@@ -1,5 +1,7 @@
 // File: features/map/presentation/widgets/event_card.dart
 // Purpose: Display event details when a marker is tapped
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

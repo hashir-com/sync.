@@ -29,7 +29,7 @@ dependencies:
   # Firebase
   firebase_core: ^3.8.1
   firebase_auth: ^5.3.4
-  cloud_firestore: ^5.5.2
+  cloud_firestore: ^5.6.12
   firebase_storage: ^12.3.7
 
   # Authentication
@@ -53,7 +53,7 @@ dependencies:
   location: ^7.0.0
   geolocator: ^13.0.2
   geocoding: ^3.0.0
-  http: ^1.2.2
+  http: ^1.5.0
   flutter_typeahead: ^5.2.0
   flutter_google_places_sdk: any
   permission_handler: ^11.3.1
@@ -63,6 +63,8 @@ dependencies:
   flutter_cache_manager: ^3.4.1
   collection: ^1.19.1
   open_file: ^3.5.10
+  razorpay_flutter: ^1.4.0
+  mailer: ^6.5.0
 
 dev_dependencies:
   flutter_test:

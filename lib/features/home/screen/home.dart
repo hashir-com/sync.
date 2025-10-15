@@ -6,7 +6,6 @@ import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/screen/drawer.dart';
-import 'package:sync_event/features/home/widgets/category_section.dart';
 import 'package:sync_event/features/home/widgets/event_section.dart';
 import 'package:sync_event/features/home/widgets/header_section.dart';
 import 'package:sync_event/features/home/widgets/invite_banner.dart';
@@ -48,7 +47,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
-    final selectedCategory = ref.watch(selectedCategoryProvider);
+    ref.watch(selectedCategoryProvider);
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(isDark),

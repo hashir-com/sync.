@@ -6,6 +6,7 @@ import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import '../../domain/entities/event_entity.dart';
+import 'package:go_router/go_router.dart';
 
 class EventDetailScreen extends ConsumerWidget {
   final EventEntity event;
@@ -20,7 +21,6 @@ class EventDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.getBackground(isDark),
       body: CustomScrollView(
         slivers: [
-          // Custom App Bar with Image
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
@@ -78,7 +78,6 @@ class EventDetailScreen extends ConsumerWidget {
                         color: AppColors.getTextSecondary(isDark),
                       ),
                     ),
-                  // Gradient overlay
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -95,24 +94,19 @@ class EventDetailScreen extends ConsumerWidget {
               ),
             ),
           ),
-
-          // Event Content
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(AppSizes.paddingXl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and Category
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           event.title,
                           style: AppTextStyles.headingMedium(isDark: isDark)
-                              .copyWith(
-                            fontSize: AppSizes.fontDisplay3,
-                          ),
+                              .copyWith(fontSize: AppSizes.fontDisplay3),
                         ),
                       ),
                       Container(
@@ -122,9 +116,7 @@ class EventDetailScreen extends ConsumerWidget {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.getPrimary(isDark).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusXl,
-                          ),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXl),
                         ),
                         child: Text(
                           event.category,
@@ -138,14 +130,11 @@ class EventDetailScreen extends ConsumerWidget {
                     ],
                   ),
                   SizedBox(height: AppSizes.spacingLarge),
-
-                  // Organizer Info
                   Row(
                     children: [
                       CircleAvatar(
                         radius: AppSizes.avatarSmall / 2,
-                        backgroundColor:
-                            AppColors.getPrimary(isDark).withOpacity(0.1),
+                        backgroundColor: AppColors.getPrimary(isDark).withOpacity(0.1),
                         child: Icon(
                           Icons.person_rounded,
                           color: AppColors.getPrimary(isDark),
@@ -169,8 +158,6 @@ class EventDetailScreen extends ConsumerWidget {
                     ],
                   ),
                   SizedBox(height: AppSizes.spacingXxl),
-
-                  // Event Details Cards
                   _buildDetailCard(
                     context,
                     isDark,
@@ -179,7 +166,6 @@ class EventDetailScreen extends ConsumerWidget {
                     '${DateFormat('EEEE, MMMM d, y').format(event.startTime)}\n${DateFormat('h:mm a').format(event.startTime)} - ${DateFormat('h:mm a').format(event.endTime)}',
                   ),
                   SizedBox(height: AppSizes.spacingLarge),
-
                   _buildDetailCard(
                     context,
                     isDark,
@@ -188,7 +174,6 @@ class EventDetailScreen extends ConsumerWidget {
                     event.location,
                   ),
                   SizedBox(height: AppSizes.spacingLarge),
-
                   _buildDetailCard(
                     context,
                     isDark,
@@ -197,71 +182,41 @@ class EventDetailScreen extends ConsumerWidget {
                     '${event.attendees.length} / ${event.maxAttendees == 0 ? '∞' : event.maxAttendees}',
                   ),
                   SizedBox(height: AppSizes.spacingLarge),
-
-                  if (event.ticketPrice != null && event.ticketPrice! > 0) ...[
+                  if (event.categoryPrices.values.any((price) => price > 0)) ...[
                     _buildDetailCard(
                       context,
                       isDark,
                       Icons.confirmation_number_rounded,
                       'Price',
-                      'Starting From ₹${event.ticketPrice!.toStringAsFixed(2)}',
+                      'Starting From ₹${event.categoryPrices.values.where((price) => price > 0).reduce((a, b) => a < b ? a : b).toStringAsFixed(2)}',
                     ),
                     SizedBox(height: AppSizes.spacingLarge),
                   ],
-
-                  // Description
                   Text(
                     'About this event',
-                    style: AppTextStyles.headingSmall(isDark: isDark).copyWith(
-                      fontSize: AppSizes.fontHeadline2,
-                    ),
+                    style: AppTextStyles.headingSmall(isDark: isDark).copyWith(fontSize: AppSizes.fontHeadline2),
                   ),
                   SizedBox(height: AppSizes.spacingMedium),
                   Text(
                     event.description,
-                    style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
-                      height: 1.5,
-                    ),
+                    style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(height: 1.5),
                   ),
                   SizedBox(height: AppSizes.spacingXxxl),
-
-                  // Join Event Button
                   SizedBox(
                     width: double.infinity,
                     height: AppSizes.buttonHeightLarge,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implement join event functionality
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Join event functionality coming soon!',
-                              style: AppTextStyles.bodyMedium(isDark: true)
-                                  .copyWith(color: Colors.white),
-                            ),
-                            backgroundColor: AppColors.getInfo(isDark),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.radiusSmall,
-                              ),
-                            ),
-                            margin: EdgeInsets.all(AppSizes.paddingLarge),
-                          ),
-                        );
-                      },
+                      onPressed: () => context.push('/book/${event.id}'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.getPrimary(isDark),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusLarge,
-                          ),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
                         ),
                         elevation: 0,
                       ),
                       child: Text(
-                        'JOIN EVENT',
+                        'Book Tickets',
                         style: AppTextStyles.button(isDark: isDark).copyWith(
                           color: Colors.white,
                           fontSize: AppSizes.fontLarge,
@@ -318,16 +273,12 @@ class EventDetailScreen extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: AppSizes.spacingXs),
                 Text(
                   value,
-                  style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),

@@ -7,6 +7,7 @@ import 'package:sync_event/features/auth/presentation/screens/login_screen.dart'
 import 'package:sync_event/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
+import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/edit_event/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
@@ -17,9 +18,10 @@ import 'package:sync_event/features/events/presentation/Screens/my_events.dart';
 import 'package:sync_event/features/home/screen/home.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
-import 'package:sync_event/features/splash/presentation/splash_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart';
 import 'package:sync_event/features/Rootnavbar/rootshell.dart';
+import 'package:sync_event/features/splash/presentation/splash_screen.dart';
+import 'package:sync_event/features/wallet/presentation/screens/wallet_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -27,7 +29,6 @@ final GoRouter appRouter = GoRouter(
     final user = FirebaseAuth.instance.currentUser;
     final isLoggedIn = user != null;
 
-    // List of public routes (no auth required)
     final publicRoutes = [
       '/',
       '/onboarding',
@@ -39,17 +40,13 @@ final GoRouter appRouter = GoRouter(
     ];
     final isPublicRoute = publicRoutes.contains(state.matchedLocation);
 
-    // If user is logged in and trying to access public routes, redirect to home
     if (isLoggedIn && isPublicRoute) {
       return '/root';
     }
-
-    // If user is not logged in and trying to access protected routes
     if (!isLoggedIn && !isPublicRoute) {
       return '/login';
     }
-
-    return null; // No redirect needed
+    return null;
   },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
@@ -72,7 +69,6 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
-
     GoRoute(path: '/root', builder: (context, state) => const RootShell()),
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     GoRoute(
@@ -87,24 +83,20 @@ final GoRouter appRouter = GoRouter(
       path: '/otp',
       builder: (context, state) {
         final extra = state.extra as Map<String, dynamic>?;
-
         if (extra == null) {
           return const Scaffold(
             body: Center(child: Text('No phone number provided')),
           );
         }
-
         final phoneNumber = extra['phoneNumber'] as String;
         final phoneAuthNotifier =
             extra['phoneAuthNotifier'] as PhoneAuthNotifier;
-
         return OtpVerificationScreen(
           phoneNumber: phoneNumber,
           phoneAuthNotifier: phoneAuthNotifier,
         );
       },
     ),
-
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfileScreen(),
@@ -121,13 +113,12 @@ final GoRouter appRouter = GoRouter(
       path: '/location-picker',
       builder: (context, state) => const LocationPickerScreen(),
     ),
-
     GoRoute(path: '/events', builder: (context, state) => const EventsScreen()),
-
     GoRoute(
       path: '/my-events',
       builder: (context, state) => const MyEventsScreen(),
     ),
+    GoRoute(path: '/wallet', builder: (context, state) => const WalletScreen()),
     GoRoute(
       path: '/edit-event',
       builder: (context, state) {
@@ -146,12 +137,10 @@ final GoRouter appRouter = GoRouter(
             const begin = Offset(0.0, 1.0);
             const end = Offset.zero;
             const curve = Curves.easeInOutCubic;
-
             var tween = Tween(
               begin: begin,
               end: end,
             ).chain(CurveTween(curve: curve));
-
             return SlideTransition(
               position: animation.drive(tween),
               child: FadeTransition(opacity: animation, child: child),
@@ -159,6 +148,12 @@ final GoRouter appRouter = GoRouter(
           },
         );
       },
+    ),
+    GoRoute(
+      path: '/book/:eventId',
+      builder: (context, state) => BookingScreen(
+        eventId: state.pathParameters['eventId']!,
+      ), // Fixed to pathParameters
     ),
   ],
 );

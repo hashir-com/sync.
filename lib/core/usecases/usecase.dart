@@ -16,3 +16,17 @@ class NoParams extends Equatable {
   @override
   List<Object> get props => [];
 }
+
+
+
+
+abstract class UseCases<Type, Params> {
+  Future<Either<Failure, Type>> call(Params params);
+}
+
+// Define Params class
+class Params {
+  final String userId;
+
+  Params({required this.userId});
+}

@@ -1,4 +1,3 @@
-// lib/core/di/injection_container.dart
 import 'package:get_it/get_it.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,6 +19,13 @@ import 'package:sync_event/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/signup_with_email_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/verify_phone_number_usecase.dart';
+import 'package:sync_event/features/bookings/data/datasources/booking_remote_datasource.dart';
+import 'package:sync_event/features/bookings/data/repositories/booking_repository_impl.dart';
+import 'package:sync_event/features/bookings/domain/repositories/booking_repositories.dart';
+import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart'; // Added
+import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_usecase.dart';
 
 // Events
 import 'package:sync_event/features/events/data/datasources/event_local_datasource.dart';
@@ -39,6 +45,10 @@ import 'package:sync_event/features/profile/data/repositories/profile_repository
 import 'package:sync_event/features/profile/domain/repositories/profile_repository.dart';
 import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
+import 'package:sync_event/features/wallet/data/datasources/wallet_remote_datasource.dart';
+import 'package:sync_event/features/wallet/data/repositories/wallet_repository_impl.dart';
+import 'package:sync_event/features/wallet/domain/repositories/wallet_repositories.dart';
+import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
 
 import '../../features/events/domain/usecases/delete_event_usecase.dart';
 
@@ -59,6 +69,8 @@ Future<void> configureDependencies() async {
   _initAuth();
   _initProfile();
   _initEvents();
+  _initBooking();
+  _initWallet();
 }
 
 void _initAuth() {
@@ -172,9 +184,57 @@ void _initEvents() {
   sl.registerLazySingleton<JoinEventUseCase>(
     () => JoinEventUseCase(sl<EventRepository>()),
   );
+  sl.registerLazySingleton(() => GetUserEventsUseCase(sl<EventRepository>()));
+  sl.registerLazySingleton(() => UpdateEventUseCase(sl<EventRepository>()));
+  sl.registerLazySingleton(() => DeleteEventUseCase(sl<EventRepository>()));
+}
 
-  // Add these registrations
-sl.registerLazySingleton(() => GetUserEventsUseCase(sl<EventRepository>()));
-sl.registerLazySingleton(() => UpdateEventUseCase(sl<EventRepository>()));
-sl.registerLazySingleton(() => DeleteEventUseCase(sl<EventRepository>()));
+void _initBooking() {
+  // Data sources
+  sl.registerLazySingleton<BookingRemoteDataSource>(
+    () => BookingRemoteDataSourceImpl(firestore: sl<FirebaseFirestore>()),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<BookingRepository>(
+    () => BookingRepositoryImpl(
+      remoteDataSource: sl<BookingRemoteDataSource>(),
+      networkInfo: sl<NetworkInfo>(),
+      eventRepository: sl<EventRepository>(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton<BookTicketUseCase>(
+    () => BookTicketUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<CancelBookingUseCase>(
+    () => CancelBookingUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<RefundToRazorpayUseCase>(
+    () => RefundToRazorpayUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<GetUserBookingsUseCase>(
+    () => GetUserBookingsUseCase(sl<BookingRepository>()), // Added registration
+  );
+}
+
+void _initWallet() {
+  // Data sources
+  sl.registerLazySingleton<WalletRemoteDataSource>(
+    () => WalletRemoteDataSourceImpl(firestore: sl<FirebaseFirestore>()),
+  );
+
+  // Repository
+  sl.registerLazySingleton<WalletRepository>(
+    () => WalletRepositoryImpl(
+      remoteDataSource: sl<WalletRemoteDataSource>(),
+      networkInfo: sl<NetworkInfo>(),
+    ),
+  );
+
+  // Use case
+  sl.registerLazySingleton<UpdateWalletUseCase>(
+    () => UpdateWalletUseCase(sl<WalletRepository>()),
+  );
 }

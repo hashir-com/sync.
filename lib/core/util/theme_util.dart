@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
@@ -5,9 +7,9 @@ import '../constants/app_colors.dart';
 class ThemeUtils {
   ThemeUtils._();
 
-  // =======================
-  // 🌗 BRIGHTNESS HELPERS
-  // =======================
+  
+  //BRIGHTNESS HELPERS
+  
 
   /// Returns true if current theme is dark
   static bool isDark(BuildContext context) =>
@@ -29,9 +31,9 @@ class ThemeUtils {
   static Color primaryColor(BuildContext context) =>
       AppColors.primary;
 
-  // =======================
-  // 🎨 COLOR CONTRAST HELPERS
-  // =======================
+  
+  // COLOR CONTRAST HELPERS
+  
 
   /// Returns a text color (black/white) that contrasts best with [background]
   static Color getContrastingTextColor(Color background) {
@@ -45,42 +47,42 @@ class ThemeUtils {
     return Color.lerp(a, b, t)!;
   }
 
-  // =======================
-  // 🖱️ MATERIAL STATE HELPERS
-  // =======================
+  
+  // MATERIAL STATE HELPERS
+  
 
-  /// Creates a MaterialStateProperty for button background colors
-  static MaterialStateProperty<Color?> buttonColor(
+  /// Creates a WidgetStateProperty for button background colors
+  static WidgetStateProperty<Color?> buttonColor(
     BuildContext context, {
     required Color color,
   }) {
-    return MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.disabled)) {
+    return WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.disabled)) {
         return color.withOpacity(0.5);
       }
-      if (states.contains(MaterialState.pressed)) {
+      if (states.contains(WidgetState.pressed)) {
         return color.withOpacity(0.8);
       }
       return color;
     });
   }
 
-  /// Creates a MaterialStateProperty for text/button foreground colors
-  static MaterialStateProperty<Color?> textColor(
+  /// Creates a WidgetStateProperty for text/button foreground colors
+  static WidgetStateProperty<Color?> textColor(
     BuildContext context, {
     required Color color,
   }) {
-    return MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.disabled)) {
+    return WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.disabled)) {
         return color.withOpacity(0.4);
       }
       return color;
     });
   }
 
-  // =======================
-  // 🌈 ELEVATION / SHADOW HELPERS
-  // =======================
+  
+  //  ELEVATION / SHADOW HELPERS
+  
 
   /// Returns appropriate shadow color based on current theme
   static Color shadowColor(BuildContext context) =>
