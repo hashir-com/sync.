@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
 
@@ -15,8 +18,7 @@ class EventDetailCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
 
     print('EventDetailCard: Building for ${event.title}, id=${event.id}');
     return TweenAnimationBuilder<double>(
@@ -30,30 +32,30 @@ class EventDetailCard extends ConsumerWidget {
         );
       },
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(AppSizes.paddingXl.w),
         child: Container(
           decoration: BoxDecoration(
-            color: colors.cardBackground,
-            borderRadius: BorderRadius.circular(26.r),
+            color: AppColors.getCard(isDark),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXxl.r),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow,
-                blurRadius: 12.r,
+                color: AppColors.getShadow(isDark),
+                blurRadius: AppSizes.cardElevationMedium * 3,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSizes.cardPadding.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildHeader(colors, ref),
-                SizedBox(height: 12.h),
-                _buildDescription(colors),
-                SizedBox(height: 12.h),
-                _buildFooter(colors, context, ref),
+                _buildHeader(isDark, ref),
+                SizedBox(height: AppSizes.spacingMedium.h),
+                _buildDescription(isDark),
+                SizedBox(height: AppSizes.spacingMedium.h),
+                _buildFooter(isDark, context, ref),
               ],
             ),
           ),
@@ -63,69 +65,79 @@ class EventDetailCard extends ConsumerWidget {
   }
 
   // BuildHeader: Display event image, title, and close button
-  Widget _buildHeader(AppColors colors, WidgetRef ref) {
+  Widget _buildHeader(bool isDark, WidgetRef ref) {
     return Row(
       children: [
         Hero(
           tag: event.id,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [BoxShadow(color: colors.shadow, blurRadius: 6.r)],
+              borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.getShadow(isDark),
+                  blurRadius: AppSizes.cardElevationLow * 3,
+                ),
+              ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(26.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
               child: Image.network(
                 event.imageUrl ?? 'https://via.placeholder.com/80',
-                width: 80.w,
-                height: 80.h,
+                width: AppSizes.imageSmall.w,
+                height: AppSizes.imageSmall.h,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Icon(Icons.event, size: 80.sp, color: colors.textSecondary),
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.event_rounded,
+                  size: AppSizes.imageSmall.sp,
+                  color: AppColors.getTextSecondary(isDark),
+                ),
               ),
             ),
           ),
         ),
-        SizedBox(width: 22.w),
-        Expanded(child: _buildEventTitle(colors)),
-        _buildCloseButton(colors, ref),
+        SizedBox(width: AppSizes.spacingXxl.w),
+        Expanded(child: _buildEventTitle(isDark)),
+        _buildCloseButton(isDark, ref),
       ],
     );
   }
 
   // BuildEventTitle: Display event title and category
-  Widget _buildEventTitle(AppColors colors) {
+  Widget _buildEventTitle(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           event.title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w500,
-            color: colors.textPrimary,
+          style: AppTextStyles.titleMedium(isDark: isDark).copyWith(
+            fontSize: AppSizes.fontLarge.sp,
+            fontWeight: FontWeight.w600,
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        SizedBox(height: 6.h),
+        SizedBox(height: AppSizes.spacingSmall.h),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSizes.chipPaddingHorizontal.w,
+            vertical: AppSizes.chipPaddingVertical.h,
+          ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                colors.primary.withOpacity(0.1),
-                colors.primary.withOpacity(0.2),
+                AppColors.getPrimary(isDark).withOpacity(0.1),
+                AppColors.getPrimary(isDark).withOpacity(0.2),
               ],
             ),
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
           ),
           child: Text(
             event.category,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: colors.primary,
-              fontWeight: FontWeight.w500,
+            style: AppTextStyles.labelSmall(isDark: isDark).copyWith(
+              fontSize: AppSizes.fontSmall.sp,
+              color: AppColors.getPrimary(isDark),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -134,11 +146,11 @@ class EventDetailCard extends ConsumerWidget {
   }
 
   // BuildCloseButton: Button to clear selected event and hide card
-  Widget _buildCloseButton(AppColors colors, WidgetRef ref) {
+  Widget _buildCloseButton(bool isDark, WidgetRef ref) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(30.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusRound.r),
         onTap: () {
           print(
             'EventDetailCard: Close button tapped for event ${event.title}, id=${event.id}',
@@ -146,29 +158,35 @@ class EventDetailCard extends ConsumerWidget {
           ref.read(selectedEventProvider.notifier).state = null;
           ref.invalidate(selectedEventProvider);
         },
-        splashColor: colors.primary.withOpacity(0.2),
+        splashColor: AppColors.getPrimary(isDark).withOpacity(0.2),
         child: Container(
-          padding: EdgeInsets.all(8.w),
-          child: Icon(Icons.close, size: 20.sp, color: colors.textSecondary),
+          padding: EdgeInsets.all(AppSizes.paddingSmall.w),
+          child: Icon(
+            Icons.close_rounded,
+            size: AppSizes.iconSmall.sp,
+            color: AppColors.getTextSecondary(isDark),
+          ),
         ),
       ),
     );
   }
 
   // BuildDescription: Display event description
-  Widget _buildDescription(AppColors colors) {
+  Widget _buildDescription(bool isDark) {
     return Container(
-      padding: EdgeInsets.all(10.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: colors.border, width: 1.0),
+        color: AppColors.getSurface(isDark),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+        border: Border.all(
+          color: AppColors.getBorder(isDark),
+          width: AppSizes.borderWidthThin,
+        ),
       ),
       child: Text(
         event.description,
-        style: TextStyle(
-          fontSize: 12.sp,
-          color: colors.textSecondary,
+        style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
+          fontSize: AppSizes.fontSmall.sp,
           height: 1.4,
         ),
         maxLines: 3,
@@ -178,34 +196,44 @@ class EventDetailCard extends ConsumerWidget {
   }
 
   // BuildFooter: Display attendee info and view details button
-  Widget _buildFooter(AppColors colors, BuildContext context, WidgetRef ref) {
+  Widget _buildFooter(bool isDark, BuildContext context, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildAttendeeInfo(colors),
-        _buildViewDetailsButton(colors, context, ref),
+        _buildAttendeeInfo(isDark),
+        _buildViewDetailsButton(isDark, context, ref),
       ],
     );
   }
 
   // BuildAttendeeInfo: Show current/max attendees
-  Widget _buildAttendeeInfo(AppColors colors) {
+  Widget _buildAttendeeInfo(bool isDark) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.paddingMedium.w,
+        vertical: AppSizes.paddingSmall.h,
+      ),
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.getSurface(isDark),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        border: Border.all(
+          color: AppColors.getBorder(isDark).withOpacity(0.5),
+          width: AppSizes.borderWidthThin,
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.people, size: 16.sp, color: colors.textSecondary),
-          SizedBox(width: 6.w),
+          Icon(
+            Icons.people_rounded,
+            size: AppSizes.iconSmall.sp,
+            color: AppColors.getTextSecondary(isDark),
+          ),
+          SizedBox(width: AppSizes.spacingSmall.w),
           Text(
             '${event.attendees.length}/${event.maxAttendees}',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w500,
+            style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
+              fontSize: AppSizes.fontSmall.sp,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -215,27 +243,30 @@ class EventDetailCard extends ConsumerWidget {
 
   // BuildViewDetailsButton: Navigate to event details page
   Widget _buildViewDetailsButton(
-    AppColors colors,
+    bool isDark,
     BuildContext context,
     WidgetRef ref,
   ) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXl.r),
         onTap: () {
           context.push('/event-detail', extra: event);
           print('EventDetailCard: Navigated to details for ${event.title}');
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingXl.w,
+            vertical: AppSizes.paddingMedium.h,
+          ),
           decoration: BoxDecoration(
-            color: colors.primary,
-            borderRadius: BorderRadius.circular(20.r),
+            color: AppColors.getPrimary(isDark),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXl.r),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow,
-                blurRadius: 6.r,
+                color: AppColors.getShadow(isDark),
+                blurRadius: AppSizes.cardElevationLow * 3,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -245,14 +276,18 @@ class EventDetailCard extends ConsumerWidget {
             children: [
               Text(
                 'View Details',
-                style: TextStyle(
+                style: AppTextStyles.labelLarge(isDark: false).copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  fontSize: AppSizes.fontMedium.sp,
                 ),
               ),
-              SizedBox(width: 6.w),
-              Icon(Icons.arrow_forward, color: Colors.white, size: 16.sp),
+              SizedBox(width: AppSizes.spacingSmall.w),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: AppSizes.iconSmall.sp,
+              ),
             ],
           ),
         ),

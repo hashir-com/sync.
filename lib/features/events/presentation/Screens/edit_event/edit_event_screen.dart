@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'providers/edit_event_provider.dart';
 import 'widgets/edit_event_form.dart';
@@ -33,8 +36,21 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       return result;
     } catch (e) {
       if (mounted) {
+        final isDark = ThemeUtils.isDark(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error opening location picker: $e')),
+          SnackBar(
+            content: Text(
+              'Error opening location picker: $e',
+              style: AppTextStyles.bodyMedium(isDark: true)
+                  .copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getError(isDark),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
+            margin: EdgeInsets.all(AppSizes.paddingLarge),
+          ),
         );
       }
       return null;
@@ -110,8 +126,21 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   }
 
   void _showError(String message) {
+    final isDark = ThemeUtils.isDark(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(
+          message,
+          style: AppTextStyles.bodyMedium(isDark: true)
+              .copyWith(color: Colors.white),
+        ),
+        backgroundColor: AppColors.getError(isDark),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+        ),
+        margin: EdgeInsets.all(AppSizes.paddingLarge),
+      ),
     );
   }
 
@@ -119,15 +148,23 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   Widget build(BuildContext context) {
     final formData = ref.watch(editEventFormProvider);
     final submissionState = ref.watch(editEventSubmissionProvider);
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
 
     ref.listen(editEventSubmissionProvider, (previous, next) {
       if (next.isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Event updated and submitted for review!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text(
+              'Event updated and submitted for review!',
+              style: AppTextStyles.bodyMedium(isDark: true)
+                  .copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getSuccess(isDark),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
+            margin: EdgeInsets.all(AppSizes.paddingLarge),
           ),
         );
         context.pop();
@@ -138,21 +175,31 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
     if (formData == null) {
       return Scaffold(
-        backgroundColor: colors.background,
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: AppColors.getBackground(isDark),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.getPrimary(isDark),
+          ),
+        ),
       );
     }
 
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: AppColors.getBackground(isDark),
       appBar: AppBar(
-        backgroundColor: colors.background,
+        backgroundColor: AppColors.getBackground(isDark),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: colors.textPrimary),
+          icon: Icon(
+            Icons.close_rounded,
+            color: AppColors.getTextPrimary(isDark),
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Edit Event', style: TextStyle(color: colors.textPrimary)),
+        title: Text(
+          'Edit Event',
+          style: AppTextStyles.titleLarge(isDark: isDark),
+        ),
       ),
       body: EditEventForm(
         event: widget.event,

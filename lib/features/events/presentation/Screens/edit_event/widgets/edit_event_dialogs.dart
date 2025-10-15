@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/data/models/category_model.dart';
 import '../../../providers/category_providers.dart';
 import '../providers/edit_event_provider.dart';
@@ -13,29 +16,29 @@ class EditDescriptionDialog {
     WidgetRef ref,
     EditEventFormData formData,
   ) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
     final controller = TextEditingController(text: formData.description);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: colors.cardBackground,
+        backgroundColor: AppColors.getCard(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        ),
         title: Text(
           'Event Description',
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.headingSmall(isDark: isDark),
         ),
         content: TextFormField(
           controller: controller,
           decoration: InputDecoration(
             hintText: 'Enter description...',
-            hintStyle: TextStyle(color: colors.textSecondary),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: colors.border),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             ),
           ),
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.bodyLarge(isDark: isDark),
           maxLines: 5,
           autofocus: true,
         ),
@@ -44,14 +47,27 @@ class EditDescriptionDialog {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(isDark),
+              ),
             ),
           ),
           TextButton(
             onPressed: () {
               if (controller.text.trim().isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Description cannot be empty')),
+                  SnackBar(
+                    content: Text(
+                      'Description cannot be empty',
+                      style: AppTextStyles.bodyMedium(isDark: true)
+                          .copyWith(color: Colors.white),
+                    ),
+                    backgroundColor: AppColors.getError(isDark),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -62,7 +78,13 @@ class EditDescriptionDialog {
                   );
               Navigator.pop(ctx);
             },
-            child: Text('Save', style: TextStyle(color: colors.primary)),
+            child: Text(
+              'Save',
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getPrimary(isDark),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -76,29 +98,29 @@ class EditLocationDialog {
     WidgetRef ref,
     EditEventFormData formData,
   ) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
     final controller = TextEditingController(text: formData.location);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: colors.cardBackground,
+        backgroundColor: AppColors.getCard(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        ),
         title: Text(
           'Event Location',
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.headingSmall(isDark: isDark),
         ),
         content: TextField(
           controller: controller,
           decoration: InputDecoration(
             hintText: 'Enter location',
-            hintStyle: TextStyle(color: colors.textSecondary),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: colors.border),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             ),
           ),
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.bodyLarge(isDark: isDark),
           autofocus: true,
         ),
         actions: [
@@ -106,14 +128,27 @@ class EditLocationDialog {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(isDark),
+              ),
             ),
           ),
           TextButton(
             onPressed: () {
               if (controller.text.trim().isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Location cannot be empty')),
+                  SnackBar(
+                    content: Text(
+                      'Location cannot be empty',
+                      style: AppTextStyles.bodyMedium(isDark: true)
+                          .copyWith(color: Colors.white),
+                    ),
+                    backgroundColor: AppColors.getError(isDark),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -122,7 +157,13 @@ class EditLocationDialog {
                   .updateFormData(formData.copyWith(location: controller.text));
               Navigator.pop(ctx);
             },
-            child: Text('Save', style: TextStyle(color: colors.primary)),
+            child: Text(
+              'Save',
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getPrimary(isDark),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -136,8 +177,7 @@ class EditDateTimeDialog {
     WidgetRef ref,
     EditEventFormData formData,
   ) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
 
     showDialog(
       context: context,
@@ -146,10 +186,13 @@ class EditDateTimeDialog {
           final currentFormData = ref.watch(editEventFormProvider)!;
 
           return AlertDialog(
-            backgroundColor: colors.cardBackground,
+            backgroundColor: AppColors.getCard(isDark),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+            ),
             title: Text(
               'Select Date & Time',
-              style: TextStyle(color: colors.textPrimary),
+              style: AppTextStyles.headingSmall(isDark: isDark),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -159,7 +202,10 @@ class EditDateTimeDialog {
                     await _pickDateTime(context, ref, currentFormData, true);
                     setState(() {});
                   },
-                  icon: const Icon(Icons.event),
+                  icon: Icon(
+                    Icons.event_rounded,
+                    size: AppSizes.iconSmall,
+                  ),
                   label: Text(
                     currentFormData.startTime == null
                         ? 'Pick Start Time'
@@ -168,17 +214,29 @@ class EditDateTimeDialog {
                           ).format(currentFormData.startTime!),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingLarge,
+                      vertical: AppSizes.paddingMedium,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: AppSizes.spacingMedium),
                 ElevatedButton.icon(
                   onPressed: () async {
                     if (currentFormData.startTime == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please select start time first'),
+                        SnackBar(
+                          content: Text(
+                            'Please select start time first',
+                            style: AppTextStyles.bodyMedium(isDark: true)
+                                .copyWith(color: Colors.white),
+                          ),
+                          backgroundColor: AppColors.getWarning(isDark),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppSizes.radiusSmall),
+                          ),
                         ),
                       );
                       return;
@@ -186,7 +244,10 @@ class EditDateTimeDialog {
                     await _pickDateTime(context, ref, currentFormData, false);
                     setState(() {});
                   },
-                  icon: const Icon(Icons.event_available),
+                  icon: Icon(
+                    Icons.event_available_rounded,
+                    size: AppSizes.iconSmall,
+                  ),
                   label: Text(
                     currentFormData.endTime == null
                         ? 'Pick End Time'
@@ -195,8 +256,10 @@ class EditDateTimeDialog {
                           ).format(currentFormData.endTime!),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingLarge,
+                      vertical: AppSizes.paddingMedium,
+                    ),
                   ),
                 ),
               ],
@@ -207,8 +270,18 @@ class EditDateTimeDialog {
                   if (currentFormData.startTime == null ||
                       currentFormData.endTime == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select both start and end time'),
+                      SnackBar(
+                        content: Text(
+                          'Please select both start and end time',
+                          style: AppTextStyles.bodyMedium(isDark: true)
+                              .copyWith(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.getWarning(isDark),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.radiusSmall),
+                        ),
                       ),
                     );
                     return;
@@ -217,15 +290,31 @@ class EditDateTimeDialog {
                     currentFormData.endTime!,
                   )) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('End time must be after start time'),
+                      SnackBar(
+                        content: Text(
+                          'End time must be after start time',
+                          style: AppTextStyles.bodyMedium(isDark: true)
+                              .copyWith(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.getError(isDark),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.radiusSmall),
+                        ),
                       ),
                     );
                     return;
                   }
                   Navigator.pop(dialogContext);
                 },
-                child: Text('Done', style: TextStyle(color: colors.primary)),
+                child: Text(
+                  'Done',
+                  style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                    color: AppColors.getPrimary(isDark),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           );
@@ -286,8 +375,7 @@ class EditCapacityDialog {
     EditEventFormData formData,
     int minAttendees,
   ) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
     final controller = TextEditingController(
       text: formData.maxAttendees.toString(),
     );
@@ -295,10 +383,13 @@ class EditCapacityDialog {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: colors.cardBackground,
+        backgroundColor: AppColors.getCard(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        ),
         title: Text(
           'Max Attendees',
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.headingSmall(isDark: isDark),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -308,19 +399,17 @@ class EditCapacityDialog {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 hintText: 'Enter maximum attendees',
-                hintStyle: TextStyle(color: colors.textSecondary),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colors.border),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                 ),
               ),
-              style: TextStyle(color: colors.textPrimary),
+              style: AppTextStyles.bodyLarge(isDark: isDark),
               autofocus: true,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSizes.spacingSmall),
             Text(
               'Minimum: $minAttendees (current attendees)',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              style: AppTextStyles.bodySmall(isDark: isDark),
             ),
           ],
         ),
@@ -329,7 +418,9 @@ class EditCapacityDialog {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(isDark),
+              ),
             ),
           ),
           TextButton(
@@ -337,7 +428,18 @@ class EditCapacityDialog {
               final value = int.tryParse(controller.text);
               if (value == null || value < minAttendees) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Must be at least $minAttendees')),
+                  SnackBar(
+                    content: Text(
+                      'Must be at least $minAttendees',
+                      style: AppTextStyles.bodyMedium(isDark: true)
+                          .copyWith(color: Colors.white),
+                    ),
+                    backgroundColor: AppColors.getError(isDark),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -346,7 +448,13 @@ class EditCapacityDialog {
                   .updateFormData(formData.copyWith(maxAttendees: value));
               Navigator.pop(ctx);
             },
-            child: Text('Save', style: TextStyle(color: colors.primary)),
+            child: Text(
+              'Save',
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getPrimary(isDark),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -360,8 +468,7 @@ class EditPriceDialog {
     WidgetRef ref,
     EditEventFormData formData,
   ) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
     final controller = TextEditingController(
       text: (formData.ticketPrice ?? 0).toString(),
     );
@@ -369,24 +476,25 @@ class EditPriceDialog {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: colors.cardBackground,
+        backgroundColor: AppColors.getCard(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        ),
         title: Text(
           'Ticket Price',
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.headingSmall(isDark: isDark),
         ),
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             hintText: 'Enter price (0 for free)',
-            hintStyle: TextStyle(color: colors.textSecondary),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: colors.border),
-            ),
             prefixText: '₹ ',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
           ),
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.bodyLarge(isDark: isDark),
           autofocus: true,
         ),
         actions: [
@@ -394,7 +502,9 @@ class EditPriceDialog {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(isDark),
+              ),
             ),
           ),
           TextButton(
@@ -402,7 +512,18 @@ class EditPriceDialog {
               final value = double.tryParse(controller.text) ?? 0;
               if (value < 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Price cannot be negative')),
+                  SnackBar(
+                    content: Text(
+                      'Price cannot be negative',
+                      style: AppTextStyles.bodyMedium(isDark: true)
+                          .copyWith(color: Colors.white),
+                    ),
+                    backgroundColor: AppColors.getError(isDark),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -411,7 +532,13 @@ class EditPriceDialog {
                   .updateFormData(formData.copyWith(ticketPrice: value));
               Navigator.pop(ctx);
             },
-            child: Text('Save', style: TextStyle(color: colors.primary)),
+            child: Text(
+              'Save',
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getPrimary(isDark),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -425,42 +552,49 @@ class EditCategoryDialog {
     WidgetRef ref,
     EditEventFormData formData,
   ) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
     final repository = ref.read(categoryRepositoryProvider);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: colors.cardBackground,
-        title: Text('Event Type', style: TextStyle(color: colors.textPrimary)),
+        backgroundColor: AppColors.getCard(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        ),
+        title: Text(
+          'Event Type',
+          style: AppTextStyles.headingSmall(isDark: isDark),
+        ),
         content: StreamBuilder<List<CategoryModel>>(
           stream: repository.getActiveCategories(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
+              return Center(
                 child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: CircularProgressIndicator(),
+                  padding: EdgeInsets.all(AppSizes.paddingXl),
+                  child: CircularProgressIndicator(
+                    color: AppColors.getPrimary(isDark),
+                  ),
                 ),
               );
             }
 
             if (snapshot.hasError) {
               return Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: EdgeInsets.all(AppSizes.paddingXl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
+                    Icon(
+                      Icons.error_outline_rounded,
+                      color: AppColors.getError(isDark),
+                      size: AppSizes.iconXxl,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSizes.spacingSmall),
                     Text(
                       'Failed to load categories',
-                      style: TextStyle(color: colors.textPrimary),
+                      style: AppTextStyles.bodyMedium(isDark: isDark),
                     ),
                   ],
                 ),
@@ -470,9 +604,12 @@ class EditCategoryDialog {
             final categories = snapshot.data ?? [];
 
             if (categories.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Text('No categories available'),
+              return Padding(
+                padding: EdgeInsets.all(AppSizes.paddingXl),
+                child: Text(
+                  'No categories available',
+                  style: AppTextStyles.bodyMedium(isDark: isDark),
+                ),
               );
             }
 
@@ -487,21 +624,21 @@ class EditCategoryDialog {
                             category.icon!.isNotEmpty) ...[
                           Text(
                             category.icon!,
-                            style: const TextStyle(fontSize: 20),
+                            style: TextStyle(fontSize: AppSizes.fontXl),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: AppSizes.spacingSmall),
                         ],
                         Expanded(
                           child: Text(
                             category.name,
-                            style: TextStyle(color: colors.textPrimary),
+                            style: AppTextStyles.bodyLarge(isDark: isDark),
                           ),
                         ),
                       ],
                     ),
                     value: category.name,
                     groupValue: formData.category,
-                    activeColor: colors.primary,
+                    activeColor: AppColors.getPrimary(isDark),
                     onChanged: (String? value) {
                       if (value != null && value.isNotEmpty) {
                         ref
@@ -521,7 +658,9 @@ class EditCategoryDialog {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(isDark),
+              ),
             ),
           ),
         ],

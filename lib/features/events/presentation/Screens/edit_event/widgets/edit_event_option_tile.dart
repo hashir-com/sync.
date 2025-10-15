@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 
 class EditEventOptionTile extends ConsumerWidget {
   final IconData icon;
@@ -22,39 +25,53 @@ class EditEventOptionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+      splashColor: AppColors.getPrimary(isDark).withOpacity(0.1),
+      highlightColor: AppColors.getPrimary(isDark).withOpacity(0.05),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingMedium,
+          vertical: AppSizes.paddingMedium,
+        ),
         decoration: BoxDecoration(
-          color: colors.surface.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.getSurface(isDark).withOpacity(0.5),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+          border: Border.all(
+            color: AppColors.getBorder(isDark).withOpacity(0.3),
+            width: AppSizes.borderWidthThin,
+          ),
         ),
         child: Row(
           children: [
+            // Icon container
             Container(
-              width: 44,
-              height: 44,
+              width: AppSizes.avatarMedium,
+              height: AppSizes.avatarMedium,
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               ),
-              child: Icon(icon, color: iconColor, size: 22),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: AppSizes.iconMedium,
+              ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: AppSizes.spacingMedium),
+
+            // Label with required indicator
             Expanded(
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       label,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 15,
+                      style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
+                        fontSize: AppSizes.fontMedium,
                         fontWeight: FontWeight.w400,
                       ),
                       maxLines: 1,
@@ -62,18 +79,23 @@ class EditEventOptionTile extends ConsumerWidget {
                     ),
                   ),
                   if (isRequired)
-                    const Text(
+                    Text(
                       ' *',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 15,
+                      style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
+                        color: AppColors.getError(isDark),
+                        fontSize: AppSizes.fontMedium,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                 ],
               ),
             ),
-            if (trailing != null) trailing!,
+
+            // Trailing widget if provided
+            if (trailing != null) ...[
+              SizedBox(width: AppSizes.spacingSmall),
+              trailing!,
+            ],
           ],
         ),
       ),

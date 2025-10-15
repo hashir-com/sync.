@@ -5,7 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import '../providers/edit_event_provider.dart';
 import '../state/edit_event_state.dart';
 import 'edit_event_option_tile.dart';
@@ -18,8 +21,7 @@ class EditTitleField extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
 
     return TextFormField(
       initialValue: formData.title,
@@ -30,17 +32,16 @@ class EditTitleField extends ConsumerWidget {
       },
       decoration: InputDecoration(
         hintText: 'Add title...',
-        hintStyle: TextStyle(
-          color: colors.textSecondary.withOpacity(0.5),
-          fontSize: 24,
+        hintStyle: AppTextStyles.headingSmall(isDark: isDark).copyWith(
+          color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+          fontSize: AppSizes.fontXxl,
           fontWeight: FontWeight.w400,
         ),
         border: InputBorder.none,
         contentPadding: EdgeInsets.zero,
       ),
-      style: TextStyle(
-        color: colors.textPrimary,
-        fontSize: 24,
+      style: AppTextStyles.headingSmall(isDark: isDark).copyWith(
+        fontSize: AppSizes.fontXxl,
         fontWeight: FontWeight.w400,
       ),
     );
@@ -54,15 +55,14 @@ class EditDescriptionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
 
     return EditEventOptionTile(
       icon: Icons.description_outlined,
       label: formData.description.isEmpty
           ? 'Add Description...'
           : formData.description,
-      iconColor: colors.textSecondary,
+      iconColor: AppColors.getTextSecondary(isDark),
       isRequired: true,
       onTap: () => EditDescriptionDialog.show(context, ref, formData),
     );
@@ -76,13 +76,14 @@ class EditCoverTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ThemeUtils.isDark(context);
     final hasImage =
         formData.newCoverImage != null || formData.existingImageUrl != null;
 
     return EditEventOptionTile(
       icon: Icons.add_photo_alternate_outlined,
       label: hasImage ? 'Cover Selected' : 'Add Cover photo',
-      iconColor: const Color(0xFF4CAF50),
+      iconColor: AppColors.success,
       isRequired: true,
       trailing: hasImage
           ? Row(
@@ -90,17 +91,20 @@ class EditCoverTile extends ConsumerWidget {
               children: [
                 if (formData.newCoverImage != null)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                     child: Image.file(
                       formData.newCoverImage!,
-                      width: 50,
-                      height: 50,
+                      width: AppSizes.avatarMedium,
+                      height: AppSizes.avatarMedium,
                       fit: BoxFit.cover,
                     ),
                   ),
-                const SizedBox(width: 8),
+                SizedBox(width: AppSizes.spacingSmall),
                 IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.getError(isDark),
+                  ),
                   onPressed: () {
                     ref
                         .read(editEventFormProvider.notifier)
@@ -108,7 +112,7 @@ class EditCoverTile extends ConsumerWidget {
                           formData.copyWith(clearCoverImage: true),
                         );
                   },
-                  iconSize: 20,
+                  iconSize: AppSizes.iconSmall,
                 ),
               ],
             )
@@ -148,11 +152,13 @@ class EditLocationTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ThemeUtils.isDark(context);
+
     return EditEventOptionTile(
       key: ValueKey(formData.location),
       icon: Icons.location_on_outlined,
       label: formData.location.isEmpty ? 'Add Location' : formData.location,
-      iconColor: const Color(0xFF5E72E4),
+      iconColor: AppColors.info,
       isRequired: true,
       onTap: () async {
         final editNotifier = ref.read(editEventFormProvider.notifier);
@@ -176,7 +182,18 @@ class EditLocationTile extends ConsumerWidget {
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error selecting location: $e')),
+                SnackBar(
+                  content: Text(
+                    'Error selecting location: $e',
+                    style: AppTextStyles.bodyMedium(isDark: true)
+                        .copyWith(color: Colors.white),
+                  ),
+                  backgroundColor: AppColors.getError(isDark),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                  ),
+                ),
               );
             }
           }
@@ -205,7 +222,7 @@ class EditDateTimeTile extends ConsumerWidget {
       label: formData.startTime == null && formData.endTime == null
           ? 'Date and Time'
           : '$startText - $endText',
-      iconColor: const Color(0xFF5E72E4),
+      iconColor: AppColors.info,
       isRequired: true,
       onTap: () => EditDateTimeDialog.show(context, ref, formData),
     );
@@ -225,11 +242,11 @@ class EditCapacityTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return EditEventOptionTile(
-      icon: Icons.people_outline,
+      icon: Icons.people_outline_rounded,
       label: formData.maxAttendees <= 0
           ? 'Max Attendees'
           : 'Max: ${formData.maxAttendees} attendees',
-      iconColor: const Color(0xFFFF9800),
+      iconColor: AppColors.warning,
       isRequired: true,
       onTap: () =>
           EditCapacityDialog.show(context, ref, formData, minAttendees),
@@ -251,7 +268,7 @@ class EditPriceTile extends ConsumerWidget {
       label: price == 0
           ? 'Free Event'
           : 'Starting from ₹${price.toStringAsFixed(2)}',
-      iconColor: const Color(0xFFFFC107),
+      iconColor: AppColors.warning,
       isRequired: true,
       onTap: () => EditPriceDialog.show(context, ref, formData),
     );
@@ -268,7 +285,7 @@ class EditCategoryTile extends ConsumerWidget {
     return EditEventOptionTile(
       icon: Icons.category_outlined,
       label: formData.category.isEmpty ? 'Event Type' : formData.category,
-      iconColor: const Color(0xFF9C27B0),
+      iconColor: AppColors.favorite,
       isRequired: true,
       onTap: () => EditCategoryDialog.show(context, ref, formData),
     );
@@ -282,8 +299,7 @@ class EditDocumentTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
     final hasDocument =
         formData.newDocument != null || formData.existingDocumentUrl != null;
 
@@ -300,58 +316,80 @@ class EditDocumentTile extends ConsumerWidget {
             ? (formData.newDocument?.path ?? formData.existingDocumentUrl)
             : 'no_doc',
       ),
-      icon: Icons.attach_file,
+      icon: Icons.attach_file_rounded,
       label: hasDocument
           ? (documentName ?? 'Document attached')
           : 'Add Document (Optional)',
-      iconColor: colors.textSecondary,
+      iconColor: AppColors.getTextSecondary(isDark),
       isRequired: false,
       trailing: hasDocument
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildDocumentPreview(context, formData, colors),
-                const SizedBox(width: 4),
-                if (formData.newDocument !=
-                    null) // Only show preview for local files
+                _buildDocumentPreview(context, formData, isDark),
+                SizedBox(width: AppSizes.spacingXs),
+                if (formData.newDocument != null)
                   IconButton(
-                    icon: Icon(Icons.visibility, color: colors.primary),
+                    icon: Icon(
+                      Icons.visibility_rounded,
+                      color: AppColors.getPrimary(isDark),
+                    ),
                     onPressed: () =>
-                        _openDocument(context, formData.newDocument!),
+                        _openDocument(context, formData.newDocument!, isDark),
                     tooltip: 'Preview document',
-                    iconSize: 20,
+                    iconSize: AppSizes.iconSmall,
                   ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(
+                    Icons.delete_rounded,
+                    color: AppColors.getError(isDark),
+                  ),
                   onPressed: () {
                     ref
                         .read(editEventFormProvider.notifier)
                         .updateFormData(formData.copyWith(clearDocument: true));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Document removed')),
+                      SnackBar(
+                        content: Text(
+                          'Document removed',
+                          style: AppTextStyles.bodyMedium(isDark: true)
+                              .copyWith(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.getSuccess(isDark),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.radiusSmall),
+                        ),
+                      ),
                     );
                   },
                   tooltip: 'Remove document',
-                  iconSize: 20,
+                  iconSize: AppSizes.iconSmall,
                 ),
               ],
             )
           : null,
       onTap: () async {
         if (hasDocument && formData.newDocument != null) {
-          // If local document exists, open it for preview
-          _openDocument(context, formData.newDocument!);
+          _openDocument(context, formData.newDocument!, isDark);
         } else if (hasDocument && formData.existingDocumentUrl != null) {
-          // If only URL exists, show message
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Document is stored online, cannot preview'),
-              backgroundColor: Colors.orange,
+            SnackBar(
+              content: Text(
+                'Document is stored online, cannot preview',
+                style: AppTextStyles.bodyMedium(isDark: true)
+                    .copyWith(color: Colors.white),
+              ),
+              backgroundColor: AppColors.getWarning(isDark),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+              ),
             ),
           );
         } else {
-          // Otherwise, pick a new document
-          await _pickDocument(context, ref);
+          await _pickDocument(context, ref, isDark);
         }
       },
     );
@@ -360,7 +398,7 @@ class EditDocumentTile extends ConsumerWidget {
   Widget _buildDocumentPreview(
     BuildContext context,
     EditEventFormData formData,
-    AppColors colors,
+    bool isDark,
   ) {
     String? path;
     if (formData.newDocument != null) {
@@ -376,40 +414,51 @@ class EditDocumentTile extends ConsumerWidget {
 
     switch (extension) {
       case 'pdf':
-        bgColor = Colors.red.shade50;
-        icon = Icons.picture_as_pdf;
-        iconColor = Colors.red;
+        bgColor = AppColors.error.withOpacity(0.1);
+        icon = Icons.picture_as_pdf_rounded;
+        iconColor = AppColors.error;
         break;
       case 'doc':
       case 'docx':
-        bgColor = Colors.blue.shade50;
-        icon = Icons.description;
-        iconColor = Colors.blue;
+        bgColor = AppColors.info.withOpacity(0.1);
+        icon = Icons.description_rounded;
+        iconColor = AppColors.info;
         break;
       default:
-        bgColor = Colors.grey.shade50;
-        icon = Icons.insert_drive_file;
-        iconColor = Colors.grey;
+        bgColor = AppColors.getDisabled(isDark).withOpacity(0.2);
+        icon = Icons.insert_drive_file_rounded;
+        iconColor = AppColors.getDisabled(isDark);
     }
 
     return GestureDetector(
       onTap: formData.newDocument != null
-          ? () => _openDocument(context, formData.newDocument!)
+          ? () => _openDocument(context, formData.newDocument!, isDark)
           : null,
       child: Container(
-        width: 50,
-        height: 50,
+        width: AppSizes.avatarMedium,
+        height: AppSizes.avatarMedium,
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          border: Border.all(
+            color: AppColors.getBorder(isDark),
+            width: AppSizes.borderWidthThin,
+          ),
         ),
-        child: Icon(icon, color: iconColor, size: 24),
+        child: Icon(
+          icon,
+          color: iconColor,
+          size: AppSizes.iconMedium,
+        ),
       ),
     );
   }
 
-  Future<void> _pickDocument(BuildContext context, WidgetRef ref) async {
+  Future<void> _pickDocument(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+  ) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'doc', 'docx'],
@@ -420,9 +469,20 @@ class EditDocumentTile extends ConsumerWidget {
         result.files.isEmpty ||
         result.files.first.path == null) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('No document selected')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No document selected',
+              style: AppTextStyles.bodyMedium(isDark: true)
+                  .copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getWarning(isDark),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
+          ),
+        );
       }
       return;
     }
@@ -432,7 +492,18 @@ class EditDocumentTile extends ConsumerWidget {
     if (!await selectedFile.exists()) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Selected file not accessible')),
+          SnackBar(
+            content: Text(
+              'Selected file not accessible',
+              style: AppTextStyles.bodyMedium(isDark: true)
+                  .copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getError(isDark),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
+          ),
         );
       }
       return;
@@ -444,12 +515,27 @@ class EditDocumentTile extends ConsumerWidget {
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Document selected successfully')),
+        SnackBar(
+          content: Text(
+            'Document selected successfully',
+            style: AppTextStyles.bodyMedium(isDark: true)
+                .copyWith(color: Colors.white),
+          ),
+          backgroundColor: AppColors.getSuccess(isDark),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          ),
+        ),
       );
     }
   }
 
-  Future<void> _openDocument(BuildContext context, File file) async {
+  Future<void> _openDocument(
+    BuildContext context,
+    File file,
+    bool isDark,
+  ) async {
     try {
       final result = await OpenFile.open(file.path);
 
@@ -457,8 +543,16 @@ class EditDocumentTile extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result.message),
-              backgroundColor: Colors.orange,
+              content: Text(
+                result.message,
+                style: AppTextStyles.bodyMedium(isDark: true)
+                    .copyWith(color: Colors.white),
+              ),
+              backgroundColor: AppColors.getWarning(isDark),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+              ),
             ),
           );
         }
@@ -467,8 +561,16 @@ class EditDocumentTile extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error opening document: $e'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Error opening document: $e',
+              style: AppTextStyles.bodyMedium(isDark: true)
+                  .copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getError(isDark),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
           ),
         );
       }
