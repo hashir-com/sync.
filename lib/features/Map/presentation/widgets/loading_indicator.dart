@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
 
 class LoadingIndicatorWidget extends ConsumerWidget {
@@ -11,7 +14,6 @@ class LoadingIndicatorWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoading = ref.watch(isLoadingMarkersProvider);
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -25,14 +27,17 @@ class LoadingIndicatorWidget extends ConsumerWidget {
                 return Transform.scale(scale: value, child: child);
               },
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 14.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingXxl.w,
+                  vertical: AppSizes.paddingMedium + 2.h,
+                ),
                 decoration: BoxDecoration(
-                  color: colors.primary,
-                  borderRadius: BorderRadius.circular(30.r),
+                  color: AppColors.getPrimary(isDark),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound.r),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow,
-                      blurRadius: 8.r,
+                      color: AppColors.getShadow(isDark),
+                      blurRadius: AppSizes.cardElevationHigh.r,
                       offset: const Offset(0, 2),
                     ),
                   ],
@@ -41,20 +46,19 @@ class LoadingIndicatorWidget extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 18.w,
-                      height: 18.h,
+                      width: AppSizes.iconSmall - 2.w,
+                      height: AppSizes.iconSmall - 2.h,
                       child: const CircularProgressIndicator(
                         strokeWidth: 2.5,
                         valueColor: AlwaysStoppedAnimation(Colors.white),
                       ),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: AppSizes.spacingMedium.w),
                     Text(
                       'Loading markers...',
-                      style: TextStyle(
+                      style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14.sp,
+                        fontSize: AppSizes.fontMedium.sp,
                       ),
                     ),
                   ],

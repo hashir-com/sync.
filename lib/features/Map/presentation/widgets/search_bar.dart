@@ -4,7 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
 
 class SearchBarWidget extends ConsumerStatefulWidget {
@@ -27,7 +30,6 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
   @override
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
     final query = ref.watch(searchQueryProvider);
 
     return TweenAnimationBuilder<double>(
@@ -43,27 +45,27 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
       child: Row(
         children: [
           Expanded(
-            child: _buildSearchField(colors, query),
+            child: _buildSearchField(isDark, query),
           ),
-          SizedBox(width: 12.w),
-          _buildLocateButton(colors),
+          SizedBox(width: AppSizes.spacingMedium.w),
+          _buildLocateButton(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildSearchField(AppColors colors, String query) {
+  Widget _buildSearchField(bool isDark, String query) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: colors.cardBackground,
-        borderRadius: BorderRadius.circular(30.r),
+        color: AppColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound.r),
         boxShadow: [
           BoxShadow(
             color: query.isNotEmpty
-                ? colors.primary.withOpacity(0.3)
-                : colors.shadow,
-            blurRadius: query.isNotEmpty ? 15.r : 10.r,
+                ? AppColors.getPrimary(isDark).withOpacity(0.3)
+                : AppColors.getShadow(isDark),
+            blurRadius: query.isNotEmpty ? 15.r : AppSizes.cardElevationMedium.r,
             offset: const Offset(0, 4),
             spreadRadius: query.isNotEmpty ? 2 : 0,
           ),
@@ -72,36 +74,46 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
       child: TextField(
         controller: widget.controller,
         focusNode: widget.focusNode,
-        style: TextStyle(
-          color: colors.textPrimary,
-          fontSize: 15.sp,
+        style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
+          fontSize: AppSizes.fontLarge - 1.sp,
           fontWeight: FontWeight.w500,
         ),
-        cursorColor: colors.primary,
+        cursorColor: AppColors.getPrimary(isDark),
         decoration: InputDecoration(
           hintText: 'Search events...',
-          hintStyle: TextStyle(
-            color: colors.textSecondary,
-            fontSize: 15.sp,
+          hintStyle: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
+            fontSize: AppSizes.fontLarge - 1.sp,
             fontWeight: FontWeight.w400,
+            color: AppColors.getTextSecondary(isDark),
           ),
           prefixIcon: AnimatedRotation(
             duration: const Duration(milliseconds: 300),
             turns: query.isNotEmpty ? 0.5 : 0,
-            child: Icon(Icons.search, color: colors.textSecondary, size: 22.sp),
+            child: Icon(
+              Icons.search,
+              color: AppColors.getTextSecondary(isDark),
+              size: AppSizes.iconSmall + 2.sp,
+            ),
           ),
-          suffixIcon: query.isNotEmpty ? _buildClearButton(colors) : null,
+          suffixIcon: query.isNotEmpty ? _buildClearButton(isDark) : null,
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingXl.w,
+            vertical: AppSizes.paddingLarge - 1.h,
+          ),
         ),
         onChanged: _onSearchChanged,
       ),
     );
   }
 
-  Widget _buildClearButton(AppColors colors) {
+  Widget _buildClearButton(bool isDark) {
     return IconButton(
-      icon: Icon(Icons.clear, color: colors.textSecondary, size: 22.sp),
+      icon: Icon(
+        Icons.clear,
+        color: AppColors.getTextSecondary(isDark),
+        size: AppSizes.iconSmall + 2.sp,
+      ),
       onPressed: () {
         widget.controller.clear();
         ref.read(searchQueryProvider.notifier).state = '';
@@ -111,15 +123,15 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
     );
   }
 
-  Widget _buildLocateButton(AppColors colors) {
+  Widget _buildLocateButton(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: colors.cardBackground,
+        color: AppColors.getCard(isDark),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: colors.primary.withOpacity(0.2),
-            blurRadius: 10.r,
+            color: AppColors.getPrimary(isDark).withOpacity(0.2),
+            blurRadius: AppSizes.cardElevationMedium.r,
             offset: const Offset(0, 4),
           ),
         ],
@@ -127,11 +139,15 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(50),
+          borderRadius: BorderRadius.circular(AppSizes.radiusRound),
           onTap: widget.onLocateTap,
           child: Padding(
-            padding: EdgeInsets.all(12.w),
-            child: Icon(Icons.my_location, color: colors.primary, size: 24.sp),
+            padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+            child: Icon(
+              Icons.my_location,
+              color: AppColors.getPrimary(isDark),
+              size: AppSizes.iconMedium.sp,
+            ),
           ),
         ),
       ),

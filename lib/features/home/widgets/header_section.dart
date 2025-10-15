@@ -6,25 +6,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/constants/app_theme.dart';
 
-class HeaderSection extends ConsumerStatefulWidget {
-  const HeaderSection({super.key});
+// ============================================
+// Providers for Location State
+// ============================================
 
-  @override
-  ConsumerState<HeaderSection> createState() => _HeaderSectionState();
-}
+final locationAddressProvider = StateProvider<String>(
+  (ref) => "Fetching location...",
+);
+final locationLoadingProvider = StateProvider<bool>((ref) => true);
 
-class _HeaderSectionState extends ConsumerState<HeaderSection> {
-  String _currentAddress = "Fetching location...";
-  bool _isLoading = true;
-  StreamSubscription<ServiceStatus>? _serviceStatusStream;
+// ============================================
+// Location Service Notifier
+// ============================================
 
-  @override
-  void initState() {
-    super.initState();
+class LocationNotifier extends StateNotifier<AsyncValue<String>> {
+  LocationNotifier() : super(const AsyncValue.loading()) {
     _getCurrentLocation();
     _listenToServiceStatus();
   }
+
+  StreamSubscription<ServiceStatus>? _serviceStatusStream;
 
   @override
   void dispose() {
@@ -32,30 +39,22 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
     super.dispose();
   }
 
-  // Watch for changes in location service (ON/OFF)
   void _listenToServiceStatus() {
     _serviceStatusStream = Geolocator.getServiceStatusStream().listen((
       ServiceStatus status,
     ) {
       if (status == ServiceStatus.enabled) {
-        _getCurrentLocation(); // Re-fetch when user turns GPS ON
+        _getCurrentLocation();
       }
     });
   }
 
-  //  Get current position
   Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isLoading = true;
-      _currentAddress = "Fetching location...";
-    });
+    state = const AsyncValue.loading();
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() {
-        _isLoading = false;
-        _currentAddress = "Location services disabled";
-      });
+      state = const AsyncValue.data("Location services disabled");
       return;
     }
 
@@ -63,19 +62,13 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        setState(() {
-          _isLoading = false;
-          _currentAddress = "Permission denied";
-        });
+        state = const AsyncValue.data("Permission denied");
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      setState(() {
-        _isLoading = false;
-        _currentAddress = "Permission permanently denied";
-      });
+      state = const AsyncValue.data("Permission permanently denied");
       return;
     }
 
@@ -85,14 +78,10 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
       );
       await _getAddressFromLatLng(position);
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _currentAddress = "Error fetching location";
-      });
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
-  //  Convert coordinates to readable address
   Future<void> _getAddressFromLatLng(Position position) async {
     try {
       final placemarks = await placemarkFromCoordinates(
@@ -100,147 +89,207 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
         position.longitude,
       );
       final place = placemarks.first;
-
-      setState(() {
-        _isLoading = false;
-        _currentAddress =
-            "${place.locality ?? 'Unknown'}, ${place.country ?? ''}";
-      });
+      state = AsyncValue.data(
+        "${place.locality ?? 'Unknown'}, ${place.country ?? ''}",
+      );
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _currentAddress = "Error fetching location";
-      });
+      state = const AsyncValue.data("Error fetching location");
     }
   }
 
+  void refresh() => _getCurrentLocation();
+}
+
+final locationNotifierProvider =
+    StateNotifierProvider<LocationNotifier, AsyncValue<String>>((ref) {
+      return LocationNotifier();
+    });
+
+// ============================================
+// Header Section Widget
+// ============================================
+
+class HeaderSection extends ConsumerWidget {
+  const HeaderSection({super.key});
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(themeProvider);
+    final locationState = ref.watch(locationNotifierProvider);
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF5E72E4),
+      decoration: BoxDecoration(
+        color: AppColors.getPrimary(isDark),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
+          bottomLeft: Radius.circular(AppSizes.radiusXxl.r + 12),
+          bottomRight: Radius.circular(AppSizes.radiusXxl.r + 12),
         ),
       ),
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 46.h, 20.w, 16.h),
+            padding: EdgeInsets.fromLTRB(
+              AppSizes.paddingXl.w,
+              46.h,
+              AppSizes.paddingXl.w,
+              AppSizes.paddingLarge.h,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
                   onPressed: () => Scaffold.of(context).openDrawer(),
-                  icon: const Icon(Icons.menu, color: Colors.white),
-                ),
-                Column(
-                  children: [
-                    const Text(
-                      'Current Location',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                    _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            _currentAddress,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                  ],
-                ),
-                Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_outlined,
+                  icon: Icon(
+                    Icons.menu,
                     color: Colors.white,
-                    size: 24,
+                    size: AppSizes.iconMedium,
                   ),
                 ),
+                _buildLocationDisplay(locationState, isDark),
+                _buildNotificationIcon(isDark),
               ],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
-            child: Container(
+          _buildSearchBar(isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationDisplay(AsyncValue<String> locationState, bool isDark) {
+    return Column(
+      children: [
+        Text(
+          'Current Location',
+          style: AppTextStyles.labelSmall(
+            isDark: false,
+          ).copyWith(color: Colors.white70),
+        ),
+        locationState.when(
+          data: (address) => Text(
+            address,
+            style: AppTextStyles.bodyMedium(isDark: false).copyWith(
+              color: Colors.white,
+              fontSize: AppSizes.fontMedium - 1.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          loading: () => _buildLocationShimmer(),
+          error: (_, __) => Text(
+            "Error fetching location",
+            style: AppTextStyles.bodyMedium(isDark: false).copyWith(
+              color: Colors.white,
+              fontSize: AppSizes.fontMedium - 1.sp,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.white.withOpacity(0.3),
+      highlightColor: Colors.white.withOpacity(0.8),
+      child: Text(
+        "Location loading...",
+        style: AppTextStyles.bodySmall(
+          isDark: false,
+        ).copyWith(color: Colors.white, fontSize: AppSizes.fontMedium - 1.sp),
+      ),
+    );
+  }
+
+  Widget _buildNotificationIcon(bool isDark) {
+    return Container(
+      padding: EdgeInsets.all(AppSizes.paddingSmall.w),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+      ),
+      child: Icon(
+        Icons.notifications_outlined,
+        color: Colors.white,
+        size: AppSizes.iconMedium,
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(bool isDark) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSizes.paddingXl.w,
+        0,
+        AppSizes.paddingXl.w,
+        AppSizes.paddingXl.h,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: AppSizes.cardElevationMedium,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingLarge.w,
+              ),
+              child: Icon(
+                Icons.search,
+                color: AppColors.getTextSecondary(false),
+                size: AppSizes.iconMedium,
+              ),
+            ),
+            Expanded(
+              child: TextField(
+                
+                style: AppTextStyles.bodySmall(isDark: false),
+                decoration: InputDecoration(
+                  hintText: 'Search...',
+                  hintStyle: AppTextStyles.bodySmall(
+                    isDark: false,
+                  ).copyWith(color: AppColors.getTextSecondary(false)),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.all(AppSizes.paddingSmall.w),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingMedium.w,
+                vertical: AppSizes.paddingSmall.h,
+              ),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound.r),
               ),
               child: Row(
                 children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: const Icon(
-                      Icons.search,
-                      color: Color(0xFF747688),
-                      size: 24,
-                    ),
+                  Icon(
+                    Icons.tune,
+                    color: AppColors.getTextSecondary(false),
+                    size: AppSizes.iconSmall - 2,
                   ),
-                  const Expanded(
-                    child: TextField(
-                      style: TextStyle(color: Color(0xFF120D26)),
-                      decoration: InputDecoration(
-                        hintText: 'Search...',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF747688),
-                          fontSize: 16,
-                        ),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(8.w),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.tune, color: Color(0xFF747688), size: 18),
-                        SizedBox(width: 4),
-                        Text(
-                          'Filters',
-                          style: TextStyle(
-                            color: Color(0xFF747688),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+                  SizedBox(width: AppSizes.spacingXs),
+                  Text(
+                    'Filters',
+                    style: AppTextStyles.bodyMedium(isDark: false).copyWith(
+                      color: AppColors.getTextSecondary(false),
+                      fontSize: AppSizes.fontMedium - 1,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

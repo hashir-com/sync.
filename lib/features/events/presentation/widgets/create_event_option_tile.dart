@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
-
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
 
 class CreateEventOptionTile extends ConsumerWidget {
   final IconData icon;
@@ -24,38 +26,43 @@ class CreateEventOptionTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingMedium,
+          vertical: AppSizes.paddingMedium + 2,
+        ),
         decoration: BoxDecoration(
-          color: colors.surface.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.getSurface(isDark).withOpacity(0.5),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         ),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: AppSizes.iconXl + 4,
+              height: AppSizes.iconXl + 4,
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusSmall + 2),
               ),
-              child: Icon(icon, color: iconColor, size: 22),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: AppSizes.iconSmall + 2,
+              ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: AppSizes.spacingMedium + 2),
             Expanded(
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       label,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 15,
+                      style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
+                        fontSize: AppSizes.fontLarge - 1,
                         fontWeight: FontWeight.w400,
                       ),
                       maxLines: 1,
@@ -63,11 +70,11 @@ class CreateEventOptionTile extends ConsumerWidget {
                     ),
                   ),
                   if (isRequired)
-                    const Text(
+                    Text(
                       ' *',
                       style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 15,
+                        color: AppColors.getError(isDark),
+                        fontSize: AppSizes.fontLarge - 1,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -81,4 +88,3 @@ class CreateEventOptionTile extends ConsumerWidget {
     );
   }
 }
-

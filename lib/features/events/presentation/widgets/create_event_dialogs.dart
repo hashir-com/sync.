@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/events/data/models/category_model.dart';
 
 import '../providers/category_providers.dart';
@@ -10,29 +13,29 @@ import '../providers/event_providers.dart';
 class DescriptionDialog {
   static void show(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
     final notifier = ref.read(createEventNotifierProvider.notifier);
     final state = ref.read(createEventNotifierProvider);
     final tempController = TextEditingController(text: state.description);
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: colors.cardBackground,
+        backgroundColor: AppColors.getCard(isDark),
         title: Text(
           'Event Description',
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.titleLarge(isDark: isDark),
         ),
         content: TextFormField(
           controller: tempController,
           decoration: InputDecoration(
             hintText: 'Enter description...',
-            hintStyle: TextStyle(color: colors.textSecondary),
+            hintStyle: AppTextStyles.bodyMedium(isDark: isDark),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: colors.border),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+              borderSide: BorderSide(color: AppColors.getBorder(isDark)),
             ),
           ),
-          style: TextStyle(color: colors.textPrimary),
+          style: AppTextStyles.bodyLarge(isDark: isDark),
           maxLines: 5,
           autofocus: true,
         ),
@@ -41,7 +44,9 @@ class DescriptionDialog {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(isDark),
+              ),
             ),
           ),
           TextButton(
@@ -55,7 +60,12 @@ class DescriptionDialog {
               notifier.setDescription(tempController.text);
               Navigator.pop(context);
             },
-            child: Text('Save', style: TextStyle(color: colors.primary)),
+            child: Text(
+              'Save',
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getPrimary(isDark),
+              ),
+            ),
           ),
         ],
       ),
@@ -66,7 +76,6 @@ class DescriptionDialog {
 class MaxAttendeesDialog {
   static void show(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
     final notifier = ref.read(createEventNotifierProvider.notifier);
     final state = ref.read(createEventNotifierProvider);
     bool tempIsOpen = state.isOpenCapacity;
@@ -93,10 +102,10 @@ class MaxAttendeesDialog {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: colors.cardBackground,
+          backgroundColor: AppColors.getCard(isDark),
           title: Text(
             'Max Attendees per Category',
-            style: TextStyle(color: colors.textPrimary),
+            style: AppTextStyles.titleLarge(isDark: isDark),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -115,92 +124,41 @@ class MaxAttendeesDialog {
                           }
                         });
                       },
-                      activeColor: colors.primary,
+                      activeColor: AppColors.getPrimary(isDark),
                     ),
                     Text(
                       'Open Capacity (Unlimited)',
-                      style: TextStyle(color: colors.textPrimary),
+                      style: AppTextStyles.bodyLarge(isDark: isDark),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: AppSizes.spacingMedium),
                 if (!tempIsOpen) ...[
-                  ExpansionTile(
-                    title: Text(
-                      (state.categoryCapacities['vip'] ?? 0) > 0
-                          ? 'VIP: ${state.categoryCapacities['vip']} seats'
-                          : 'Set VIP Capacity',
-                      style: TextStyle(color: colors.textPrimary),
-                    ),
-                    collapsedBackgroundColor: colors.background,
-                    backgroundColor: colors.background,
-                    children: [
-                      TextFormField(
-                        controller: tempControllers['vip'],
-                        decoration: InputDecoration(
-                          hintText: 'Enter VIP capacity (e.g., 50)',
-                          hintStyle: TextStyle(color: colors.textSecondary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.border),
-                          ),
-                        ),
-                        style: TextStyle(color: colors.textPrimary),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ],
+                  _buildCapacityTile(
+                    isDark: isDark,
+                    title: (state.categoryCapacities['vip'] ?? 0) > 0
+                        ? 'VIP: ${state.categoryCapacities['vip']} seats'
+                        : 'Set VIP Capacity',
+                    controller: tempControllers['vip']!,
+                    hint: 'Enter VIP capacity (e.g., 50)',
                   ),
-                  const SizedBox(height: 8),
-                  ExpansionTile(
-                    title: Text(
-                      (state.categoryCapacities['premium'] ?? 0) > 0
-                          ? 'Premium: ${state.categoryCapacities['premium']} seats'
-                          : 'Set Premium Capacity',
-                      style: TextStyle(color: colors.textPrimary),
-                    ),
-                    collapsedBackgroundColor: colors.background,
-                    backgroundColor: colors.background,
-                    children: [
-                      TextFormField(
-                        controller: tempControllers['premium'],
-                        decoration: InputDecoration(
-                          hintText: 'Enter Premium capacity (e.g., 100)',
-                          hintStyle: TextStyle(color: colors.textSecondary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.border),
-                          ),
-                        ),
-                        style: TextStyle(color: colors.textPrimary),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ],
+                  SizedBox(height: AppSizes.spacingSmall),
+                  _buildCapacityTile(
+                    isDark: isDark,
+                    title: (state.categoryCapacities['premium'] ?? 0) > 0
+                        ? 'Premium: ${state.categoryCapacities['premium']} seats'
+                        : 'Set Premium Capacity',
+                    controller: tempControllers['premium']!,
+                    hint: 'Enter Premium capacity (e.g., 100)',
                   ),
-                  const SizedBox(height: 8),
-                  ExpansionTile(
-                    title: Text(
-                      (state.categoryCapacities['regular'] ?? 0) > 0
-                          ? 'Regular: ${state.categoryCapacities['regular']} seats'
-                          : 'Set Regular Capacity',
-                      style: TextStyle(color: colors.textPrimary),
-                    ),
-                    collapsedBackgroundColor: colors.background,
-                    backgroundColor: colors.background,
-                    children: [
-                      TextFormField(
-                        controller: tempControllers['regular'],
-                        decoration: InputDecoration(
-                          hintText: 'Enter Regular capacity (e.g., 200)',
-                          hintStyle: TextStyle(color: colors.textSecondary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colors.border),
-                          ),
-                        ),
-                        style: TextStyle(color: colors.textPrimary),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ],
+                  SizedBox(height: AppSizes.spacingSmall),
+                  _buildCapacityTile(
+                    isDark: isDark,
+                    title: (state.categoryCapacities['regular'] ?? 0) > 0
+                        ? 'Regular: ${state.categoryCapacities['regular']} seats'
+                        : 'Set Regular Capacity',
+                    controller: tempControllers['regular']!,
+                    hint: 'Enter Regular capacity (e.g., 200)',
                   ),
                 ],
               ],
@@ -211,31 +169,25 @@ class MaxAttendeesDialog {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 'Cancel',
-                style: TextStyle(color: colors.textSecondary),
+                style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                  color: AppColors.getTextSecondary(isDark),
+                ),
               ),
             ),
             TextButton(
               onPressed: () {
                 if (tempIsOpen) {
-                  // Explicitly set capacities to 0 when open (unlimited)
                   notifier.setCategoryCapacity('vip', 99999);
                   notifier.setCategoryCapacity('premium', 99999);
                   notifier.setCategoryCapacity('regular', 99999);
                 } else {
-                  final vip =
-                      int.tryParse(tempControllers['vip']!.text.trim()) ?? 0;
-                  final premium =
-                      int.tryParse(tempControllers['premium']!.text.trim()) ??
-                      0;
-                  final regular =
-                      int.tryParse(tempControllers['regular']!.text.trim()) ??
-                      0;
+                  final vip = int.tryParse(tempControllers['vip']!.text.trim()) ?? 0;
+                  final premium = int.tryParse(tempControllers['premium']!.text.trim()) ?? 0;
+                  final regular = int.tryParse(tempControllers['regular']!.text.trim()) ?? 0;
                   if (vip + premium + regular <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                          'Total capacity must be >0 or select open',
-                        ),
+                        content: Text('Total capacity must be >0 or select open'),
                       ),
                     );
                     return;
@@ -247,11 +199,47 @@ class MaxAttendeesDialog {
                 notifier.setOpenCapacity(tempIsOpen);
                 Navigator.pop(context);
               },
-              child: Text('Save', style: TextStyle(color: colors.primary)),
+              child: Text(
+                'Save',
+                style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                  color: AppColors.getPrimary(isDark),
+                ),
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  static Widget _buildCapacityTile({
+    required bool isDark,
+    required String title,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return ExpansionTile(
+      title: Text(title, style: AppTextStyles.bodyLarge(isDark: isDark)),
+      collapsedBackgroundColor: AppColors.getBackground(isDark),
+      backgroundColor: AppColors.getBackground(isDark),
+      children: [
+        Padding(
+          padding: EdgeInsets.all(AppSizes.paddingSmall),
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.bodyMedium(isDark: isDark),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                borderSide: BorderSide(color: AppColors.getBorder(isDark)),
+              ),
+            ),
+            style: AppTextStyles.bodyLarge(isDark: isDark),
+            keyboardType: TextInputType.number,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -259,12 +247,10 @@ class MaxAttendeesDialog {
 class PriceDialog {
   static void show(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
     final notifier = ref.read(createEventNotifierProvider.notifier);
     final state = ref.read(createEventNotifierProvider);
     bool tempIsFree = state.isFreeEvent;
 
-    // Track which categories are free individually
     final tempIsFreeCategory = {
       'vip': (state.categoryPrices['vip'] ?? 0.0) == 0.0,
       'premium': (state.categoryPrices['premium'] ?? 0.0) == 0.0,
@@ -293,10 +279,10 @@ class PriceDialog {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: colors.cardBackground,
+          backgroundColor: AppColors.getCard(isDark),
           title: Text(
             'Ticket Price per Category',
-            style: TextStyle(color: colors.textPrimary),
+            style: AppTextStyles.titleLarge(isDark: isDark),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -311,218 +297,57 @@ class PriceDialog {
                         setDialogState(() {
                           tempIsFree = v ?? false;
                           if (tempIsFree) {
-                            // Mark all categories as free
                             tempIsFreeCategory['vip'] = true;
                             tempIsFreeCategory['premium'] = true;
                             tempIsFreeCategory['regular'] = true;
                             tempControllers.forEach((_, ctrl) => ctrl.clear());
                           } else {
-                            // Unmark all categories
                             tempIsFreeCategory['vip'] = false;
                             tempIsFreeCategory['premium'] = false;
                             tempIsFreeCategory['regular'] = false;
                           }
                         });
                       },
-                      activeColor: colors.primary,
+                      activeColor: AppColors.getPrimary(isDark),
                     ),
                     Text(
                       'Mark All Categories as Free',
-                      style: TextStyle(color: colors.textPrimary),
+                      style: AppTextStyles.bodyLarge(isDark: isDark),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // VIP Category
-                ExpansionTile(
-                  title: Text(
-                    (state.categoryPrices['vip'] ?? 0.0) > 0
-                        ? 'VIP: ₹${state.categoryPrices['vip']!.toStringAsFixed(2)}'
-                        : 'Set VIP Price',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  collapsedBackgroundColor: colors.background,
-                  backgroundColor: colors.background,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: tempIsFreeCategory['vip'],
-                                onChanged: tempIsFree
-                                    ? null
-                                    : (v) {
-                                        setDialogState(() {
-                                          tempIsFreeCategory['vip'] =
-                                              v ?? false;
-                                          if (tempIsFreeCategory['vip']!) {
-                                            tempControllers['vip']!.clear();
-                                          }
-                                        });
-                                      },
-                                activeColor: colors.primary,
-                              ),
-                              Text(
-                                'Free VIP Tickets',
-                                style: TextStyle(color: colors.textPrimary),
-                              ),
-                            ],
-                          ),
-                          if (!tempIsFreeCategory['vip']!)
-                            TextFormField(
-                              controller: tempControllers['vip'],
-                              decoration: InputDecoration(
-                                hintText: 'Enter VIP price (e.g., 500)',
-                                hintStyle: TextStyle(
-                                  color: colors.textSecondary,
-                                ),
-                                prefixText: '₹ ',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: colors.border),
-                                ),
-                              ),
-                              style: TextStyle(color: colors.textPrimary),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                SizedBox(height: AppSizes.spacingMedium),
+                _buildPriceTile(
+                  isDark: isDark,
+                  state: state,
+                  category: 'vip',
+                  label: 'VIP',
+                  tempIsFree: tempIsFree,
+                  tempIsFreeCategory: tempIsFreeCategory,
+                  controller: tempControllers['vip']!,
+                  setDialogState: setDialogState,
                 ),
-                const SizedBox(height: 8),
-                // Premium Category
-                ExpansionTile(
-                  title: Text(
-                    (state.categoryPrices['premium'] ?? 0.0) > 0
-                        ? 'Premium: ₹${state.categoryPrices['premium']!.toStringAsFixed(2)}'
-                        : 'Set Premium Price',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  collapsedBackgroundColor: colors.background,
-                  backgroundColor: colors.background,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: tempIsFreeCategory['premium'],
-                                onChanged: tempIsFree
-                                    ? null
-                                    : (v) {
-                                        setDialogState(() {
-                                          tempIsFreeCategory['premium'] =
-                                              v ?? false;
-                                          if (tempIsFreeCategory['premium']!) {
-                                            tempControllers['premium']!.clear();
-                                          }
-                                        });
-                                      },
-                                activeColor: colors.primary,
-                              ),
-                              Text(
-                                'Free Premium Tickets',
-                                style: TextStyle(color: colors.textPrimary),
-                              ),
-                            ],
-                          ),
-                          if (!tempIsFreeCategory['premium']!)
-                            TextFormField(
-                              controller: tempControllers['premium'],
-                              decoration: InputDecoration(
-                                hintText: 'Enter Premium price (e.g., 200)',
-                                hintStyle: TextStyle(
-                                  color: colors.textSecondary,
-                                ),
-                                prefixText: '₹ ',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: colors.border),
-                                ),
-                              ),
-                              style: TextStyle(color: colors.textPrimary),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                SizedBox(height: AppSizes.spacingSmall),
+                _buildPriceTile(
+                  isDark: isDark,
+                  state: state,
+                  category: 'premium',
+                  label: 'Premium',
+                  tempIsFree: tempIsFree,
+                  tempIsFreeCategory: tempIsFreeCategory,
+                  controller: tempControllers['premium']!,
+                  setDialogState: setDialogState,
                 ),
-                const SizedBox(height: 8),
-                // Regular Category
-                ExpansionTile(
-                  title: Text(
-                    (state.categoryPrices['regular'] ?? 0.0) > 0
-                        ? 'Regular: ₹${state.categoryPrices['regular']!.toStringAsFixed(2)}'
-                        : 'Set Regular Price',
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  collapsedBackgroundColor: colors.background,
-                  backgroundColor: colors.background,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: tempIsFreeCategory['regular'],
-                                onChanged: tempIsFree
-                                    ? null
-                                    : (v) {
-                                        setDialogState(() {
-                                          tempIsFreeCategory['regular'] =
-                                              v ?? false;
-                                          if (tempIsFreeCategory['regular']!) {
-                                            tempControllers['regular']!.clear();
-                                          }
-                                        });
-                                      },
-                                activeColor: colors.primary,
-                              ),
-                              Text(
-                                'Free Regular Tickets',
-                                style: TextStyle(color: colors.textPrimary),
-                              ),
-                            ],
-                          ),
-                          if (!tempIsFreeCategory['regular']!)
-                            TextFormField(
-                              controller: tempControllers['regular'],
-                              decoration: InputDecoration(
-                                hintText: 'Enter Regular price (e.g., 100)',
-                                hintStyle: TextStyle(
-                                  color: colors.textSecondary,
-                                ),
-                                prefixText: '₹ ',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: colors.border),
-                                ),
-                              ),
-                              style: TextStyle(color: colors.textPrimary),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                SizedBox(height: AppSizes.spacingSmall),
+                _buildPriceTile(
+                  isDark: isDark,
+                  state: state,
+                  category: 'regular',
+                  label: 'Regular',
+                  tempIsFree: tempIsFree,
+                  tempIsFreeCategory: tempIsFreeCategory,
+                  controller: tempControllers['regular']!,
+                  setDialogState: setDialogState,
                 ),
               ],
             ),
@@ -532,94 +357,139 @@ class PriceDialog {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 'Cancel',
-                style: TextStyle(color: colors.textSecondary),
+                style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                  color: AppColors.getTextSecondary(isDark),
+                ),
               ),
             ),
             TextButton(
               onPressed: () {
-                // Parse prices based on checkbox states
                 final vip = tempIsFreeCategory['vip']!
                     ? 0.0
                     : (double.tryParse(
-                            tempControllers['vip']!.text
-                                .trim()
-                                .replaceAll('₹', '')
-                                .replaceAll(',', ''),
-                          ) ??
-                          0.0);
+                            tempControllers['vip']!.text.trim().replaceAll('₹', '').replaceAll(',', '')) ??
+                        0.0);
                 final premium = tempIsFreeCategory['premium']!
                     ? 0.0
                     : (double.tryParse(
-                            tempControllers['premium']!.text
-                                .trim()
-                                .replaceAll('₹', '')
-                                .replaceAll(',', ''),
-                          ) ??
-                          0.0);
+                            tempControllers['premium']!.text.trim().replaceAll('₹', '').replaceAll(',', '')) ??
+                        0.0);
                 final regular = tempIsFreeCategory['regular']!
                     ? 0.0
                     : (double.tryParse(
-                            tempControllers['regular']!.text
-                                .trim()
-                                .replaceAll('₹', '')
-                                .replaceAll(',', ''),
-                          ) ??
-                          0.0);
+                            tempControllers['regular']!.text.trim().replaceAll('₹', '').replaceAll(',', '')) ??
+                        0.0);
 
-                // Validate: At least one category must be configured
-                // (Either have a capacity set or be explicitly free)
-                final hasVipCapacity =
-                    (state.categoryCapacities['vip'] ?? 0) > 0;
-                final hasPremiumCapacity =
-                    (state.categoryCapacities['premium'] ?? 0) > 0;
-                final hasRegularCapacity =
-                    (state.categoryCapacities['regular'] ?? 0) > 0;
+                final hasVipCapacity = (state.categoryCapacities['vip'] ?? 0) > 0;
+                final hasPremiumCapacity = (state.categoryCapacities['premium'] ?? 0) > 0;
+                final hasRegularCapacity = (state.categoryCapacities['regular'] ?? 0) > 0;
 
-                // Check if prices are set for categories that have capacity
                 bool isValid = true;
                 String errorMessage = '';
 
                 if (hasVipCapacity && !tempIsFreeCategory['vip']! && vip <= 0) {
                   isValid = false;
-                  errorMessage =
-                      'VIP has capacity but no price set. Set price or mark as free.';
-                } else if (hasPremiumCapacity &&
-                    !tempIsFreeCategory['premium']! &&
-                    premium <= 0) {
+                  errorMessage = 'VIP has capacity but no price set. Set price or mark as free.';
+                } else if (hasPremiumCapacity && !tempIsFreeCategory['premium']! && premium <= 0) {
                   isValid = false;
-                  errorMessage =
-                      'Premium has capacity but no price set. Set price or mark as free.';
-                } else if (hasRegularCapacity &&
-                    !tempIsFreeCategory['regular']! &&
-                    regular <= 0) {
+                  errorMessage = 'Premium has capacity but no price set. Set price or mark as free.';
+                } else if (hasRegularCapacity && !tempIsFreeCategory['regular']! && regular <= 0) {
                   isValid = false;
-                  errorMessage =
-                      'Regular has capacity but no price set. Set price or mark as free.';
+                  errorMessage = 'Regular has capacity but no price set. Set price or mark as free.';
                 }
 
                 if (!isValid) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(errorMessage)));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
                   return;
                 }
 
-                // Save the prices
                 notifier.setCategoryPrice('vip', vip);
                 notifier.setCategoryPrice('premium', premium);
                 notifier.setCategoryPrice('regular', regular);
 
-                // Update the global free flag (true only if ALL categories are free)
                 final allFree = vip == 0.0 && premium == 0.0 && regular == 0.0;
                 notifier.setFree(allFree);
 
                 Navigator.pop(context);
               },
-              child: Text('Save', style: TextStyle(color: colors.primary)),
+              child: Text(
+                'Save',
+                style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                  color: AppColors.getPrimary(isDark),
+                ),
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  static Widget _buildPriceTile({
+    required bool isDark,
+    required dynamic state,
+    required String category,
+    required String label,
+    required bool tempIsFree,
+    required Map<String, bool> tempIsFreeCategory,
+    required TextEditingController controller,
+    required StateSetter setDialogState,
+  }) {
+    return ExpansionTile(
+      title: Text(
+        (state.categoryPrices[category] ?? 0.0) > 0
+            ? '$label: ₹${state.categoryPrices[category]!.toStringAsFixed(2)}'
+            : 'Set $label Price',
+        style: AppTextStyles.bodyLarge(isDark: isDark),
+      ),
+      collapsedBackgroundColor: AppColors.getBackground(isDark),
+      backgroundColor: AppColors.getBackground(isDark),
+      children: [
+        Padding(
+          padding: EdgeInsets.all(AppSizes.paddingSmall),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Checkbox(
+                    value: tempIsFreeCategory[category],
+                    onChanged: tempIsFree
+                        ? null
+                        : (v) {
+                            setDialogState(() {
+                              tempIsFreeCategory[category] = v ?? false;
+                              if (tempIsFreeCategory[category]!) {
+                                controller.clear();
+                              }
+                            });
+                          },
+                    activeColor: AppColors.getPrimary(isDark),
+                  ),
+                  Text(
+                    'Free $label Tickets',
+                    style: AppTextStyles.bodyLarge(isDark: isDark),
+                  ),
+                ],
+              ),
+              if (!tempIsFreeCategory[category]!)
+                TextFormField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    hintText: 'Enter $label price (e.g., 500)',
+                    hintStyle: AppTextStyles.bodyMedium(isDark: isDark),
+                    prefixText: '₹ ',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                      borderSide: BorderSide(color: AppColors.getBorder(isDark)),
+                    ),
+                  ),
+                  style: AppTextStyles.bodyLarge(isDark: isDark),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -627,7 +497,6 @@ class PriceDialog {
 class CategoryDialog {
   static void show(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
     final notifier = ref.read(createEventNotifierProvider.notifier);
     final state = ref.read(createEventNotifierProvider);
     final repository = ref.read(categoryRepositoryProvider);
@@ -635,36 +504,38 @@ class CategoryDialog {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: colors.cardBackground,
-        title: Text('Event Type', style: TextStyle(color: colors.textPrimary)),
+        backgroundColor: AppColors.getCard(isDark),
+        title: Text(
+          'Event Type',
+          style: AppTextStyles.titleLarge(isDark: isDark),
+        ),
         content: StreamBuilder<List<CategoryModel>>(
           stream: repository.getActiveCategories(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: CircularProgressIndicator(),
-                ),
+              return Padding(
+                padding: EdgeInsets.all(AppSizes.paddingXl),
+                child: Center(child: CircularProgressIndicator(
+                  color: AppColors.getPrimary(isDark),
+                )),
               );
             }
 
             if (snapshot.hasError) {
-              print('Error loading categories: ${snapshot.error}');
               return Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: EdgeInsets.all(AppSizes.paddingXl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
+                      color: AppColors.getError(isDark),
+                      size: AppSizes.iconXxl,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSizes.spacingSmall),
                     Text(
                       'Failed to load categories',
-                      style: TextStyle(color: colors.textPrimary),
+                      style: AppTextStyles.bodyLarge(isDark: isDark),
                     ),
                   ],
                 ),
@@ -674,9 +545,12 @@ class CategoryDialog {
             final categories = snapshot.data ?? [];
 
             if (categories.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Text('No categories available'),
+              return Padding(
+                padding: EdgeInsets.all(AppSizes.paddingXl),
+                child: Text(
+                  'No categories available',
+                  style: AppTextStyles.bodyLarge(isDark: isDark),
+                ),
               );
             }
 
@@ -687,25 +561,24 @@ class CategoryDialog {
                   return RadioListTile<String>(
                     title: Row(
                       children: [
-                        if (category.icon != null &&
-                            category.icon!.isNotEmpty) ...[
+                        if (category.icon != null && category.icon!.isNotEmpty) ...[
                           Text(
                             category.icon!,
-                            style: const TextStyle(fontSize: 20),
+                            style: TextStyle(fontSize: AppSizes.fontXl),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: AppSizes.spacingSmall),
                         ],
                         Expanded(
                           child: Text(
                             category.name,
-                            style: TextStyle(color: colors.textPrimary),
+                            style: AppTextStyles.bodyLarge(isDark: isDark),
                           ),
                         ),
                       ],
                     ),
                     value: category.name,
                     groupValue: state.category,
-                    activeColor: colors.primary,
+                    activeColor: AppColors.getPrimary(isDark),
                     onChanged: (String? value) {
                       if (value != null && value.isNotEmpty) {
                         notifier.setCategory(value);
@@ -723,7 +596,9 @@ class CategoryDialog {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+              style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(isDark),
+              ),
             ),
           ),
         ],
@@ -740,7 +615,6 @@ class DateTimeDialog {
     Future<void> Function() pickEnd,
   ) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
 
     showDialog(
       context: context,
@@ -749,10 +623,10 @@ class DateTimeDialog {
           final state = ref.watch(createEventNotifierProvider);
 
           return AlertDialog(
-            backgroundColor: colors.cardBackground,
+            backgroundColor: AppColors.getCard(isDark),
             title: Text(
               'Select Date & Time',
-              style: TextStyle(color: colors.textPrimary),
+              style: AppTextStyles.titleLarge(isDark: isDark),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -765,28 +639,28 @@ class DateTimeDialog {
                       DateTimeDialog.show(context, ref, pickStart, pickEnd);
                     }
                   },
-                  icon: const Icon(Icons.event),
+                  icon: Icon(Icons.event, size: AppSizes.iconMedium),
                   label: Text(
                     state.startTime == null
                         ? 'Pick Start Time'
-                        : DateFormat(
-                            'dd MMM yyyy, HH:mm',
-                          ).format(state.startTime!),
+                        : DateFormat('dd MMM yyyy, HH:mm').format(state.startTime!),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
+                    backgroundColor: AppColors.getPrimary(isDark),
                     foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.buttonPaddingHorizontal,
+                      vertical: AppSizes.buttonPaddingVertical,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: AppSizes.spacingMedium),
                 ElevatedButton.icon(
                   onPressed: () async {
                     if (state.startTime == null) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please select start time first'),
-                          ),
+                          const SnackBar(content: Text('Please select start time first')),
                         );
                       }
                       return;
@@ -797,17 +671,19 @@ class DateTimeDialog {
                       DateTimeDialog.show(context, ref, pickStart, pickEnd);
                     }
                   },
-                  icon: const Icon(Icons.event_available),
+                  icon: Icon(Icons.event_available, size: AppSizes.iconMedium),
                   label: Text(
                     state.endTime == null
                         ? 'Pick End Time'
-                        : DateFormat(
-                            'dd MMM yyyy, HH:mm',
-                          ).format(state.endTime!),
+                        : DateFormat('dd MMM yyyy, HH:mm').format(state.endTime!),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
+                    backgroundColor: AppColors.getPrimary(isDark),
                     foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.buttonPaddingHorizontal,
+                      vertical: AppSizes.buttonPaddingVertical,
+                    ),
                   ),
                 ),
               ],
@@ -818,11 +694,7 @@ class DateTimeDialog {
                   if (state.startTime == null || state.endTime == null) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Please select both start and end time',
-                          ),
-                        ),
+                        const SnackBar(content: Text('Please select both start and end time')),
                       );
                     }
                     return;
@@ -830,16 +702,19 @@ class DateTimeDialog {
                   if (state.startTime!.isAfter(state.endTime!)) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('End time must be after start time'),
-                        ),
+                        const SnackBar(content: Text('End time must be after start time')),
                       );
                     }
                     return;
                   }
                   Navigator.pop(dialogContext);
                 },
-                child: Text('Done', style: TextStyle(color: colors.primary)),
+                child: Text(
+                  'Done',
+                  style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                    color: AppColors.getPrimary(isDark),
+                  ),
+                ),
               ),
             ],
           );

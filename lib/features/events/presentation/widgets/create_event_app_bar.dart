@@ -1,42 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
 
 
 class CreateEventAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const CreateEventAppBar({super.key});
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+
     return AppBar(
       title: Text(
         'CREATE NEW EVENT',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: colors.textPrimary,
-          letterSpacing: 0.5,
+        style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+          letterSpacing: AppSizes.letterSpacingLabel,
         ),
       ),
       centerTitle: true,
-      backgroundColor: colors.background,
-      elevation: 0,
+      backgroundColor: AppColors.getBackground(isDark),
+      elevation: AppSizes.appBarElevation,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: colors.textPrimary),
+        icon: Icon(
+          Icons.arrow_back,
+          color: AppColors.getTextPrimary(isDark),
+          size: AppSizes.iconMedium,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.more_vert, color: colors.textPrimary),
+          icon: Icon(
+            Icons.more_vert,
+            color: AppColors.getTextPrimary(isDark),
+            size: AppSizes.iconMedium,
+          ),
           onPressed: () {},
         ),
       ],
     );
   }
 }
-
