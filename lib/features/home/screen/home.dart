@@ -59,12 +59,12 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           children: [
             const HeaderSection(),
-            CategorySection(
-              selectedCategory: selectedCategory,
-              onCategoryTap: (index) {
-                ref.read(selectedCategoryProvider.notifier).state = index;
-              },
-            ),
+            // CategorySection(
+            //   selectedCategory: selectedCategory,
+            //   onCategoryTap: (index) {
+            //     ref.read(selectedCategoryProvider.notifier).state = index;
+            //   },
+            // ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

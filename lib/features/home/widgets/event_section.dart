@@ -204,13 +204,38 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ============================================
-// Event Horizontal List Widget
+// Event Horizontal List with Smooth Transitions
 // ============================================
-class _EventHorizontalList extends StatelessWidget {
+class _EventHorizontalList extends StatefulWidget {
   final List events;
   final bool isDark;
 
   const _EventHorizontalList({required this.events, required this.isDark});
+
+  @override
+  State<_EventHorizontalList> createState() => _EventHorizontalListState();
+}
+
+class _EventHorizontalListState extends State<_EventHorizontalList> {
+  late PageController _pageController;
+  double _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.45, initialPage: 0);
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page ?? 0;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,26 +243,52 @@ class _EventHorizontalList extends StatelessWidget {
     final cardWidth = screenWidth * 0.42;
 
     return SizedBox(
-      height: cardWidth * 1.65,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
+      height: cardWidth * 1.7,
+      child: PageView.builder(
+        controller: _pageController,
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.screenPaddingHorizontal,
-        ),
-        itemCount: events.length,
+        itemCount: widget.events.length,
         itemBuilder: (context, index) {
-          return Padding(
-            padding: EdgeInsets.only(right: AppSizes.spacingMedium),
-            child: SizedBox(
-              width: cardWidth,
-              child: _AirbnbEventCard(
-                event: events[index],
-                isDark: isDark,
-                onTap: () =>
-                    context.push('/event-detail', extra: events[index]),
-              ),
-            ),
+          // Calculate scale and opacity based on scroll position
+          double scale = 1.0;
+          double opacity = 1.0;
+
+          if (_pageController.hasClients) {
+            double diff = (index - _currentPage).abs();
+
+            // Scale: cards get smaller as they move away from center
+            scale = 1.0 - (diff * 0.15).clamp(0.0, 0.3);
+
+            // Opacity: cards fade as they move away
+            opacity = 1.0 - (diff * 0.3).clamp(0.0, 0.5);
+          }
+
+          return TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            tween: Tween<double>(begin: scale, end: scale),
+            builder: (context, scale, child) {
+              return Transform.scale(
+                scale: scale,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.spacingSmall,
+                      vertical: AppSizes.spacingMedium,
+                    ),
+                    child: _AirbnbEventCard(
+                      event: widget.events[index],
+                      isDark: widget.isDark,
+                      onTap: () => context.push(
+                        '/event-detail',
+                        extra: widget.events[index],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
@@ -485,26 +536,50 @@ class _HeartBookmarkState extends State<_HeartBookmark> {
 }
 
 // ============================================
-// Nearby Events Section
+// Nearby Events Section with Smooth Transitions
 // ============================================
-class _NearbyEventsSection extends ConsumerWidget {
+class _NearbyEventsSection extends ConsumerStatefulWidget {
   final AsyncValue eventsAsync;
   final bool isDark;
 
   const _NearbyEventsSection({required this.eventsAsync, required this.isDark});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_NearbyEventsSection> createState() =>
+      _NearbyEventsSectionState();
+}
+
+class _NearbyEventsSectionState extends ConsumerState<_NearbyEventsSection> {
+  late PageController _pageController;
+  double _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.45, initialPage: 0);
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page ?? 0;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final locationState = ref.watch(locationStateProvider);
 
     if (locationState.isServiceDisabled) {
       return _LocationServiceDisabledState(
-        isDark: isDark,
+        isDark: widget.isDark,
         onEnableLocation: () async {
           final notifier = ref.read(locationStateProvider.notifier);
-          // Try to open location settings
           await notifier.openLocationSettings();
-          // Wait a bit and retry
           await Future.delayed(const Duration(seconds: 1));
           notifier.retry();
         },
@@ -513,7 +588,7 @@ class _NearbyEventsSection extends ConsumerWidget {
 
     if (locationState.isDenied) {
       return _LocationDeniedState(
-        isDark: isDark,
+        isDark: widget.isDark,
         onRetry: () async {
           final notifier = ref.read(locationStateProvider.notifier);
           await notifier.openAppSettings();
@@ -524,10 +599,10 @@ class _NearbyEventsSection extends ConsumerWidget {
     }
 
     if (locationState.isLoading || locationState.position == null) {
-      return _EventListShimmer(isDark: isDark);
+      return _EventListShimmer(isDark: widget.isDark);
     }
 
-    return eventsAsync.when(
+    return widget.eventsAsync.when(
       data: (events) {
         final nearbyEvents = events.toList();
 
@@ -551,7 +626,7 @@ class _NearbyEventsSection extends ConsumerWidget {
           return _EmptyState(
             message: 'No nearby events found',
             icon: Icons.location_off_rounded,
-            isDark: isDark,
+            isDark: widget.isDark,
           );
         }
 
@@ -559,13 +634,10 @@ class _NearbyEventsSection extends ConsumerWidget {
         final cardWidth = screenWidth * 0.42;
 
         return SizedBox(
-          height: cardWidth * 1.65,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
+          height: cardWidth * 1.7,
+          child: PageView.builder(
+            controller: _pageController,
             physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.screenPaddingHorizontal,
-            ),
             itemCount: nearbyEvents.length,
             itemBuilder: (context, index) {
               final event = nearbyEvents[index];
@@ -577,27 +649,51 @@ class _NearbyEventsSection extends ConsumerWidget {
               );
               final distanceKm = (distanceMeters / 1000).toStringAsFixed(1);
 
-              return Padding(
-                padding: EdgeInsets.only(right: AppSizes.spacingMedium),
-                child: SizedBox(
-                  width: cardWidth,
-                  child: _AirbnbEventCard(
-                    event: event,
-                    isDark: isDark,
-                    distanceKm: distanceKm,
-                    onTap: () => context.push('/event-detail', extra: event),
-                  ),
-                ),
+              // Calculate scale and opacity based on scroll position
+              double scale = 1.0;
+              double opacity = 1.0;
+
+              if (_pageController.hasClients) {
+                double diff = (index - _currentPage).abs();
+                scale = 1.0 - (diff * 0.15).clamp(0.0, 0.3);
+                opacity = 1.0 - (diff * 0.3).clamp(0.0, 0.5);
+              }
+
+              return TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                tween: Tween<double>(begin: scale, end: scale),
+                builder: (context, scale, child) {
+                  return Transform.scale(
+                    scale: scale,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSizes.spacingSmall,
+                          vertical: AppSizes.spacingMedium,
+                        ),
+                        child: _AirbnbEventCard(
+                          event: event,
+                          isDark: widget.isDark,
+                          distanceKm: distanceKm,
+                          onTap: () =>
+                              context.push('/event-detail', extra: event),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
         );
       },
-      loading: () => _EventListShimmer(isDark: isDark),
+      loading: () => _EventListShimmer(isDark: widget.isDark),
       error: (error, _) => _ErrorState(
         message: 'Failed to load nearby events',
         onRetry: () => ref.refresh(approvedEventsStreamProvider),
-        isDark: isDark,
+        isDark: widget.isDark,
       ),
     );
   }
