@@ -12,18 +12,10 @@ import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 
-// ============================================
-// Providers for Location State
-// ============================================
-
 final locationAddressProvider = StateProvider<String>(
   (ref) => "Fetching location...",
 );
 final locationLoadingProvider = StateProvider<bool>((ref) => true);
-
-// ============================================
-// Location Service Notifier
-// ============================================
 
 class LocationNotifier extends StateNotifier<AsyncValue<String>> {
   LocationNotifier() : super(const AsyncValue.loading()) {
@@ -40,9 +32,7 @@ class LocationNotifier extends StateNotifier<AsyncValue<String>> {
   }
 
   void _listenToServiceStatus() {
-    _serviceStatusStream = Geolocator.getServiceStatusStream().listen((
-      ServiceStatus status,
-    ) {
+    _serviceStatusStream = Geolocator.getServiceStatusStream().listen((status) {
       if (status == ServiceStatus.enabled) {
         _getCurrentLocation();
       }
@@ -105,10 +95,6 @@ final locationNotifierProvider =
       return LocationNotifier();
     });
 
-// ============================================
-// Header Section Widget
-// ============================================
-
 class HeaderSection extends ConsumerWidget {
   const HeaderSection({super.key});
 
@@ -125,171 +111,267 @@ class HeaderSection extends ConsumerWidget {
           bottomRight: Radius.circular(AppSizes.radiusXxl.r + 12),
         ),
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSizes.paddingXl.w,
-              46.h,
-              AppSizes.paddingXl.w,
-              AppSizes.paddingLarge.h,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                  icon: Icon(
-                    Icons.menu,
-                    color: Colors.white,
-                    size: AppSizes.iconMedium,
-                  ),
-                ),
-                _buildLocationDisplay(locationState, isDark),
-                _buildNotificationIcon(isDark),
-              ],
-            ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSizes.paddingXl.w,
+            AppSizes.paddingLarge.h,
+            AppSizes.paddingXl.w,
+            AppSizes.paddingLarge.h,
           ),
-          _buildSearchBar(isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationDisplay(AsyncValue<String> locationState, bool isDark) {
-    return Column(
-      children: [
-        Text(
-          'Current Location',
-          style: AppTextStyles.labelSmall(
-            isDark: false,
-          ).copyWith(color: Colors.white70),
-        ),
-        locationState.when(
-          data: (address) => Text(
-            address,
-            style: AppTextStyles.bodyMedium(isDark: false).copyWith(
-              color: Colors.white,
-              fontSize: AppSizes.fontMedium - 1.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          loading: () => _buildLocationShimmer(),
-          error: (_, __) => Text(
-            "Error fetching location",
-            style: AppTextStyles.bodyMedium(isDark: false).copyWith(
-              color: Colors.white,
-              fontSize: AppSizes.fontMedium - 1.sp,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLocationShimmer() {
-    return Shimmer.fromColors(
-      baseColor: Colors.white.withOpacity(0.3),
-      highlightColor: Colors.white.withOpacity(0.8),
-      child: Text(
-        "Location loading...",
-        style: AppTextStyles.bodySmall(
-          isDark: false,
-        ).copyWith(color: Colors.white, fontSize: AppSizes.fontMedium - 1.sp),
-      ),
-    );
-  }
-
-  Widget _buildNotificationIcon(bool isDark) {
-    return Container(
-      padding: EdgeInsets.all(AppSizes.paddingSmall.w),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
-      ),
-      child: Icon(
-        Icons.notifications_outlined,
-        color: Colors.white,
-        size: AppSizes.iconMedium,
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(bool isDark) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSizes.paddingXl.w,
-        0,
-        AppSizes.paddingXl.w,
-        AppSizes.paddingXl.h,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: AppSizes.cardElevationMedium,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingLarge.w,
-              ),
-              child: Icon(
-                Icons.search,
-                color: AppColors.getTextSecondary(false),
-                size: AppSizes.iconMedium,
-              ),
-            ),
-            Expanded(
-              child: TextField(
-                
-                style: AppTextStyles.bodySmall(isDark: false),
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  hintStyle: AppTextStyles.bodySmall(
-                    isDark: false,
-                  ).copyWith(color: AppColors.getTextSecondary(false)),
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.all(AppSizes.paddingSmall.w),
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingMedium.w,
-                vertical: AppSizes.paddingSmall.h,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound.r),
-              ),
-              child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top row: Drawer (left) and Notification (right)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.tune,
-                    color: AppColors.getTextSecondary(false),
-                    size: AppSizes.iconSmall - 2,
+                  _circleIcon(
+                    isDark: isDark,
+                    icon: Icons.menu_rounded,
+                    onTap: () => Scaffold.maybeOf(context)?.openDrawer(),
                   ),
-                  SizedBox(width: AppSizes.spacingXs),
-                  Text(
-                    'Filters',
-                    style: AppTextStyles.bodyMedium(isDark: false).copyWith(
-                      color: AppColors.getTextSecondary(false),
-                      fontSize: AppSizes.fontMedium - 1,
-                    ),
+                  _circleIcon(
+                    isDark: isDark,
+                    icon: Icons.notifications_outlined,
+                    onTap: () {},
                   ),
                 ],
               ),
+
+              SizedBox(height: AppSizes.spacingLarge.h),
+
+              // Location chip (neatly above search bar)
+              _LocationChip(locationState: locationState, isDark: isDark),
+
+              SizedBox(height: AppSizes.spacingMedium.h),
+
+              // Big rounded search bar with nice elevation and centered title
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 620.w),
+                  child: _SearchBar(isDark: isDark),
+                ),
+              ),
+
+              SizedBox(height: AppSizes.spacingMedium.h),
+
+              // Small elegant filter icon under the search bar
+              Center(
+                child: _circleIcon(
+                  isDark: isDark,
+                  icon: Icons.tune_rounded,
+                  onTap: () {},
+                  size: 36.w,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _circleIcon({
+    required bool isDark,
+    required IconData icon,
+    required VoidCallback onTap,
+    double? size,
+  }) {
+    final double s = size ?? 36.w;
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        width: s,
+        height: s,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.10),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
+        child: Icon(icon, size: 20.sp, color: AppColors.getTextPrimary(isDark)),
+      ),
+    );
+  }
+}
+
+class _LocationChip extends StatelessWidget {
+  const _LocationChip({required this.locationState, required this.isDark});
+
+  final AsyncValue<String> locationState;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingMedium.w,
+          vertical: (AppSizes.paddingSmall.h * 0.8),
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.getSurface(isDark),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: locationState.when(
+          data: (address) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                size: 16.sp,
+                color: AppColors.getTextPrimary(isDark),
+              ),
+              SizedBox(width: 6.w),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 260.w),
+                child: Text(
+                  address,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.getTextPrimary(isDark),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          loading: () => Shimmer.fromColors(
+            baseColor: Colors.white.withOpacity(0.3),
+            highlightColor: Colors.white.withOpacity(0.8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 16.sp,
+                  color: AppColors.getTextPrimary(isDark),
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  "Locating...",
+                  style: AppTextStyles.bodySmall(
+                    isDark: isDark,
+                  ).copyWith(color: AppColors.getTextPrimary(isDark)),
+                ),
+              ],
+            ),
+          ),
+          error: (_, __) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.location_off_outlined,
+                size: 16.sp,
+                color: AppColors.getTextPrimary(isDark),
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                "Error fetching location",
+                style: AppTextStyles.bodySmall(
+                  isDark: isDark,
+                ).copyWith(color: AppColors.getTextPrimary(isDark)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchBar extends StatefulWidget {
+  const _SearchBar({required this.isDark});
+  final bool isDark;
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppSizes.radiusXxl.r * 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 24,
+            spreadRadius: 1,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Left search icon (decorative)
+          Positioned(
+            left: 14.w,
+            child: Icon(
+              Icons.search_rounded,
+              size: AppSizes.iconLarge.sp,
+              color: AppColors.getTextSecondary(false),
+            ),
+          ),
+          // Centered text field
+          TextField(
+            controller: _controller,
+            textInputAction: TextInputAction.search,
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              hintText: "Start your search",
+              hintStyle: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
+                color: AppColors.getTextSecondary(false),
+                fontWeight: FontWeight.w700,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusXxl.r * 1.4),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingLarge.w,
+                vertical: AppSizes.paddingMedium.h + 2,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
+              color: AppColors.getTextPrimary(isDark),
+              fontWeight: FontWeight.w700,
+            ),
+            onSubmitted: (v) {},
+            onChanged: (v) {},
+          ),
+        ],
       ),
     );
   }

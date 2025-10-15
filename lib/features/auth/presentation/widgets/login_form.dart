@@ -47,7 +47,7 @@ class LoginForm extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           ),
-          margin: const EdgeInsets.all(AppSizes.paddingLarge),
+          margin:  EdgeInsets.all(AppSizes.paddingLarge),
         ),
       );
     }
@@ -88,7 +88,7 @@ class LoginForm extends ConsumerWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(
+      padding:  EdgeInsets.symmetric(
         horizontal: AppSizes.screenPaddingHorizontal,
         vertical: AppSizes.paddingXxxl,
       ),
@@ -112,13 +112,13 @@ class LoginForm extends ConsumerWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(
+             SizedBox(
               height: AppSizes.spacingXxxl + AppSizes.spacingSmall,
             ),
 
             // Sign in heading
             Text('Sign in', style: AppTextStyles.headingSmall(isDark: isDark)),
-            const SizedBox(height: AppSizes.spacingMedium),
+             SizedBox(height: AppSizes.spacingMedium),
 
             // Email field
             AuthTextField(
@@ -129,7 +129,7 @@ class LoginForm extends ConsumerWidget {
               fieldType: AuthFieldType.email,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: AppSizes.spacingLarge),
+             SizedBox(height: AppSizes.spacingLarge),
 
             // Password field
             AuthTextField(
@@ -162,7 +162,7 @@ class LoginForm extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: AppSizes.spacingSmall),
+             SizedBox(height: AppSizes.spacingSmall),
 
             // Login button
             SizedBox(
@@ -190,8 +190,8 @@ class LoginForm extends ConsumerWidget {
                               isDark: isDark,
                             ).copyWith(color: Colors.white),
                           ),
-                          const SizedBox(width: AppSizes.spacingSmall),
-                          const Icon(
+                           SizedBox(width: AppSizes.spacingSmall),
+                           Icon(
                             Icons.arrow_forward,
                             size: AppSizes.iconSmall,
                             color: Colors.white,

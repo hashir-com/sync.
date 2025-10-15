@@ -77,7 +77,7 @@ class OnboardingBottomNav extends ConsumerWidget {
               duration: const Duration(milliseconds: 300),
               child: Text(
                 title,
-                style: AppTextStyles.extraHeadingLarge(isDark: false).copyWith(
+                style: AppTextStyles.headingLarge(isDark: false).copyWith(
                   fontSize: AppSizes.fontXxxl.sp,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

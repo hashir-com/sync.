@@ -39,7 +39,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           ),
-          margin: const EdgeInsets.all(AppSizes.paddingLarge),
+          margin:  EdgeInsets.all(AppSizes.paddingLarge),
         ),
       );
     }
@@ -76,7 +76,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
+          padding: EdgeInsets.symmetric(
             horizontal: AppSizes.screenPaddingHorizontal,
             vertical: AppSizes.paddingXxxl,
           ),
@@ -89,7 +89,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                 size: AppSizes.iconXxl * 2,
                 color: AppColors.getPrimary(isDark),
               ),
-              const SizedBox(height: AppSizes.spacingXxl),
+               SizedBox(height: AppSizes.spacingXxl),
 
               // Heading
               Text(
@@ -97,7 +97,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                 style: AppTextStyles.headingMedium(isDark: isDark),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSizes.spacingLarge),
+               SizedBox(height: AppSizes.spacingLarge),
 
               // Description
               Text(
@@ -105,7 +105,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                 style: AppTextStyles.bodyMedium(isDark: isDark),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSizes.spacingXxxl),
+               SizedBox(height: AppSizes.spacingXxxl),
 
               // Email input field
               TextField(
@@ -121,7 +121,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSizes.spacingXxxl),
+               SizedBox(height: AppSizes.spacingXxxl),
 
               // Send reset link button
               SizedBox(
@@ -140,7 +140,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                       : const Text("Send Reset Link"),
                 ),
               ),
-              const SizedBox(height: AppSizes.spacingLarge),
+               SizedBox(height: AppSizes.spacingLarge),
 
               // Back to login
               TextButton(

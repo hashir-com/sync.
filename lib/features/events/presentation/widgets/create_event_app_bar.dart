@@ -10,7 +10,7 @@ class CreateEventAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const CreateEventAppBar({super.key});
 
   @override
-  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
+  Size get preferredSize =>  Size.fromHeight(AppSizes.appBarHeight);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

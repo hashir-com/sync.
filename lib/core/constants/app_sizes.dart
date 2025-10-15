@@ -1,152 +1,155 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 class AppSizes {
   // Prevent instantiation
   AppSizes._();
 
   // Spacing & Padding
-  static const double spacingXs = 4.0;
-  static const double spacingSmall = 8.0;
-  static const double spacingMedium = 12.0;
-  static const double spacingLarge = 16.0;
-  static const double spacingXl = 20.0;
-  static const double spacingXxl = 24.0;
-  static const double spacingXxxl = 32.0;
-  static const double spacingMaxl = 82.0;
+  static double get spacingXs => 4.w;
+  static double get spacingSmall => 8.w;
+  static double get spacingMedium => 12.w;
+  static double get spacingLarge => 16.w;
+  static double get spacingXl => 20.w;
+  static double get spacingXxl => 24.w;
+  static double get spacingXxxl => 32.w;
+  static double get spacingMaxl => 82.w;
 
-  static const double paddingXs = 4.0;
-  static const double paddingSmall = 8.0;
-  static const double paddingMedium = 12.0;
-  static const double paddingLarge = 16.0;
-  static const double paddingXl = 20.0;
-  static const double paddingXxl = 24.0;
-  static const double paddingXxxl = 32.0;
+  static double get paddingXs => 4.w;
+  static double get paddingSmall => 8.w;
+  static double get paddingMedium => 12.w;
+  static double get paddingLarge => 16.w;
+  static double get paddingXl => 20.w;
+  static double get paddingXxl => 24.w;
+  static double get paddingXxxl => 32.w;
 
   // Border Radius
-  static const double radiusXs = 4.0;
-  static const double radiusSmall = 8.0;
-  static const double radiusMedium = 12.0;
-  static const double radiusLarge = 16.0;
-  static const double radiusXl = 20.0;
-  static const double radiusXxl = 24.0;
-  static const double radiusSemiRound = 70.0;
-  static const double radiusRound = 100.0; // For circular elements
+  static double get radiusXs => 4.r;
+  static double get radiusSmall => 8.r;
+  static double get radiusMedium => 12.r;
+  static double get radiusLarge => 16.r;
+  static double get radiusXl => 20.r;
+  static double get radiusXxl => 24.r;
+  static double get radiusXxxl => 28.r;
+  static double get radiusSemiRound => 70.r;
+  static double get radiusRound => 100.r; // For circular elements
 
   // Button Sizes
-  static const double buttonHeightSmall = 36.0;
-  static const double buttonHeightMedium = 44.0;
-  static const double buttonHeightLarge = 52.0;
-  static const double buttonPaddingHorizontal = 24.0;
-  static const double buttonPaddingVertical = 12.0;
+  static double get buttonHeightSmall => 36.h;
+  static double get buttonHeightMedium => 44.h;
+  static double get buttonHeightLarge => 52.h;
+  static double get buttonPaddingHorizontal => 24.w;
+  static double get buttonPaddingVertical => 12.h;
 
   // Icon Sizes
-  static const double iconXs = 16.0;
-  static const double iconSmall = 20.0;
-  static const double iconMedium = 24.0;
-  static const double iconLarge = 32.0;
-  static const double iconXl = 40.0;
-  static const double iconXxl = 48.0;
+  static double get iconXs => 16.sp;
+  static double get iconSmall => 20.sp;
+  static double get iconMedium => 24.sp;
+  static double get iconLarge => 32.sp;
+  static double get iconXl => 40.sp;
+  static double get iconXxl => 48.sp;
 
   // Avatar Sizes
-  static const double avatarSmall = 32.0;
-  static const double avatarMedium = 40.0;
-  static const double avatarLarge = 50.0;
-  static const double avatarXl = 64.0;
-  static const double avatarXxl = 80.0;
+  static double get avatarSmall => 32.r;
+  static double get avatarMedium => 40.r;
+  static double get avatarLarge => 50.r;
+  static double get avatarXl => 64.r;
+  static double get avatarXxl => 80.r;
 
   // Card & Container
-  static const double cardElevationLow = 2.0;
-  static const double cardElevationMedium = 4.0;
-  static const double cardElevationHigh = 8.0;
-  static const double cardMarginHorizontal = 16.0;
-  static const double cardMarginVertical = 8.0;
-  static const double cardPadding = 16.0;
+  static double get cardElevationLow => 2.0; // Elevation remains static
+  static double get cardElevationMedium => 4.0;
+  static double get cardElevationHigh => 8.0;
+  static double get cardMarginHorizontal => 16.w;
+  static double get cardMarginVertical => 8.h;
+  static double get cardPadding => 16.w;
 
   // Input Fields
-  static const double inputHeight = 56.0;
-  static const double inputPaddingHorizontal = 16.0;
-  static const double inputPaddingVertical = 16.0;
-  static const double inputBorderWidth = 1.0;
-  static const double inputBorderWidthFocused = 2.0;
+  static double get inputHeight => 56.h;
+  static double get inputPaddingHorizontal => 16.w;
+  static double get inputPaddingVertical => 16.h;
+  static double get inputBorderWidth => 1.0; // Border width remains static
+  static double get inputBorderWidthFocused => 2.0;
 
   // Typography Sizes
-  static const double fontXs = 10.0;
-  static const double fontSmall = 12.0;
-  static const double fontMedium = 14.0;
-  static const double fontLarge = 16.0;
-  static const double fontXl = 18.0;
-  static const double fontXxl = 20.0;
-  static const double fontXxxl = 24.0;
+  static double get fontXs => 10.sp;
+  static double get fontSmall => 12.sp;
+  static double get fontMedium => 14.sp;
+  static double get fontLarge => 16.sp;
+  static double get fontXl => 18.sp;
+  static double get fontXxl => 20.sp;
+  static double get fontXxxl => 24.sp;
 
   // Display text sizes
-  static const double fontDisplay1 = 32.0;
-  static const double fontDisplay2 = 28.0;
-  static const double fontDisplay3 = 24.0;
+  static double get fontDisplay1 => 32.sp;
+  static double get fontDisplay2 => 28.sp;
+  static double get fontDisplay3 => 24.sp;
 
   // Headline sizes
-  static const double fontHeadline1 = 22.0;
-  static const double fontHeadline2 = 20.0;
-  static const double fontHeadline3 = 18.0;
+  static double get fontHeadline1 => 22.sp;
+  static double get fontHeadline2 => 20.sp;
+  static double get fontHeadline3 => 18.sp;
 
   // Letter Spacing
-  static const double letterSpacingTight = -0.5;
-  static const double letterSpacingNormal = 0.0;
-  static const double letterSpacingWide = 0.15;
-  static const double letterSpacingExtraWide = 0.25;
-  static const double letterSpacingLabel = 0.5;
+  static double get letterSpacingTight => -0.5;
+  static double get letterSpacingNormal => 0.0;
+  static double get letterSpacingWide => 0.15;
+  static double get letterSpacingExtraWide => 0.25;
+  static double get letterSpacingLabel => 0.5;
 
   // Divider & Border
-  static const double dividerThickness = 1.0;
-  static const double borderWidthThin = 1.0;
-  static const double borderWidthMedium = 1.5;
-  static const double borderWidthThick = 2.0;
+  static double get dividerThickness => 1.0; // Remains static
+  static double get borderWidthThin => 1.0;
+  static double get borderWidthMedium => 1.5;
+  static double get borderWidthThick => 2.0;
 
   // App Bar
-  static const double appBarHeight = 56.0;
-  static const double appBarElevation = 0.0;
+  static double get appBarHeight => 56.h;
+  static double get appBarElevation => 0.0; // Elevation remains static
 
   // Bottom Navigation
-  static const double bottomNavHeight = 60.0;
-  static const double bottomNavElevation = 8.0;
-  static const double bottomNavIconSize = 24.0;
+  static double get bottomNavHeight => 60.h;
+  static double get bottomNavElevation => 8.0; // Elevation remains static
+  static double get bottomNavIconSize => 24.sp;
 
   // Floating Action Button
-  static const double fabSize = 56.0;
-  static const double fabElevation = 4.0;
-  static const double fabIconSize = 24.0;
+  static double get fabSize => 56.r;
+  static double get fabElevation => 4.0; // Elevation remains static
+  static double get fabIconSize => 24.sp;
 
   // Dot Indicator (Onboarding/Carousel)
-  static const double dotIndicatorActiveWidth = 14.0;
-  static const double dotIndicatorInactiveWidth = 8.0;
-  static const double dotIndicatorHeight = 8.0;
-  static const double dotIndicatorSpacing = 6.0;
+  static double get dotIndicatorActiveWidth => 14.w;
+  static double get dotIndicatorInactiveWidth => 8.w;
+  static double get dotIndicatorHeight => 8.h;
+  static double get dotIndicatorSpacing => 6.w;
 
   // Chip
-  static const double chipHeight = 32.0;
-  static const double chipPaddingHorizontal = 12.0;
-  static const double chipPaddingVertical = 8.0;
+  static double get chipHeight => 32.h;
+  static double get chipPaddingHorizontal => 12.w;
+  static double get chipPaddingVertical => 8.h;
 
   // Dialog
-  static const double dialogElevation = 8.0;
-  static const double dialogPadding = 24.0;
-  static const double dialogMaxWidth = 400.0;
+  static double get dialogElevation => 8.0; // Elevation remains static
+  static double get dialogPadding => 24.w;
+  static double get dialogMaxWidth => 400.w;
 
   // Snackbar
-  static const double snackbarElevation = 6.0;
-  static const double snackbarPadding = 16.0;
+  static double get snackbarElevation => 6.0; // Elevation remains static
+  static double get snackbarPadding => 16.w;
 
   // List Items
-  static const double listTileHeight = 56.0;
-  static const double listTileVerticalPadding = 12.0;
-  static const double listTileHorizontalPadding = 16.0;
+  static double get listTileHeight => 56.h;
+  static double get listTileVerticalPadding => 12.h;
+  static double get listTileHorizontalPadding => 16.w;
 
   // Image Sizes
-  static const double imageSmall = 80.0;
-  static const double imageMedium = 120.0;
-  static const double imageLarge = 200.0;
-  static const double imageXl = 300.0;
+  static double get imageSmall => 80.w;
+  static double get imageMedium => 120.w;
+  static double get imageLarge => 200.w;
+  static double get imageXl => 300.w;
 
   // Screen Padding
-  static const double screenPaddingHorizontal = 16.0;
-  static const double screenPaddingVertical = 16.0;
-  static const double screenPaddingTop = 20.0;
-  static const double screenPaddingBottom = 20.0;
+  static double get screenPaddingHorizontal => 16.w;
+  static double get screenPaddingVertical => 16.h;
+  static double get screenPaddingTop => 20.h;
+  static double get screenPaddingBottom => 20.h;
 }

@@ -74,7 +74,7 @@ class SignupForm extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           ),
-          margin: const EdgeInsets.all(AppSizes.paddingLarge),
+          margin:  EdgeInsets.all(AppSizes.paddingLarge),
         ),
       );
       if (kDebugMode) {
@@ -122,7 +122,7 @@ class SignupForm extends ConsumerWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(
+      padding:  EdgeInsets.symmetric(
         horizontal: AppSizes.screenPaddingHorizontal,
         vertical: AppSizes.paddingXxl,
       ),
@@ -158,7 +158,7 @@ class SignupForm extends ConsumerWidget {
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(AppSizes.paddingSmall),
+                        padding:  EdgeInsets.all(AppSizes.paddingSmall),
                         decoration: BoxDecoration(
                           color: AppColors.getPrimary(isDark),
                           shape: BoxShape.circle,
@@ -177,7 +177,7 @@ class SignupForm extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AppSizes.spacingXxl),
+             SizedBox(height: AppSizes.spacingXxl),
 
             // Sign up heading
             Text(
@@ -185,7 +185,7 @@ class SignupForm extends ConsumerWidget {
               style: AppTextStyles.headingMedium(isDark: isDark),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSizes.spacingXxl),
+             SizedBox(height: AppSizes.spacingXxl),
 
             // Full Name field
             AuthTextField(
@@ -195,7 +195,7 @@ class SignupForm extends ConsumerWidget {
               fieldType: AuthFieldType.name,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: AppSizes.spacingLarge),
+             SizedBox(height: AppSizes.spacingLarge),
 
             // Email field
             AuthTextField(
@@ -206,7 +206,7 @@ class SignupForm extends ConsumerWidget {
               fieldType: AuthFieldType.email,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: AppSizes.spacingLarge),
+             SizedBox(height: AppSizes.spacingLarge),
 
             // Password field
             AuthTextField(
@@ -218,7 +218,7 @@ class SignupForm extends ConsumerWidget {
               fieldType: AuthFieldType.password,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: AppSizes.spacingLarge),
+             SizedBox(height: AppSizes.spacingLarge),
 
             // Confirm Password field
             AuthTextField(
@@ -231,7 +231,7 @@ class SignupForm extends ConsumerWidget {
               matchController: passwordController,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: AppSizes.spacingXxl),
+             SizedBox(height: AppSizes.spacingXxl),
 
             // Sign Up button
             SizedBox(
@@ -259,8 +259,8 @@ class SignupForm extends ConsumerWidget {
                               isDark: isDark,
                             ).copyWith(color: Colors.white),
                           ),
-                          const SizedBox(width: AppSizes.spacingSmall),
-                          const Icon(
+                           SizedBox(width: AppSizes.spacingSmall),
+                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             color: Colors.white,
                             size: AppSizes.iconSmall,

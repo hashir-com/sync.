@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
@@ -22,18 +23,26 @@ class LocationState {
   final Position? position;
   final bool isDenied;
   final bool isLoading;
+  final bool isServiceDisabled;
 
-  LocationState({this.position, this.isDenied = false, this.isLoading = true});
+  LocationState({
+    this.position,
+    this.isDenied = false,
+    this.isLoading = true,
+    this.isServiceDisabled = false,
+  });
 
   LocationState copyWith({
     Position? position,
     bool? isDenied,
     bool? isLoading,
+    bool? isServiceDisabled,
   }) {
     return LocationState(
       position: position ?? this.position,
       isDenied: isDenied ?? this.isDenied,
       isLoading: isLoading ?? this.isLoading,
+      isServiceDisabled: isServiceDisabled ?? this.isServiceDisabled,
     );
   }
 }
@@ -46,7 +55,11 @@ class LocationNotifier extends StateNotifier<LocationState> {
   Future<void> _checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      state = state.copyWith(isDenied: true, isLoading: false);
+      state = state.copyWith(
+        isServiceDisabled: true,
+        isDenied: false,
+        isLoading: false,
+      );
       return;
     }
 
@@ -57,20 +70,40 @@ class LocationNotifier extends StateNotifier<LocationState> {
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      state = state.copyWith(isDenied: true, isLoading: false);
+      state = state.copyWith(
+        isDenied: true,
+        isServiceDisabled: false,
+        isLoading: false,
+      );
       return;
     }
 
-    final pos = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    state = state.copyWith(position: pos, isDenied: false, isLoading: false);
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      state = state.copyWith(
+        position: pos,
+        isDenied: false,
+        isServiceDisabled: false,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isDenied: true, isLoading: false);
+    }
   }
 
   void retry() {
     state = LocationState();
     _checkLocationPermission();
+  }
+
+  Future<void> openLocationSettings() async {
+    await Geolocator.openLocationSettings();
+  }
+
+  Future<void> openAppSettings() async {
+    await Geolocator.openAppSettings();
   }
 }
 
@@ -84,90 +117,53 @@ class EventSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(approvedEventsStreamProvider);
     final isDark = ThemeUtils.isDark(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: AppSizes.spacingLarge),
+        SizedBox(height: AppSizes.spacingXxl),
 
-        // ------- UPCOMING EVENTS SECTION -------
-        _SectionHeader(
-          title: 'Upcoming Events',
-          onSeeAllPressed: () => context.push('/events'),
-          isDark: isDark,
-        ),
+        // ------- POPULAR EVENTS SECTION -------
+        _SectionHeader(title: 'Upcoming Popular events', isDark: isDark),
 
         SizedBox(height: AppSizes.spacingLarge),
 
-        // ------- UPCOMING EVENTS LIST -------
-        SizedBox(
-          height: screenHeight * 0.42,
-          child: eventsAsync.when(
-            data: (events) {
-              if (events.isEmpty) {
-                return _EmptyState(
-                  message: 'No upcoming events',
-                  icon: Icons.event_busy_rounded,
-                  isDark: isDark,
-                );
-              }
-
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSizes.screenPaddingHorizontal,
-                ),
-                itemCount: events.length,
-                itemBuilder: (context, index) {
-                  final event = events[index];
-                  return Padding(
-                    padding: EdgeInsets.only(right: AppSizes.spacingLarge),
-                    child: _EventCard(
-                      event: event,
-                      isDark: isDark,
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                      onTap: () => context.push('/event-detail', extra: event),
-                    ),
-                  );
-                },
+        eventsAsync.when(
+          data: (events) {
+            if (events.isEmpty) {
+              return _EmptyState(
+                message: 'No events available',
+                icon: Icons.event_busy_rounded,
+                isDark: isDark,
               );
-            },
-            loading: () => _EventCardShimmer(
-              isDark: isDark,
-              screenWidth: screenWidth,
-              screenHeight: screenHeight,
-            ),
-            error: (error, _) => _ErrorState(
-              message: 'Failed to load events',
-              onRetry: () => ref.refresh(approvedEventsStreamProvider),
-              isDark: isDark,
-            ),
+            }
+
+            return Column(
+              children: [
+                _EventHorizontalList(
+                  events: events.take(10).toList(),
+                  isDark: isDark,
+                ),
+                SizedBox(height: AppSizes.spacingXxxl),
+              ],
+            );
+          },
+          loading: () => _EventListShimmer(isDark: isDark),
+          error: (error, _) => _ErrorState(
+            message: 'Failed to load events',
+            onRetry: () => ref.refresh(approvedEventsStreamProvider),
+            isDark: isDark,
           ),
         ),
 
-        SizedBox(height: AppSizes.spacingXxxl),
-
-        // ------- NEARBY YOU SECTION -------
-        _SectionHeader(
-          title: 'Nearby You',
-          onSeeAllPressed: () {},
-          isDark: isDark,
-        ),
+        // ------- NEARBY EVENTS SECTION -------
+        _SectionHeader(title: 'Popular Events Near You', isDark: isDark),
 
         SizedBox(height: AppSizes.spacingLarge),
 
-        // ------- NEARBY EVENTS LIST -------
-        _NearbyEventsSection(
-          eventsAsync: eventsAsync,
-          isDark: isDark,
-          screenWidth: screenWidth,
-          screenHeight: screenHeight,
-        ),
+        _NearbyEventsSection(eventsAsync: eventsAsync, isDark: isDark),
 
-        SizedBox(height: AppSizes.spacingXxl),
+        SizedBox(height: AppSizes.spacingXxxl),
       ],
     );
   }
@@ -178,14 +174,9 @@ class EventSection extends ConsumerWidget {
 // ============================================
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final VoidCallback onSeeAllPressed;
   final bool isDark;
 
-  const _SectionHeader({
-    required this.title,
-    required this.onSeeAllPressed,
-    required this.isDark,
-  });
+  const _SectionHeader({required this.title, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -194,43 +185,300 @@ class _SectionHeader extends StatelessWidget {
         horizontal: AppSizes.screenPaddingHorizontal,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: AppTextStyles.titleLarge(
-              isDark: isDark,
-            ).copyWith(fontWeight: FontWeight.w700),
-          ),
-          InkWell(
-            onTap: onSeeAllPressed,
-            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingSmall,
-                vertical: AppSizes.paddingXs,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'See All',
-                    style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
-                      color: AppColors.getPrimary(isDark),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(width: AppSizes.spacingXs),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: AppSizes.iconSmall,
-                    color: AppColors.getPrimary(isDark),
-                  ),
-                ],
-              ),
+          Expanded(
+            child: Text(
+              title,
+              style: AppTextStyles.headingxSmall(isDark: isDark),
             ),
           ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: AppSizes.iconMedium,
+            color: AppColors.getTextPrimary(isDark),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Event Horizontal List Widget
+// ============================================
+class _EventHorizontalList extends StatelessWidget {
+  final List events;
+  final bool isDark;
+
+  const _EventHorizontalList({required this.events, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth * 0.42;
+
+    return SizedBox(
+      height: cardWidth * 1.65,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.screenPaddingHorizontal,
+        ),
+        itemCount: events.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(right: AppSizes.spacingMedium),
+            child: SizedBox(
+              width: cardWidth,
+              child: _AirbnbEventCard(
+                event: events[index],
+                isDark: isDark,
+                onTap: () =>
+                    context.push('/event-detail', extra: events[index]),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ============================================
+// Airbnb-Style Event Card
+// ============================================
+class _AirbnbEventCard extends StatelessWidget {
+  final dynamic event;
+  final bool isDark;
+  final String? distanceKm;
+  final VoidCallback onTap;
+
+  const _AirbnbEventCard({
+    required this.event,
+    required this.isDark,
+    this.distanceKm,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('MMM d');
+    final formattedDate = dateFormat.format(event.startTime);
+    final attendeesCount = event.attendees.length;
+
+    // Determine distance color and icon
+    Color distanceColor = Colors.orange;
+    IconData distanceIcon = Icons.location_on_rounded;
+
+    if (distanceKm != null) {
+      final distance = double.tryParse(distanceKm!) ?? 0;
+      if (distance <= 40) {
+        distanceColor = Colors.green;
+        distanceIcon = Icons.near_me_rounded;
+      } else {
+        distanceColor = Colors.orange;
+        distanceIcon = Icons.location_on_rounded;
+      }
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image with bookmark and date badge
+          Expanded(
+            child: Stack(
+              children: [
+                _EventImage(event: event, isDark: isDark),
+                Positioned(
+                  top: AppSizes.paddingSmall,
+                  right: AppSizes.paddingSmall,
+                  child: _HeartBookmark(isDark: isDark),
+                ),
+                Positioned(
+                  top: AppSizes.paddingSmall,
+                  left: AppSizes.paddingSmall,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingMedium,
+                      vertical: AppSizes.paddingXs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.radiusSemiRound,
+                      ),
+                    ),
+                    child: Text(
+                      formattedDate,
+                      style: AppTextStyles.labelSmall(
+                        isDark: false,
+                      ).copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: AppSizes.spacingSmall),
+
+          // Event title (bold and big)
+          Text(
+            event.title,
+            style: AppTextStyles.titleSmall(
+              isDark: isDark,
+            ).copyWith(fontWeight: FontWeight.w900),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          SizedBox(height: AppSizes.spacingXs / 2),
+
+          // Location
+          Text(
+            event.location,
+            style: AppTextStyles.bodyMedium(isDark: isDark),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          SizedBox(height: AppSizes.spacingXs),
+
+          // Distance (if nearby) or Attendees count
+          if (distanceKm != null)
+            Row(
+              children: [
+                Icon(
+                  distanceIcon,
+                  size: AppSizes.iconSmall,
+                  color: distanceColor,
+                ),
+                SizedBox(width: AppSizes.spacingXs / 2),
+                Text(
+                  '$distanceKm km away',
+                  style: AppTextStyles.bodySmall(
+                    isDark: isDark,
+                  ).copyWith(fontWeight: FontWeight.w600, color: distanceColor),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Icon(
+                  Icons.people_rounded,
+                  size: AppSizes.iconSmall,
+                  color: AppColors.getPrimary(isDark),
+                ),
+                SizedBox(width: AppSizes.spacingXs / 2),
+                Text(
+                  '$attendeesCount going',
+                  style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.getPrimary(isDark),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Event Image Widget
+// ============================================
+class _EventImage extends StatelessWidget {
+  final dynamic event;
+  final bool isDark;
+
+  const _EventImage({required this.event, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.4)
+                : Colors.black.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: AppColors.getSurface(isDark),
+          child: event.imageUrl != null
+              ? Image.network(
+                  event.imageUrl!,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return _ImageShimmer(isDark: isDark);
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(
+                      child: Icon(
+                        Icons.event_rounded,
+                        size: AppSizes.iconXxl,
+                        color: AppColors.getTextSecondary(
+                          isDark,
+                        ).withOpacity(0.5),
+                      ),
+                    );
+                  },
+                )
+              : Center(
+                  child: Icon(
+                    Icons.event_rounded,
+                    size: AppSizes.iconXxl,
+                    color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Heart Bookmark Button
+// ============================================
+class _HeartBookmark extends StatefulWidget {
+  final bool isDark;
+
+  const _HeartBookmark({required this.isDark});
+
+  @override
+  State<_HeartBookmark> createState() => _HeartBookmarkState();
+}
+
+class _HeartBookmarkState extends State<_HeartBookmark> {
+  bool isBookmarked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() => isBookmarked = !isBookmarked),
+      child: Container(
+        padding: EdgeInsets.all(AppSizes.paddingSmall),
+        child: Icon(
+          isBookmarked ? Icons.favorite : Icons.favorite_border,
+          size: AppSizes.iconMedium,
+          color: isBookmarked ? Colors.red : Colors.white,
+        ),
       ),
     );
   }
@@ -242,70 +490,77 @@ class _SectionHeader extends StatelessWidget {
 class _NearbyEventsSection extends ConsumerWidget {
   final AsyncValue eventsAsync;
   final bool isDark;
-  final double screenWidth;
-  final double screenHeight;
 
-  const _NearbyEventsSection({
-    required this.eventsAsync,
-    required this.isDark,
-    required this.screenWidth,
-    required this.screenHeight,
-  });
+  const _NearbyEventsSection({required this.eventsAsync, required this.isDark});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locationState = ref.watch(locationStateProvider);
 
+    if (locationState.isServiceDisabled) {
+      return _LocationServiceDisabledState(
+        isDark: isDark,
+        onEnableLocation: () async {
+          final notifier = ref.read(locationStateProvider.notifier);
+          // Try to open location settings
+          await notifier.openLocationSettings();
+          // Wait a bit and retry
+          await Future.delayed(const Duration(seconds: 1));
+          notifier.retry();
+        },
+      );
+    }
+
     if (locationState.isDenied) {
       return _LocationDeniedState(
         isDark: isDark,
-        onRetry: () => ref.read(locationStateProvider.notifier).retry(),
+        onRetry: () async {
+          final notifier = ref.read(locationStateProvider.notifier);
+          await notifier.openAppSettings();
+          await Future.delayed(const Duration(seconds: 1));
+          notifier.retry();
+        },
       );
     }
 
     if (locationState.isLoading || locationState.position == null) {
-      return SizedBox(
-        height: screenHeight * 0.35,
-        child: _EventCardShimmer(
-          isDark: isDark,
-          screenWidth: screenWidth,
-          screenHeight: screenHeight,
-        ),
-      );
+      return _EventListShimmer(isDark: isDark);
     }
 
-    return SizedBox(
-      height: screenHeight * 0.35,
-      child: eventsAsync.when(
-        data: (events) {
-          final nearbyEvents = events.toList();
+    return eventsAsync.when(
+      data: (events) {
+        final nearbyEvents = events.toList();
 
-          // Sort by distance
-          nearbyEvents.sort((a, b) {
-            double distA = Geolocator.distanceBetween(
-              locationState.position!.latitude,
-              locationState.position!.longitude,
-              a.latitude ?? 0.0,
-              a.longitude ?? 0.0,
-            );
-            double distB = Geolocator.distanceBetween(
-              locationState.position!.latitude,
-              locationState.position!.longitude,
-              b.latitude ?? 0.0,
-              b.longitude ?? 0.0,
-            );
-            return distA.compareTo(distB);
-          });
+        nearbyEvents.sort((a, b) {
+          double distA = Geolocator.distanceBetween(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+            a.latitude ?? 0.0,
+            a.longitude ?? 0.0,
+          );
+          double distB = Geolocator.distanceBetween(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+            b.latitude ?? 0.0,
+            b.longitude ?? 0.0,
+          );
+          return distA.compareTo(distB);
+        });
 
-          if (nearbyEvents.isEmpty) {
-            return _EmptyState(
-              message: 'No nearby events found',
-              icon: Icons.location_off_rounded,
-              isDark: isDark,
-            );
-          }
+        if (nearbyEvents.isEmpty) {
+          return _EmptyState(
+            message: 'No nearby events found',
+            icon: Icons.location_off_rounded,
+            isDark: isDark,
+          );
+        }
 
-          return ListView.builder(
+        final screenWidth = MediaQuery.of(context).size.width;
+        final cardWidth = screenWidth * 0.42;
+
+        return SizedBox(
+          height: cardWidth * 1.65,
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.symmetric(
@@ -314,7 +569,6 @@ class _NearbyEventsSection extends ConsumerWidget {
             itemCount: nearbyEvents.length,
             itemBuilder: (context, index) {
               final event = nearbyEvents[index];
-
               final distanceMeters = Geolocator.distanceBetween(
                 locationState.position!.latitude,
                 locationState.position!.longitude,
@@ -324,437 +578,93 @@ class _NearbyEventsSection extends ConsumerWidget {
               final distanceKm = (distanceMeters / 1000).toStringAsFixed(1);
 
               return Padding(
-                padding: EdgeInsets.only(right: AppSizes.spacingLarge),
-                child: _EventCard(
-                  event: event,
-                  isDark: isDark,
-                  distanceKm: distanceKm,
-                  screenWidth: screenWidth,
-                  screenHeight: screenHeight,
-                  onTap: () => context.push('/event-detail', extra: event),
+                padding: EdgeInsets.only(right: AppSizes.spacingMedium),
+                child: SizedBox(
+                  width: cardWidth,
+                  child: _AirbnbEventCard(
+                    event: event,
+                    isDark: isDark,
+                    distanceKm: distanceKm,
+                    onTap: () => context.push('/event-detail', extra: event),
+                  ),
                 ),
               );
             },
-          );
-        },
-        loading: () => _EventCardShimmer(
-          isDark: isDark,
-          screenWidth: screenWidth,
-          screenHeight: screenHeight,
-        ),
-        error: (error, _) => _ErrorState(
-          message: 'Failed to load nearby events',
-          onRetry: () => ref.refresh(approvedEventsStreamProvider),
-          isDark: isDark,
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-// Event Card Widget
-// ============================================
-class _EventCard extends StatelessWidget {
-  final dynamic event;
-  final bool isDark;
-  final String? distanceKm;
-  final double screenWidth;
-  final double screenHeight;
-  final VoidCallback onTap;
-
-  const _EventCard({
-    required this.event,
-    required this.isDark,
-    this.distanceKm,
-    required this.screenWidth,
-    required this.screenHeight,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd\nMMM');
-    final formattedDate = dateFormat.format(event.startTime);
-    final attendeesText = '${event.attendees.length} Going';
-
-    // Responsive card dimensions
-    final cardWidth = (screenWidth * 0.65).clamp(240.0, 300.0);
-    final imageHeight = (screenHeight * 0.16).clamp(120.0, 160.0);
-    final contentPadding = AppSizes.paddingMedium;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: AppColors.getCard(isDark),
-            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-            border: Border.all(color: AppColors.getBorder(isDark), width: 0.5),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withOpacity(0.3)
-                    : Colors.black.withOpacity(0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: SizedBox(
-            width: cardWidth,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Event Image
-                _EventImage(
-                  event: event,
-                  formattedDate: formattedDate,
-                  isDark: isDark,
-                  imageHeight: imageHeight,
-                ),
-
-                // Content Section
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(contentPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Flexible(
-                          child: Text(
-                            event.title,
-                            style: AppTextStyles.titleMedium(
-                              isDark: isDark,
-                            ).copyWith(fontWeight: FontWeight.w900, height: .5),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-
-                        SizedBox(height: AppSizes.spacingMedium),
-
-                        // Location
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_rounded,
-                              size: AppSizes.iconSmall,
-                              color: AppColors.getTextSecondary(isDark),
-                            ),
-                            SizedBox(width: AppSizes.spacingXs),
-                            Expanded(
-                              child: Text(
-                                event.location,
-                                style: AppTextStyles.bodySmall(isDark: isDark),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const Spacer(),
-
-                        // Distance badge (if nearby)
-                        if (distanceKm != null) ...[
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppSizes.paddingSmall,
-                              vertical: AppSizes.paddingXs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.getSuccess(
-                                isDark,
-                              ).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.radiusXs,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.near_me_rounded,
-                                  size: AppSizes.iconXs,
-                                  color: AppColors.getSuccess(isDark),
-                                ),
-                                SizedBox(width: AppSizes.spacingXs),
-                                Text(
-                                  '$distanceKm km away',
-                                  style:
-                                      AppTextStyles.labelSmall(
-                                        isDark: isDark,
-                                      ).copyWith(
-                                        color: AppColors.getSuccess(isDark),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: AppSizes.spacingSmall),
-                        ],
-
-                        // Attendees
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.people_rounded,
-                              size: AppSizes.iconSmall,
-                              color: AppColors.getPrimary(isDark),
-                            ),
-                            SizedBox(width: AppSizes.spacingXs),
-                            Text(
-                              attendeesText,
-                              style: AppTextStyles.labelMedium(isDark: isDark)
-                                  .copyWith(
-                                    color: AppColors.getPrimary(isDark),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-// Event Image Widget
-// ============================================
-class _EventImage extends StatelessWidget {
-  final dynamic event;
-  final String formattedDate;
-  final bool isDark;
-  final double imageHeight;
-
-  const _EventImage({
-    required this.event,
-    required this.formattedDate,
-    required this.isDark,
-    required this.imageHeight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppSizes.radiusLarge),
-          ),
-          child: Container(
-            height: imageHeight,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        AppColors.primaryVariant.withOpacity(0.3),
-                        AppColors.secondary.withOpacity(0.2),
-                      ]
-                    : [
-                        AppColors.primary.withOpacity(0.1),
-                        AppColors.secondary.withOpacity(0.15),
-                      ],
-              ),
-            ),
-            child: event.imageUrl != null
-                ? Image.network(
-                    event.imageUrl!,
-                    width: double.infinity,
-                    height: imageHeight,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return _ImageShimmer(isDark: isDark);
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Center(
-                        child: Icon(
-                          Icons.event_rounded,
-                          size: AppSizes.iconXxl,
-                          color: AppColors.getTextSecondary(
-                            isDark,
-                          ).withOpacity(0.5),
-                        ),
-                      );
-                    },
-                  )
-                : Center(
-                    child: Icon(
-                      Icons.event_rounded,
-                      size: AppSizes.iconXxl,
-                      color: AppColors.getTextSecondary(
-                        isDark,
-                      ).withOpacity(0.5),
-                    ),
-                  ),
-          ),
-        ),
-        Positioned(
-          top: AppSizes.paddingSmall,
-          left: AppSizes.paddingSmall,
-          child: _DateTag(date: formattedDate, isDark: isDark),
-        ),
-        Positioned(
-          top: AppSizes.paddingSmall,
-          right: AppSizes.paddingSmall,
-          child: _BookmarkButton(isDark: isDark),
-        ),
-      ],
-    );
-  }
-}
-
-// ============================================
-// Date Tag Widget
-// ============================================
-class _DateTag extends StatelessWidget {
-  final String date;
-  final bool isDark;
-
-  const _DateTag({required this.date, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingMedium,
-        vertical: AppSizes.paddingSmall,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        date,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: AppSizes.fontMedium,
-          fontWeight: FontWeight.w800,
-          color: AppColors.error,
-          height: 1.2,
-          letterSpacing: -0.3,
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-// Bookmark Button Widget
-// ============================================
-class _BookmarkButton extends StatefulWidget {
-  final bool isDark;
-
-  const _BookmarkButton({required this.isDark});
-
-  @override
-  State<_BookmarkButton> createState() => _BookmarkButtonState();
-}
-
-class _BookmarkButtonState extends State<_BookmarkButton> {
-  bool isBookmarked = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => setState(() => isBookmarked = !isBookmarked),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-        child: Container(
-          padding: EdgeInsets.all(AppSizes.paddingSmall),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.95),
-            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(
-            isBookmarked
-                ? Icons.bookmark_rounded
-                : Icons.bookmark_border_rounded,
-            size: AppSizes.iconSmall,
-            color: isBookmarked
-                ? AppColors.error
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-// Event Card Shimmer
-// ============================================
-class _EventCardShimmer extends StatelessWidget {
-  final bool isDark;
-  final double screenWidth;
-  final double screenHeight;
-
-  const _EventCardShimmer({
-    required this.isDark,
-    required this.screenWidth,
-    required this.screenHeight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cardWidth = (screenWidth * 0.65).clamp(240.0, 300.0);
-
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.screenPaddingHorizontal,
-      ),
-      itemCount: 3,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: EdgeInsets.only(right: AppSizes.spacingLarge),
-          child: Shimmer.fromColors(
-            baseColor: AppColors.getShimmerBase(isDark),
-            highlightColor: AppColors.getShimmerHighlight(isDark),
-            child: Container(
-              width: cardWidth,
-              decoration: BoxDecoration(
-                color: AppColors.getCard(isDark),
-                borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-              ),
-            ),
           ),
         );
       },
+      loading: () => _EventListShimmer(isDark: isDark),
+      error: (error, _) => _ErrorState(
+        message: 'Failed to load nearby events',
+        onRetry: () => ref.refresh(approvedEventsStreamProvider),
+        isDark: isDark,
+      ),
+    );
+  }
+}
+
+// ============================================
+// Event List Shimmer
+// ============================================
+class _EventListShimmer extends StatelessWidget {
+  final bool isDark;
+
+  const _EventListShimmer({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth * 0.42;
+
+    return SizedBox(
+      height: cardWidth * 1.65,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.screenPaddingHorizontal,
+        ),
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(right: AppSizes.spacingMedium),
+            child: SizedBox(
+              width: cardWidth,
+              child: Shimmer.fromColors(
+                baseColor: AppColors.getShimmerBase(isDark),
+                highlightColor: AppColors.getShimmerHighlight(isDark),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurface(isDark),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusMedium,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: AppSizes.spacingSmall),
+                    Container(
+                      width: double.infinity,
+                      height: AppSizes.fontLarge,
+                      color: AppColors.getSurface(isDark),
+                    ),
+                    SizedBox(height: AppSizes.spacingXs),
+                    Container(
+                      width: cardWidth * 0.7,
+                      height: AppSizes.fontMedium,
+                      color: AppColors.getSurface(isDark),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -778,6 +688,72 @@ class _ImageShimmer extends StatelessWidget {
 }
 
 // ============================================
+// Location Service Disabled State
+// ============================================
+class _LocationServiceDisabledState extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onEnableLocation;
+
+  const _LocationServiceDisabledState({
+    required this.isDark,
+    required this.onEnableLocation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSizes.screenPaddingHorizontal,
+      ),
+      padding: EdgeInsets.all(AppSizes.paddingXxl),
+      decoration: BoxDecoration(
+        color: AppColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        border: Border.all(color: AppColors.getBorder(isDark)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.location_off_rounded,
+            size: AppSizes.iconXxl,
+            color: AppColors.getWarning(isDark),
+          ),
+          SizedBox(height: AppSizes.spacingLarge),
+          Text(
+            'Location Service Disabled',
+            style: AppTextStyles.titleMedium(
+              isDark: isDark,
+            ).copyWith(fontWeight: FontWeight.w700),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: AppSizes.spacingSmall),
+          Text(
+            'Please turn on location services to discover events near you',
+            style: AppTextStyles.bodyMedium(isDark: isDark),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: AppSizes.spacingXl),
+          ElevatedButton.icon(
+            onPressed: onEnableLocation,
+            icon: Icon(Icons.location_on_rounded, size: AppSizes.iconSmall),
+            label: Text('Turn On Location'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.getPrimary(isDark),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingXxl,
+                vertical: AppSizes.paddingMedium,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================
 // Location Denied State
 // ============================================
 class _LocationDeniedState extends StatelessWidget {
@@ -796,26 +772,19 @@ class _LocationDeniedState extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getCard(isDark),
         borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-        border: Border.all(color: AppColors.getBorder(isDark), width: 0.5),
+        border: Border.all(color: AppColors.getBorder(isDark)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: EdgeInsets.all(AppSizes.paddingLarge),
-            decoration: BoxDecoration(
-              color: AppColors.getWarning(isDark).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.location_off_rounded,
-              size: AppSizes.iconXxl,
-              color: AppColors.getWarning(isDark),
-            ),
+          Icon(
+            Icons.location_off_rounded,
+            size: AppSizes.iconXxl,
+            color: AppColors.getError(isDark),
           ),
           SizedBox(height: AppSizes.spacingLarge),
           Text(
-            'Location Access Required',
+            'Location Permission Denied',
             style: AppTextStyles.titleMedium(
               isDark: isDark,
             ).copyWith(fontWeight: FontWeight.w700),
@@ -823,34 +792,22 @@ class _LocationDeniedState extends StatelessWidget {
           ),
           SizedBox(height: AppSizes.spacingSmall),
           Text(
-            'Enable location services to discover amazing events happening near you',
+            'Grant location permission in settings to find nearby events',
             style: AppTextStyles.bodyMedium(isDark: isDark),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: AppSizes.spacingXl),
           ElevatedButton.icon(
             onPressed: onRetry,
-            icon: const Icon(
-              Icons.location_on_rounded,
-              size: AppSizes.iconSmall,
-            ),
-            label: Text(
-              'Enable Location',
-              style: AppTextStyles.button(
-                isDark: isDark,
-              ).copyWith(color: Colors.white, fontSize: AppSizes.fontMedium),
-            ),
+            icon: Icon(Icons.settings_rounded, size: AppSizes.iconSmall),
+            label: Text('Open Settings'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.getPrimary(isDark),
               foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.paddingXxl,
-                vertical: AppSizes.paddingLarge,
+                vertical: AppSizes.paddingMedium,
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-              ),
-              elevation: 0,
             ),
           ),
         ],
@@ -876,24 +833,20 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.all(AppSizes.paddingXl),
-            decoration: BoxDecoration(
-              color: AppColors.getSurface(isDark),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingXxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
               icon,
               size: AppSizes.iconXxl,
-              color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+              color: AppColors.getTextSecondary(isDark),
             ),
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
-          Text(message, style: AppTextStyles.bodyMedium(isDark: isDark)),
-        ],
+            SizedBox(height: AppSizes.spacingLarge),
+            Text(message, style: AppTextStyles.bodyMedium(isDark: isDark)),
+          ],
+        ),
       ),
     );
   }
@@ -916,46 +869,26 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.all(AppSizes.paddingLarge),
-            decoration: BoxDecoration(
-              color: AppColors.getError(isDark).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingXxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
               Icons.error_outline_rounded,
               size: AppSizes.iconXxl,
               color: AppColors.getError(isDark),
             ),
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
-          Text(
-            message,
-            style: AppTextStyles.bodyMedium(isDark: isDark),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: AppSizes.iconSmall),
-            label: Text(
-              'Try Again',
-              style: AppTextStyles.labelLarge(
-                isDark: isDark,
-              ).copyWith(fontWeight: FontWeight.w600),
+            SizedBox(height: AppSizes.spacingLarge),
+            Text(
+              message,
+              style: AppTextStyles.bodyMedium(isDark: isDark),
+              textAlign: TextAlign.center,
             ),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.getPrimary(isDark),
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingXl,
-                vertical: AppSizes.paddingMedium,
-              ),
-            ),
-          ),
-        ],
+            SizedBox(height: AppSizes.spacingLarge),
+            TextButton(onPressed: onRetry, child: Text('Try Again')),
+          ],
+        ),
       ),
     );
   }

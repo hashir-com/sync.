@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 
 /// Centralized text styles for consistent typography across the app
@@ -16,8 +18,8 @@ class AppTextStyles {
     letterSpacing: -0.5,
   );
 
-  static TextStyle extraHeadingLarge({required bool isDark}) => TextStyle(
-    fontSize: 22,
+  static TextStyle mediumHeading({required bool isDark}) => TextStyle(
+    fontSize: 20,
     fontWeight: FontWeight.bold,
     color: AppColors.getTextPrimary(isDark),
     letterSpacing: 0,
@@ -35,6 +37,15 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: AppColors.getTextPrimary(isDark),
   );
+
+  static TextStyle headingxSmall({required bool isDark}) =>
+      GoogleFonts.montserrat(
+        fontSize: 19.sp, // Responsive with flutter_screenutil
+        fontWeight:
+            FontWeight.bold, // Medium-bold, mimicking AirBnB's thickness
+        color: AppColors.getTextPrimary(isDark),
+        letterSpacing: -0.4, // Tight letter spacing for a refined look
+      );
 
   // =======================
   // Subheadings / Titles
