@@ -592,7 +592,7 @@ class MyBookingsScreen extends ConsumerWidget {
               ),
             ),
             child: Text(
-              'Go Back',
+              'Go  Back',
               style: AppTextStyles.labelMedium(
                 isDark: isDark,
               ).copyWith(color: Colors.white),
