@@ -6,6 +6,7 @@ final onboardingProvider = StateNotifierProvider<OnboardingController, int>((ref
   return OnboardingController();
 });
 
+
 class OnboardingController extends StateNotifier<int> {
   OnboardingController() : super(0);
 

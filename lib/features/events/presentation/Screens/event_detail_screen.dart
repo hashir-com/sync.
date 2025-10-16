@@ -5,6 +5,7 @@ import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 import '../../domain/entities/event_entity.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,6 +17,8 @@ class EventDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ThemeUtils.isDark(context);
+    final user = ref.watch(authNotifierProvider).user;
+final isOrganizer = user?.uid == event.organizerId;
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(isDark),
@@ -215,7 +218,8 @@ class EventDetailScreen extends ConsumerWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: Text(
+                      child:  Text(
+                        isOrganizer?"View Event":
                         'Book Tickets',
                         style: AppTextStyles.button(isDark: isDark).copyWith(
                           color: Colors.white,

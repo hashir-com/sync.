@@ -1,6 +1,9 @@
+// lib/features/bookings/data/models/booking_model.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 
+// lib/features/bookings/data/models/booking_model.dart
 class BookingModel extends BookingEntity {
   const BookingModel({
     required String id,
@@ -10,7 +13,8 @@ class BookingModel extends BookingEntity {
     required int ticketQuantity,
     required double totalAmount,
     required String paymentId,
-    String status = 'pending',
+    required List<int> seatNumbers, // NEW: Add seat numbers
+    String status = 'confirmed', // Changed default to confirmed
     required DateTime bookingDate,
     DateTime? cancellationDate,
     double? refundAmount,
@@ -24,6 +28,7 @@ class BookingModel extends BookingEntity {
           ticketQuantity: ticketQuantity,
           totalAmount: totalAmount,
           paymentId: paymentId,
+          seatNumbers: seatNumbers, // NEW
           status: status,
           bookingDate: bookingDate,
           cancellationDate: cancellationDate,
@@ -38,10 +43,11 @@ class BookingModel extends BookingEntity {
       userId: json['userId'],
       eventId: json['eventId'],
       ticketType: json['ticketType'],
-      ticketQuantity: (json['ticketQuantity'] as num).toInt(), // Cast num to int
+      ticketQuantity: (json['ticketQuantity'] as num).toInt(),
       totalAmount: (json['totalAmount'] as num).toDouble(),
       paymentId: json['paymentId'],
-      status: json['status'],
+      seatNumbers: List<int>.from(json['seatNumbers'] ?? []), // NEW
+      status: json['status'] ?? 'confirmed',
       bookingDate: (json['bookingDate'] as Timestamp).toDate(),
       cancellationDate: json['cancellationDate'] != null
           ? (json['cancellationDate'] as Timestamp).toDate()
@@ -63,6 +69,7 @@ class BookingModel extends BookingEntity {
       'ticketQuantity': ticketQuantity,
       'totalAmount': totalAmount,
       'paymentId': paymentId,
+      'seatNumbers': seatNumbers, // NEW
       'status': status,
       'bookingDate': Timestamp.fromDate(bookingDate),
       'cancellationDate': cancellationDate != null
@@ -82,6 +89,7 @@ class BookingModel extends BookingEntity {
     int? ticketQuantity,
     double? totalAmount,
     String? paymentId,
+    List<int>? seatNumbers, // NEW
     String? status,
     DateTime? bookingDate,
     DateTime? cancellationDate,
@@ -97,6 +105,7 @@ class BookingModel extends BookingEntity {
       ticketQuantity: ticketQuantity ?? this.ticketQuantity,
       totalAmount: totalAmount ?? this.totalAmount,
       paymentId: paymentId ?? this.paymentId,
+      seatNumbers: seatNumbers ?? this.seatNumbers, // NEW
       status: status ?? this.status,
       bookingDate: bookingDate ?? this.bookingDate,
       cancellationDate: cancellationDate ?? this.cancellationDate,
@@ -114,6 +123,7 @@ class BookingModel extends BookingEntity {
         ticketQuantity: entity.ticketQuantity,
         totalAmount: entity.totalAmount,
         paymentId: entity.paymentId,
+        seatNumbers: entity.seatNumbers, // NEW
         status: entity.status,
         bookingDate: entity.bookingDate,
         cancellationDate: entity.cancellationDate,

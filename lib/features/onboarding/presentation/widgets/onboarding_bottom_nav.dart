@@ -33,14 +33,24 @@ class OnboardingBottomNav extends ConsumerWidget {
         duration: const Duration(milliseconds: 300),
         curve: Curves.ease,
       );
-      ref.read(onboardingProvider.notifier).nextPage(totalPages);
+      ref.read(onboardingProvider.notifier).setPage(currentPage + 1); // Use setPage instead of nextPage
     } else {
-      context.go('/login');
+      // Defer navigation to avoid web build-time issues
+      Future.microtask(() {
+        if (context.mounted) {
+          context.go('/login');
+        }
+      });
     }
   }
 
   void _skip(BuildContext context) {
-    context.go('/login');
+    // Defer navigation to avoid web build-time issues
+    Future.microtask(() {
+      if (context.mounted) {
+        context.go('/login');
+      }
+    });
   }
 
   @override

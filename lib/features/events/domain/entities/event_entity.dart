@@ -25,6 +25,7 @@ class EventEntity extends Equatable {
   final String? rejectionReason;
   final Map<String, int> categoryCapacities;
   final Map<String, double> categoryPrices;
+  final List<int> takenSeats;
 
   const EventEntity({
     required this.id,
@@ -48,6 +49,7 @@ class EventEntity extends Equatable {
     this.status = 'pending',
     this.approvalReason,
     this.rejectionReason,
+    this.takenSeats = const [],
     this.categoryCapacities = const {'vip': 0, 'premium': 0, 'regular': 0},
     this.categoryPrices = const {'vip': 0.0, 'premium': 0.0, 'regular': 0.0},
   });
@@ -75,6 +77,7 @@ class EventEntity extends Equatable {
     status,
     approvalReason,
     rejectionReason,
+    takenSeats,
     categoryCapacities,
     categoryPrices,
   ];
@@ -103,6 +106,7 @@ class EventEntity extends Equatable {
       status: json['status'],
       approvalReason: json['approvalReason'],
       rejectionReason: json['rejectionReason'],
+      takenSeats: List<int>.from(json['takenSeats'] ?? []),
       categoryCapacities: Map<String, int>.from(
         (json['categoryCapacities'] ?? {'vip': 0, 'premium': 0, 'regular': 0})
             .map((key, value) => MapEntry(key, (value as num).toInt())), // Cast num to int
@@ -136,6 +140,7 @@ class EventEntity extends Equatable {
       'status': status,
       'approvalReason': approvalReason,
       'rejectionReason': rejectionReason,
+      'takenSeats': takenSeats,
       'categoryCapacities': categoryCapacities,
       'categoryPrices': categoryPrices,
     };

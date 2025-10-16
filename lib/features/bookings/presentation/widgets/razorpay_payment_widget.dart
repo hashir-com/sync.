@@ -9,10 +9,11 @@ import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/core/util/theme_util.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 class RazorpayPaymentWidget extends ConsumerStatefulWidget {
   final double amount;
-  final VoidCallback onSuccess;
+  final void Function(String paymentId) onSuccess;
 
   const RazorpayPaymentWidget({
     Key? key,
@@ -43,40 +44,72 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
   }
 
   void _openCheckout() {
-    final isDark = ref.watch(themeProvider); // Assume themeProvider exists
+    final isDark = ref.watch(themeProvider);
+    final authState = ref.watch(authNotifierProvider);
+
     var options = {
-      'key': 'rzp_test_your_key', // Replace with your Razorpay test key
-      'amount': (widget.amount * 100).toInt(), // Amount in paise
+      'key': 'rzp_test_RU0yq41o7lOiIN',
+      'amount': (widget.amount * 100).toInt(),
       'name': 'Sync Event',
       'description': 'Event Ticket Booking',
-      'prefill': {'contact': '', 'email': ''}, // Populate with user data if available
+      'prefill': {
+        'contact': authState.user?.phoneNumber ?? '',
+        'email': authState.user?.email ?? '',
+      },
       'external': {'wallets': ['paytm']},
-      'theme': {'color': AppColors.getPrimary(isDark).value.toRadixString(16).substring(2)},
+      'theme': {
+        'color':
+            '#${AppColors.getPrimary(isDark).value.toRadixString(16).padLeft(8, '0').substring(2)}'
+      },
     };
+
     _razorpay.open(options);
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Payment Successful!', style: AppTextStyles.bodyMedium(isDark: true).copyWith(color: Colors.white)),
+        content: Text(
+          'Payment Successful!',
+          style: AppTextStyles.bodyMedium(isDark: true)
+              .copyWith(color: Colors.white),
+        ),
         backgroundColor: AppColors.getSuccess(ref.watch(themeProvider)),
       ),
     );
-    widget.onSuccess();
+
+    if (response.paymentId != null) {
+  widget.onSuccess(response.paymentId!);
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Payment completed, but payment ID is missing.',
+        style: AppTextStyles.bodyMedium(isDark: true)
+            .copyWith(color: Colors.white),
+      ),
+      backgroundColor: AppColors.getError(ref.watch(themeProvider)),
+    ),
+  );
+}
+// pass paymentId
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Payment Failed: ${response.message}', style: AppTextStyles.bodyMedium(isDark: true).copyWith(color: Colors.white)),
+        content: Text(
+          'Payment Failed: ${response.message}',
+          style: AppTextStyles.bodyMedium(isDark: true)
+              .copyWith(color: Colors.white),
+        ),
         backgroundColor: AppColors.getError(ref.watch(themeProvider)),
       ),
     );
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
-    // Handle if needed
+    // Optional: handle external wallet
   }
 
   @override
@@ -90,9 +123,14 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
           horizontal: AppSizes.buttonPaddingHorizontal,
           vertical: AppSizes.buttonPaddingVertical,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r)),
       ),
-      child: Text('Pay ₹${widget.amount.toStringAsFixed(2)}', style: AppTextStyles.button(isDark: isDark).copyWith(color: Colors.white)),
+      child: Text(
+        'Pay ₹${widget.amount.toStringAsFixed(2)}',
+        style: AppTextStyles.button(isDark: isDark)
+            .copyWith(color: Colors.white),
+      ),
     );
   }
 }

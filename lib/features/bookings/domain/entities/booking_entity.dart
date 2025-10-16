@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+// lib/features/bookings/domain/entities/booking_entity.dart
 class BookingEntity extends Equatable {
   final String id;
   final String userId;
@@ -7,13 +8,14 @@ class BookingEntity extends Equatable {
   final String ticketType;
   final int ticketQuantity;
   final double totalAmount;
-  final String paymentId; // Razorpay payment ID
-  final String status; // 'pending', 'confirmed', 'cancelled'
+  final String paymentId;
+  final List<int> seatNumbers; // NEW
+  final String status;
   final DateTime bookingDate;
   final DateTime? cancellationDate;
   final double? refundAmount;
-  final DateTime startTime; // Event start time
-  final DateTime endTime;   // Event end time
+  final DateTime startTime;
+  final DateTime endTime;
 
   const BookingEntity({
     required this.id,
@@ -23,7 +25,8 @@ class BookingEntity extends Equatable {
     required this.ticketQuantity,
     required this.totalAmount,
     required this.paymentId,
-    this.status = 'pending',
+    required this.seatNumbers, // NEW
+    this.status = 'confirmed',
     required this.bookingDate,
     this.cancellationDate,
     this.refundAmount,
@@ -40,6 +43,7 @@ class BookingEntity extends Equatable {
         ticketQuantity,
         totalAmount,
         paymentId,
+        seatNumbers, // NEW
         status,
         bookingDate,
         cancellationDate,

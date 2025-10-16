@@ -26,6 +26,7 @@ class EventModel extends EventEntity {
     super.status,
     super.approvalReason,
     super.rejectionReason,
+    super.takenSeats = const [],
     super.categoryCapacities,
     super.categoryPrices,
   });
@@ -94,44 +95,46 @@ class EventModel extends EventEntity {
       status: map['status'] ?? "pending",
       approvalReason: map['approvalReason'],
       rejectionReason: map['rejectionReason'],
+      takenSeats: List<int>.from(map['takenSeats'] ?? []),
       categoryCapacities: capacities,
       categoryPrices: prices,
     );
   }
 
   Map<String, dynamic> toMap() {
-  // Always compute and save legacy from maps for consistency.
-  final totalMax = categoryCapacities.values.fold(0, (a, b) => a + b);
-  
-  // FIX: Handle case where all prices are 0 (free event)
-  final positivePrices = categoryPrices.values.where((p) => p > 0).toList();
-  final minPrice = positivePrices.isNotEmpty 
-      ? positivePrices.reduce(min) 
-      : 0.0; // Default to 0.0 if all are free
+    // Always compute and save legacy from maps for consistency.
+    final totalMax = categoryCapacities.values.fold(0, (a, b) => a + b);
 
-  return {
-    'title': title,
-    'description': description,
-    'location': location,
-    'latitude': latitude,
-    'longitude': longitude,
-    'startTime': Timestamp.fromDate(startTime),
-    'endTime': Timestamp.fromDate(endTime),
-    'imageUrl': imageUrl,
-    'documentUrl': documentUrl,
-    'organizerId': organizerId,
-    'organizerName': organizerName,
-    'attendees': attendees,
-    'maxAttendees': totalMax, // Synced
-    'category': category,
-    'createdAt': Timestamp.fromDate(createdAt),
-    'updatedAt': Timestamp.fromDate(updatedAt),
-    'ticketPrice': minPrice, // Synced to min (or 0 if all free)
-    'status': status,
-    'categoryCapacities': categoryCapacities,
-    'categoryPrices': categoryPrices,
-  };
-}
+    // FIX: Handle case where all prices are 0 (free event)
+    final positivePrices = categoryPrices.values.where((p) => p > 0).toList();
+    final minPrice = positivePrices.isNotEmpty
+        ? positivePrices.reduce(min)
+        : 0.0; // Default to 0.0 if all are free
+
+    return {
+      'title': title,
+      'description': description,
+      'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
+      'startTime': Timestamp.fromDate(startTime),
+      'endTime': Timestamp.fromDate(endTime),
+      'imageUrl': imageUrl,
+      'documentUrl': documentUrl,
+      'organizerId': organizerId,
+      'organizerName': organizerName,
+      'attendees': attendees,
+      'maxAttendees': totalMax, // Synced
+      'category': category,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
+      'ticketPrice': minPrice, // Synced to min (or 0 if all free)
+      'status': status,
+      'takenSeats': takenSeats,
+      'categoryCapacities': categoryCapacities,
+      'categoryPrices': categoryPrices,
+    };
+  }
 
   EventModel copyWith({
     String? id,
@@ -153,6 +156,7 @@ class EventModel extends EventEntity {
     DateTime? updatedAt,
     double? ticketPrice,
     String? status,
+    List<int>? takenSeats,
     Map<String, int>? categoryCapacities,
     Map<String, double>? categoryPrices,
   }) {
@@ -176,6 +180,7 @@ class EventModel extends EventEntity {
       updatedAt: updatedAt ?? this.updatedAt,
       ticketPrice: ticketPrice ?? this.ticketPrice,
       status: status ?? this.status,
+      takenSeats: takenSeats ?? this.takenSeats,
       categoryCapacities: categoryCapacities ?? this.categoryCapacities,
       categoryPrices: categoryPrices ?? this.categoryPrices,
     );

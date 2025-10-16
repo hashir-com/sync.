@@ -205,7 +205,7 @@ class CustomDrawer extends ConsumerWidget {
                           isDark,
                           Icons.settings_outlined,
                           'Settings',
-                          '/settings',
+                          '/mybookings',
                         ),
                         _buildItem(
                           context,

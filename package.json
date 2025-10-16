@@ -1,5 +1,28 @@
 {
   "dependencies": {
-    "firebase": "^12.3.0"
-  }
+    "firebase": "^12.3.0",
+    "firebase-admin": "^13.5.0"
+  },
+  "name": "sync_event",
+  "version": "1.0.0",
+  "description": "A new Flutter project.",
+  "main": "migrate.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hashir-com/sync..git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hashir-com/sync./issues"
+  },
+  "homepage": "https://github.com/hashir-com/sync.#readme"
 }

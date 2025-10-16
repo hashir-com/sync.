@@ -1,3 +1,5 @@
+// lib/features/bookings/data/repositories/booking_repository_impl.dart
+
 import 'package:dartz/dartz.dart';
 import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/core/network/network_info.dart';
@@ -25,7 +27,9 @@ class BookingRepositoryImpl implements BookingRepository {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
     try {
-      final booked = await remoteDataSource.bookTicket(BookingModel.fromEntity(booking));
+      final booked = await remoteDataSource.bookTicket(
+        BookingModel.fromEntity(booking),
+      );
       return Right(booked);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -67,6 +71,10 @@ class BookingRepositoryImpl implements BookingRepository {
       final bookings = await remoteDataSource.getUserBookings(userId);
       return Right(bookings);
     } catch (e) {
+      if (e.toString().contains('PERMISSION_DENIED') ||
+          e.toString().contains('does not exist')) {
+        return Right([]); // Return empty list if collection missing or no permission
+      }
       return Left(ServerFailure(message: e.toString()));
     }
   }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../widgets/login_form.dart';
-import '../widgets/signup_text.dart';
-import '../widgets/social_buttons.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/features/auth/presentation/widgets/login_form.dart';
+import 'package:sync_event/features/auth/presentation/widgets/signup_text.dart';
+import 'package:sync_event/features/auth/presentation/widgets/social_buttons.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -74,3 +74,5 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
+
+

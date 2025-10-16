@@ -7,7 +7,10 @@ import 'package:sync_event/features/auth/presentation/screens/login_screen.dart'
 import 'package:sync_event/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
+import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
+import 'package:sync_event/features/bookings/presentation/screens/booking_detail_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
+import 'package:sync_event/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/edit_event/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
@@ -120,6 +123,10 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(path: '/wallet', builder: (context, state) => const WalletScreen()),
     GoRoute(
+      path: '/mybookings',
+      builder: (context, state) => const MyBookingsScreen(),
+    ),
+    GoRoute(
       path: '/edit-event',
       builder: (context, state) {
         final event = state.extra as EventEntity;
@@ -151,9 +158,18 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/book/:eventId',
-      builder: (context, state) => BookingScreen(
-        eventId: state.pathParameters['eventId']!,
-      ), // Fixed to pathParameters
+      builder: (context, state) =>
+          BookingScreen(eventId: state.pathParameters['eventId']!),
+    ),
+    GoRoute(
+      path: '/booking-details',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return BookingDetailsScreen(
+          booking: extra['booking'] as BookingEntity,
+          event: extra['event'] as EventEntity,
+        );
+      },
     ),
   ],
 );
