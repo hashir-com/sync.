@@ -1,4 +1,6 @@
-// lib/features/bookings/data/datasources/booking_remote_data_source.dart
+// lib/features/bookings/data/datasources/booking_remote_datasource.dart
+// COMPLETE FIXED FILE
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -13,6 +15,17 @@ abstract class BookingRemoteDataSource {
   Future<BookingModel> getBooking(String bookingId);
   Future<EventEntity> getEvent(String eventId);
   Future<void> requestRefund(String bookingId, String refundType);
+  Future<void> updateBookingRefundStatus(
+    String bookingId,
+    String refundType,
+    double amount,
+  );
+  Future<void> recordRefundToBank(
+    String bookingId,
+    String paymentId,
+    double amount,
+  );
+  Future<void> addRefundToWallet(String userId, double amount, String bookingId);
 }
 
 class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
@@ -36,7 +49,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
           throw Exception('Event not found: ${booking.eventId}');
         }
 
-        final eventData = eventSnap.data()! as Map<String, dynamic>;
+        final eventData = eventSnap.data()!;
         if (!eventData.containsKey('categoryCapacities') ||
             !eventData.containsKey('takenSeats')) {
           throw Exception('Event missing required fields');
@@ -251,13 +264,96 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       final requestRef = firestore.collection('refundRequests').doc();
       await requestRef.set({
         'bookingId': bookingId,
-        'refundType': refundType, // 'wallet' or 'bank'
+        'refundType': refundType,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       });
+      print('✓ Refund request created: $bookingId, Type: $refundType');
     } catch (e, stackTrace) {
       print('✗ Failed to create refund request: $e\n$stackTrace');
       throw Exception('Failed to request refund: $e');
+    }
+  }
+
+  @override
+  Future<void> updateBookingRefundStatus(
+    String bookingId,
+    String refundType,
+    double amount,
+  ) async {
+    try {
+      await firestore.collection('bookings').doc(bookingId).update({
+        'refundAmount': amount,
+        'refundType': refundType,
+        'refundProcessedAt': FieldValue.serverTimestamp(),
+        'refundStatus': 'processed',
+      });
+      print('✓ Booking refund status updated: $bookingId');
+    } catch (e, stackTrace) {
+      print('✗ Failed to update refund status: $e\n$stackTrace');
+      throw Exception('Failed to update booking refund status: $e');
+    }
+  }
+
+  @override
+  Future<void> recordRefundToBank(
+    String bookingId,
+    String paymentId,
+    double amount,
+  ) async {
+    try {
+      await firestore.collection('refundRecords').add({
+        'bookingId': bookingId,
+        'paymentId': paymentId,
+        'amount': amount,
+        'refundType': 'bank',
+        'status': 'initiated',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✓ Bank refund recorded: $paymentId');
+    } catch (e, stackTrace) {
+      print('✗ Failed to record bank refund: $e\n$stackTrace');
+      throw Exception('Failed to record bank refund: $e');
+    }
+  }
+
+  @override
+  Future<void> addRefundToWallet(
+    String userId,
+    double amount,
+    String bookingId,
+  ) async {
+    try {
+      final walletRef = firestore.collection('wallets').doc(userId);
+
+      await firestore.runTransaction((transaction) async {
+        final walletSnap = await transaction.get(walletRef);
+
+        double currentBalance = 0.0;
+        if (walletSnap.exists) {
+          currentBalance = (walletSnap.data()?['balance'] as num?)?.toDouble() ?? 0.0;
+        }
+
+        final newBalance = currentBalance + amount;
+        final newTransaction = {
+          'type': 'refund',
+          'amount': amount,
+          'bookingId': bookingId,
+          'timestamp': FieldValue.serverTimestamp(),
+          'description': 'Refund for cancelled booking',
+        };
+
+        transaction.update(walletRef, {
+          'balance': newBalance,
+          'transactionHistory': FieldValue.arrayUnion([newTransaction]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+      print('✓ Refund added to wallet: $userId, Amount: ₹$amount');
+    } catch (e, stackTrace) {
+      print('✗ Failed to add refund to wallet: $e\n$stackTrace');
+      throw Exception('Failed to add refund to wallet: $e');
     }
   }
 }

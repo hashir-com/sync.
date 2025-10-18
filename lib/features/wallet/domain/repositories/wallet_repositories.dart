@@ -5,4 +5,9 @@ import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
 abstract class WalletRepository {
   Future<Either<Failure, WalletEntity>> getWallet(String userId);
   Future<Either<Failure, Unit>> updateWallet(WalletEntity wallet);
+  Future<Either<Failure, Unit>> addRefundToWallet(
+    String userId,
+    double amount,
+    String bookingId,
+  );
 }

@@ -1,45 +1,38 @@
-// lib/features/bookings/presentation/providers/booking_provider.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/usecases/usecase.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/get_booking_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/process_refund_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/request_refund_usecase.dart';
-import 'package:sync_event/features/email/services/email_services.dart';
-import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
-import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart';
 import 'package:sync_event/core/di/injection_container.dart' as di;
 
 final bookingNotifierProvider =
     StateNotifierProvider<BookingNotifier, AsyncValue<BookingEntity?>>((ref) {
-      return BookingNotifier(
-        di.sl<BookTicketUseCase>(),
-        di.sl<CancelBookingUseCase>(),
-        di.sl<RefundToRazorpayUseCase>(),
-        di.sl<UpdateWalletUseCase>(),
-        di.sl<RequestRefundUseCase>(),
-        ref,
-      );
-    });
+  return BookingNotifier(
+    di.sl<BookTicketUseCase>(),
+    di.sl<CancelBookingUseCase>(),
+    di.sl<RefundToRazorpayUseCase>(),
+    di.sl<RequestRefundUseCase>(),
+    ref,
+  );
+});
 
 class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   final BookTicketUseCase bookTicketUseCase;
   final CancelBookingUseCase cancelBookingUseCase;
   final RefundToRazorpayUseCase refundToRazorpayUseCase;
-  final UpdateWalletUseCase updateWalletUseCase;
   final RequestRefundUseCase requestRefundUseCase;
-  // ignore: deprecated_member_use
-  final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>>
-  ref;
+  final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>> ref;
 
   BookingNotifier(
     this.bookTicketUseCase,
     this.cancelBookingUseCase,
     this.refundToRazorpayUseCase,
-    this.updateWalletUseCase,
     this.requestRefundUseCase,
     this.ref,
   ) : super(const AsyncValue.data(null));
@@ -55,7 +48,6 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
       return;
     }
 
-    // Include email in booking
     final bookingWithPayment = BookingEntity(
       id: booking.id,
       userId: booking.userId,
@@ -69,7 +61,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
       startTime: booking.startTime,
       endTime: booking.endTime,
       status: 'confirmed',
-      userEmail: email, // Save email in booking
+      userEmail: email,
     );
 
     final result = await bookTicketUseCase(bookingWithPayment);
@@ -78,10 +70,9 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
         state = AsyncValue.error(failure, StackTrace.current);
         print('Booking failed: $failure');
       },
-      (booked) async {
+      (booked) {
         state = AsyncValue.data(booked);
-        ref.invalidate(userBookingsProvider(booked.userId)); // Refresh bookings
-        // Confirmation email is sent by Cloud Function on booking creation
+        ref.invalidate(userBookingsProvider(booked.userId));
       },
     );
   }
@@ -89,66 +80,80 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   Future<void> cancelBooking(
     String bookingId,
     String paymentId,
-    String eventId,
-    {String refundType = 'wallet'},
-  ) async {
+    String eventId, {
+    String refundType = 'wallet',
+  }) async {
     state = const AsyncValue.loading();
-    final result = await cancelBookingUseCase(
-      CancelParams(
-        bookingId: bookingId,
-        paymentId: paymentId,
-        eventId: eventId,
-      ),
-    );
 
-    result.fold(
-      (failure) {
-        state = AsyncValue.error(failure, StackTrace.current);
-        print('Cancellation failed: $failure');
-      },
-      (success) async {
-        // Defer refund processing to backend via refund request
-        await requestRefundUseCase(
-          RequestRefundParams(bookingId: bookingId, refundType: refundType),
-        );
-        // Note: backend Cloud Function will process refund and send emails
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser != null) {
-          ref.invalidate(userBookingsProvider(currentUser.uid));
-        }
-        state = const AsyncValue.data(null);
-      },
-    );
-  }
+    try {
+      // Step 1: Get booking details
+      final getBookingUseCase = di.sl<GetBookingUseCase>();
+      final bookingResult = await getBookingUseCase(bookingId);
 
-  Future<void> _sendInvoiceEmail(BookingEntity booking) async {
-    await EmailService.sendInvoice(
-      booking.userId,
-      booking.id,
-      booking.totalAmount,
-      booking.userEmail,
-    );
-  }
+      final booking = bookingResult.fold(
+        (failure) => throw failure,
+        (bookingEntity) => bookingEntity,
+      );
 
-  Future<void> _sendCancellationEmail(BookingEntity booking) async {
-    await EmailService.sendCancellationNotice(
-      booking.userId,
-      booking.id,
-      booking.totalAmount,
-    );
+      // Step 2: Cancel the booking
+      final cancelResult = await cancelBookingUseCase(
+        CancelParams(
+          bookingId: bookingId,
+          paymentId: paymentId,
+          eventId: eventId,
+        ),
+      );
+
+      final cancelSuccess = cancelResult.fold(
+        (failure) => throw failure,
+        (_) => true,
+      );
+
+      if (!cancelSuccess) {
+        throw Exception('Failed to cancel booking');
+      }
+
+      // Step 3: Process refund based on type
+      final processRefundUseCase = di.sl<ProcessRefundUseCase>();
+      final refundResult = await processRefundUseCase(
+        ProcessRefundParams(
+          userId: booking.userId,
+          bookingId: bookingId,
+          paymentId: paymentId,
+          amount: booking.totalAmount,
+          refundType: refundType,
+        ),
+      );
+
+      refundResult.fold(
+        (failure) => throw failure,
+        (_) {
+          final currentUser = FirebaseAuth.instance.currentUser;
+          if (currentUser != null) {
+            ref.invalidate(userBookingsProvider(currentUser.uid));
+          }
+          state = const AsyncValue.data(null);
+          print('✓ Booking cancelled and refund processed: $refundType');
+        },
+      );
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+      print('Error in cancelBooking: $e');
+    }
   }
 }
-
-// lib/features/bookings/presentation/providers/booking_provider.dart
 
 final userBookingsProvider = FutureProvider.family<List<BookingEntity>, String>(
   (ref, userId) async {
     final useCase = di.sl<GetUserBookingsUseCase>();
-    final result = await useCase(Params(userId: userId));
+    final result = await useCase(GetUserBookingsParams(userId: userId));
 
-    return result.fold((failure) {
-      print('Failed to fetch bookings: $failure');
-      return <BookingEntity>[];
-    }, (bookings) => bookings);
+    return result.fold(
+      (failure) {
+        print('Failed to fetch bookings: $failure');
+        return <BookingEntity>[];
+      },
+      (bookings) => bookings,
+    );
   },
 );

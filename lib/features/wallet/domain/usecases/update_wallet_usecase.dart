@@ -10,7 +10,7 @@ class UpdateWalletUseCase implements UseCase<Unit, WalletEntity> {
   UpdateWalletUseCase(this.repository);
 
   @override
-  Future<Either<Failure, Unit>> call(WalletEntity params) async {
-    return await repository.updateWallet(params);
+  Future<Either<Failure, Unit>> call(WalletEntity wallet) async {
+    return await repository.updateWallet(wallet);
   }
 }
