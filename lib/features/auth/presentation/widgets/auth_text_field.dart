@@ -3,6 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 
 enum AuthFieldType { name, email, password, confirmPassword }
 
@@ -14,9 +18,8 @@ class AuthTextField extends ConsumerWidget {
   final bool obscureText;
   final StateProvider<bool>? visibilityProvider;
   final AuthFieldType fieldType;
-  final TextEditingController? matchController; 
+  final TextEditingController? matchController;
   final bool autoValidate;
-
 
   const AuthTextField({
     super.key,
@@ -30,7 +33,6 @@ class AuthTextField extends ConsumerWidget {
     this.matchController,
     this.autoValidate = false,
   });
-
 
   String? _validateField(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -64,18 +66,17 @@ class AuthTextField extends ConsumerWidget {
         }
         break;
       case AuthFieldType.confirmPassword:
-  if (matchController != null && value != matchController!.text) {
-    return 'Passwords do not match';
-  }
-  break;
-
+        if (matchController != null && value != matchController!.text) {
+          return 'Passwords do not match';
+        }
+        break;
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final isDark = ThemeUtils.isDark(context);
     final isObscure = visibilityProvider != null
         ? ref.watch(visibilityProvider!)
         : obscureText;
@@ -88,47 +89,84 @@ class AuthTextField extends ConsumerWidget {
           ? AutovalidateMode.onUserInteraction
           : AutovalidateMode.disabled,
       validator: _validateField,
+      style: AppTextStyles.bodyLarge(
+        isDark: isDark,
+      ).copyWith(fontSize: AppSizes.fontMedium.sp),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-        prefixIcon: Icon(icon, color: theme.colorScheme.onSurface),
+        labelStyle: AppTextStyles.bodyMedium(
+          isDark: isDark,
+        ).copyWith(fontSize: AppSizes.fontMedium.sp),
+        hintText: label,
+        hintStyle: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
+          fontSize: AppSizes.fontMedium.sp,
+          color: AppColors.getTextSecondary(isDark).withOpacity(0.6),
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: AppColors.getTextSecondary(isDark),
+          size: AppSizes.iconMedium.sp,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
           borderSide: BorderSide(
-            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+            color: AppColors.getBorder(isDark),
+            width: AppSizes.inputBorderWidth,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderSide: BorderSide(
+            color: AppColors.getBorder(isDark),
+            width: AppSizes.inputBorderWidth,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.r),
-          borderSide: BorderSide(color: theme.colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
           borderSide: BorderSide(
-            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+            color: AppColors.getPrimary(isDark),
+            width: AppSizes.inputBorderWidthFocused,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.r),
-          borderSide: BorderSide(color: theme.colorScheme.error),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderSide: BorderSide(
+            color: AppColors.getError(isDark),
+            width: AppSizes.inputBorderWidth,
+          ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.r),
-          borderSide: BorderSide(color: theme.colorScheme.error),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderSide: BorderSide(
+            color: AppColors.getError(isDark),
+            width: AppSizes.inputBorderWidthFocused,
+          ),
         ),
-        errorStyle: TextStyle(fontSize: 12.sp, color: theme.colorScheme.error),
+        errorStyle: AppTextStyles.bodySmall(isDark: isDark).copyWith(
+          fontSize: AppSizes.fontSmall.sp,
+          color: AppColors.getError(isDark),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: AppSizes.inputPaddingHorizontal.w,
+          vertical: AppSizes.inputPaddingVertical.h,
+        ),
+        filled: true,
+        fillColor: AppColors.getSurface(isDark).withOpacity(0.5),
         suffixIcon: visibilityProvider != null
             ? IconButton(
                 icon: Icon(
-                  isObscure ? Icons.visibility_off : Icons.visibility,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  isObscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: AppColors.getTextSecondary(isDark),
+                  size: AppSizes.iconMedium.sp,
                 ),
                 onPressed: () =>
                     ref.read(visibilityProvider!.notifier).state = !isObscure,
+                tooltip: isObscure ? 'Show password' : 'Hide password',
               )
             : null,
       ),
-      style: TextStyle(fontSize: 14.sp, color: theme.colorScheme.onSurface),
     );
   }
 }

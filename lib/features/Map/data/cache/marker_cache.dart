@@ -1,53 +1,59 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 
-/// Cache for storing marker icons and built markers
 class MarkerCache {
   static final Map<String, BitmapDescriptor> _icons = {};
   static final Set<Marker> _markers = {};
   static bool _isBuilt = false;
   static String _lastEventHash = '';
 
-  /// Check if markers need to be rebuilt based on events
   static bool needsRebuild(List<EventEntity> events) {
-    final currentHash = '${events.length}:${events.map((e) => e.id).join(',')}';
+    final currentHash = '${events.length}:${events.map((e) => '${e.id}:${e.status}:${e.updatedAt.millisecondsSinceEpoch}').join(',')}';
+    print('MarkerCache: needsRebuild - lastHash=$_lastEventHash, currentHash=$currentHash');
     if (_lastEventHash != currentHash) {
       _lastEventHash = currentHash;
       _isBuilt = false;
+      print('MarkerCache: Rebuild required due to hash change');
       return true;
     }
-    return !_isBuilt;
+    if (!_isBuilt) {
+      print('MarkerCache: Rebuild required as not built');
+      return true;
+    }
+    print('MarkerCache: No rebuild needed');
+    return false;
   }
 
-  /// Mark markers as built
-  static void markBuilt() => _isBuilt = true;
+  static void markBuilt() {
+    _isBuilt = true;
+    print('MarkerCache: Marked as built');
+  }
 
-  /// Get cached icon for event
   static BitmapDescriptor? getIcon(String eventId) => _icons[eventId];
 
-  /// Cache icon for event
-  static void setIcon(String eventId, BitmapDescriptor icon) =>
-      _icons[eventId] = icon;
+  static void setIcon(String eventId, BitmapDescriptor icon) {
+    _icons[eventId] = icon;
+    print('MarkerCache: Cached icon for eventId=$eventId');
+  }
 
-  /// Get all cached markers
   static Set<Marker> get markers => _markers;
 
-  /// Set markers in cache
   static void setMarkers(Set<Marker> markers) {
     _markers.clear();
     _markers.addAll(markers);
+    print('MarkerCache: Set ${markers.length} markers');
   }
 
-  /// Clear all cache
   static void clearAll() {
     _icons.clear();
     _markers.clear();
     _isBuilt = false;
     _lastEventHash = '';
+    print('MarkerCache: Cleared all');
   }
 
-  /// Clear specific event icon
   static void clearIcon(String eventId) {
     _icons.remove(eventId);
+    print('MarkerCache: Cleared icon for eventId=$eventId');
   }
 }

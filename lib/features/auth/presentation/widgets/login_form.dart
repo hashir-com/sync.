@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sync_event/features/auth/presentation/providers/login_notifier.dart'; // Updated import
-// Ensure this includes loginNotifierProvider
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_font_size.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
+import 'package:sync_event/features/auth/presentation/providers/login_notifier.dart';
 import 'auth_text_field.dart';
 
 final emailControllerProvider = Provider.autoDispose(
@@ -22,85 +23,104 @@ class LoginForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final emailController = ref.watch(emailControllerProvider);
     final passwordController = ref.watch(passwordControllerProvider);
-    final loginState = ref.watch(
-      loginNotifierProvider,
-    ); // Changed to loginNotifierProvider
+    final loginState = ref.watch(loginNotifierProvider);
     final autoValidate = ref.watch(autoValidateProvider);
     final formKey = GlobalKey<FormState>();
+    final isDark = ThemeUtils.isDark(context);
 
-    void showSnackBar(String message) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+    void showSnackBar(String message, {bool isError = false}) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: AppTextStyles.bodyMedium(
+              isDark: true,
+            ).copyWith(color: Colors.white),
+          ),
+          backgroundColor: isError
+              ? AppColors.getError(isDark)
+              : AppColors.getSuccess(isDark),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          ),
+          margin:  EdgeInsets.all(AppSizes.paddingLarge),
+        ),
+      );
     }
 
     ref.listen<LoginState>(loginNotifierProvider, (previous, next) {
-      // Changed to loginNotifierProvider
-      if (next.errorMessage != null) {
-        showSnackBar(
-          next.errorMessage!,
-        ); // Show errors like "Incorrect email or password"
-        ref
-            .read(loginNotifierProvider.notifier)
-            .clearError(); // Changed to loginNotifierProvider
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        print('Login error: ${next.errorMessage}'); // Debug print
+        showSnackBar(next.errorMessage!, isError: true);
+        ref.read(loginNotifierProvider.notifier).clearError();
+      }
+      if (next.user != null && previous?.user == null) {
+        print('Login successful for user: ${next.user!.email}'); // Debug print
+        showSnackBar("Login successful!");
+        if (context.mounted) {
+          context.go('/root');
+        }
       }
     });
 
-    final isDarkMode = theme.brightness == Brightness.dark;
-    final syncColor = isDarkMode
-        ? const Color.fromARGB(255, 199, 210, 255)
-        : AppColors.splash;
-    final forgotPasswordColor = isDarkMode ? Colors.white : AppColors.primary;
-
     Future<void> login() async {
-      ref.read(autoValidateProvider.notifier).state =
-          true; // Enable autovalidation
+      ref.read(autoValidateProvider.notifier).state = true;
 
       if (!formKey.currentState!.validate()) {
+        print('Form validation failed'); // Debug print
         return;
       }
 
-      final user = await ref
+      print(
+        'Attempting login with email: ${emailController.text}',
+      ); // Debug print
+      await ref
           .read(loginNotifierProvider.notifier)
           .loginWithEmail(
-            // Changed to loginNotifierProvider
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
-      if (user != null && context.mounted) {
-        showSnackBar("Login successful!");
-        context.go('/root');
-      }
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+      padding:  EdgeInsets.symmetric(
+        horizontal: AppSizes.screenPaddingHorizontal,
+        vertical: AppSizes.paddingXxxl,
+      ),
       physics: const BouncingScrollPhysics(),
       child: Form(
         key: formKey,
+        autovalidateMode: autoValidate
+            ? AutovalidateMode.onUserInteraction
+            : AutovalidateMode.disabled,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // App Logo/Title
             Text(
               "SYNC.",
               style: GoogleFonts.quicksand(
-                textStyle: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: syncColor,
-                ).merge(AppTextStyles.headingLarge(syncColor)),
+                fontSize: AppSizes.fontDisplay1 + 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.getPrimary(isDark),
+                letterSpacing: AppSizes.letterSpacingWide,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 40),
-            Text(
-              'Sign in',
-              style: AppTextStyles.headingMedium(theme.colorScheme.onSurface),
+             SizedBox(
+              height: AppSizes.spacingXxxl + AppSizes.spacingSmall,
             ),
-            const SizedBox(height: 10),
+
+            // Sign in heading
+            Text('Sign in', style: AppTextStyles.headingSmall(isDark: isDark)),
+             SizedBox(height: AppSizes.spacingMedium),
+
+            // Email field
             AuthTextField(
               controller: emailController,
               label: "abc@gmail.com",
@@ -109,7 +129,9 @@ class LoginForm extends ConsumerWidget {
               fieldType: AuthFieldType.email,
               autoValidate: autoValidate,
             ),
-            const SizedBox(height: 16),
+             SizedBox(height: AppSizes.spacingLarge),
+
+            // Password field
             AuthTextField(
               controller: passwordController,
               label: "Your Password",
@@ -119,48 +141,59 @@ class LoginForm extends ConsumerWidget {
               fieldType: AuthFieldType.password,
               autoValidate: autoValidate,
             ),
+
+            // Forgot password button
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => context.push('/forgot-password'),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.paddingMedium,
+                    vertical: AppSizes.paddingSmall,
+                  ),
+                ),
                 child: Text(
                   'Forgot password?',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: forgotPasswordColor,
+                  style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                    color: AppColors.getPrimary(isDark),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+             SizedBox(height: AppSizes.spacingSmall),
+
+            // Login button
             SizedBox(
-              height: 50,
+              height: AppSizes.buttonHeightMedium,
               child: ElevatedButton(
-                onPressed: loginState.isLoading ? null : login,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                  backgroundColor: AppColors.getPrimary(isDark),
                 ),
+                onPressed: loginState.isLoading ? null : login,
                 child: loginState.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? SizedBox(
+                        height: AppSizes.iconMedium,
+                        width: AppSizes.iconMedium,
+                        child: const CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Text(
                             "Login",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                            style: AppTextStyles.button(
+                              isDark: isDark,
+                            ).copyWith(color: Colors.white),
                           ),
-                          SizedBox(width: 8),
-                          Icon(
+                           SizedBox(width: AppSizes.spacingSmall),
+                           Icon(
                             Icons.arrow_forward,
-                            size: 20,
+                            size: AppSizes.iconSmall,
                             color: Colors.white,
                           ),
                         ],

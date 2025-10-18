@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/features/auth/domain/entities/user_entity.dart';
 import 'package:sync_event/features/auth/domain/usecases/login_with_email_usecase.dart';
@@ -47,11 +48,35 @@ class LoginNotifier extends StateNotifier<LoginState> {
         },
         (user) {
           state = state.copyWith(isLoading: false, user: user);
-          return user;
+          return null; // Return null here to avoid duplicate navigation
         },
       );
+    } on FirebaseAuthException catch (e) {
+      // Handle specific Firebase Authentication errors
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'No user found with this email.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Incorrect password.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Invalid email format.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'This user account has been disabled.';
+          break;
+        default:
+          errorMessage = 'Login failed: ${e.message ?? e.toString()}';
+      }
+      state = state.copyWith(isLoading: false, errorMessage: errorMessage);
+      return null;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'An unexpected error occurred: $e',
+      );
       return null;
     }
   }
@@ -61,9 +86,9 @@ class LoginNotifier extends StateNotifier<LoginState> {
   }
 }
 
-final loginNotifierProvider = StateNotifierProvider<LoginNotifier, LoginState>((
-  ref,
-) {
-  final loginWithEmailUseCase = ref.watch(loginWithEmailUseCaseProvider);
-  return LoginNotifier(loginWithEmailUseCase);
-});
+final loginNotifierProvider = StateNotifierProvider<LoginNotifier, LoginState>(
+  (ref) {
+    final loginWithEmailUseCase = ref.watch(loginWithEmailUseCaseProvider);
+    return LoginNotifier(loginWithEmailUseCase);
+  },
+);

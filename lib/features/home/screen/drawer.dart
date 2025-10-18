@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 // Assuming authStateProvider is defined as in the previous response
-// If not, include it here or in a shared file:
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:sync_event/core/di/injection_container.dart';
 import 'package:sync_event/features/auth/domain/repo/auth_repo.dart';
 
-// Define UserModel (same as in ProfileScreen)
+// Define UserModel
 class UserModel {
   final String? name;
   final String? image;
@@ -27,7 +32,7 @@ class UserModel {
   }
 }
 
-// Ensure authStateProvider is accessible (same as in ProfileScreen)
+// Ensure authStateProvider is accessible
 final authStateProvider = StreamProvider<UserModel?>((ref) {
   sl<AuthRepository>();
   return firebase_auth.FirebaseAuth.instance.userChanges().map((user) {
@@ -40,23 +45,26 @@ class CustomDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ThemeUtils.isDark(context);
     final authNotifier = ref.read(authNotifierProvider.notifier);
-    // Watch authStateProvider for real-time user data
     final userAsync = ref.watch(authStateProvider);
 
     return Drawer(
-      elevation: 8,
-      shadowColor: Colors.black26,
+      elevation: AppSizes.cardElevationHigh,
+      shadowColor: AppColors.getShadow(isDark),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topRight: Radius.circular(24.r),
-          bottomRight: Radius.circular(24.r),
+          topRight: Radius.circular(AppSizes.radiusXxl.r),
+          bottomRight: Radius.circular(AppSizes.radiusXxl.r),
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.getCard(isDark),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingLarge.w,
+            vertical: AppSizes.paddingXl.h,
+          ),
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -75,7 +83,10 @@ class CustomDrawer extends ConsumerWidget {
                                 child: Hero(
                                   tag: "profile",
                                   child: CircleAvatar(
-                                    radius: 28.r,
+                                    radius: AppSizes.avatarMedium.r,
+                                    backgroundColor: AppColors.getSurface(
+                                      isDark,
+                                    ),
                                     backgroundImage: user?.image != null
                                         ? NetworkImage(user!.image!)
                                         : const AssetImage(
@@ -85,17 +96,19 @@ class CustomDrawer extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 12.w),
+                              SizedBox(width: AppSizes.spacingMedium.w),
                               Expanded(
                                 child: Text(
                                   user?.name ??
                                       user?.uid?.split('@').first ??
                                       'User',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
+                                  style:
+                                      AppTextStyles.titleLarge(
+                                        isDark: isDark,
+                                      ).copyWith(
+                                        fontSize: AppSizes.fontXl.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                 ),
                               ),
                             ],
@@ -103,15 +116,20 @@ class CustomDrawer extends ConsumerWidget {
                           loading: () => Row(
                             children: [
                               CircleAvatar(
-                                radius: 28.r,
-                                backgroundColor: Colors.grey.shade300,
+                                radius: AppSizes.avatarMedium.r,
+                                backgroundColor: AppColors.getDisabled(isDark),
                               ),
-                              SizedBox(width: 12.w),
+                              SizedBox(width: AppSizes.spacingMedium.w),
                               Expanded(
                                 child: Container(
-                                  height: 18.sp,
+                                  height: AppSizes.fontXl.sp,
                                   width: 100.w,
-                                  color: Colors.grey.shade300,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.getDisabled(isDark),
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusSmall.r,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -119,110 +137,120 @@ class CustomDrawer extends ConsumerWidget {
                           error: (error, stack) => Row(
                             children: [
                               CircleAvatar(
-                                radius: 28.r,
-                                backgroundColor: Colors.grey.shade300,
+                                radius: AppSizes.avatarMedium.r,
+                                backgroundColor: AppColors.getDisabled(isDark),
                                 child: Icon(
-                                  Icons.error,
-                                  size: 20.sp,
-                                  color: Colors.red,
+                                  Icons.error_outline_rounded,
+                                  size: AppSizes.iconSmall.sp,
+                                  color: AppColors.getError(isDark),
                                 ),
                               ),
-                              SizedBox(width: 12.w),
+                              SizedBox(width: AppSizes.spacingMedium.w),
                               Expanded(
                                 child: Text(
                                   'Error loading user',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.red,
-                                  ),
+                                  style:
+                                      AppTextStyles.titleLarge(
+                                        isDark: isDark,
+                                      ).copyWith(
+                                        fontSize: AppSizes.fontXl.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.getError(isDark),
+                                      ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        SizedBox(height: 32.h),
+                        SizedBox(height: AppSizes.spacingXxxl.h),
 
                         // --- Drawer Items ---
                         _buildItem(
                           context,
-                          Icons.person_outline,
+                          isDark,
+                          Icons.person_outline_rounded,
                           'My Profile',
                           '/profile',
                         ),
                         _buildItem(
                           context,
-                          Icons.chat_bubble_outline,
+                          isDark,
+                          Icons.chat_bubble_outline_rounded,
                           'Message',
                           '/message',
                         ),
                         _buildItem(
                           context,
+                          isDark,
                           Icons.calendar_today_outlined,
                           'Calendar',
-                          '/calendar',
+                          '/wallet',
                         ),
                         _buildItem(
                           context,
-                          Icons.favorite_border,
+                          isDark,
+                          Icons.favorite_border_rounded,
                           'Favorites',
                           '/favorites',
                         ),
                         _buildItem(
                           context,
-                          Icons.mail_outline,
+                          isDark,
+                          Icons.mail_outline_rounded,
                           'Contact Us',
                           '/contact',
                         ),
                         _buildItem(
                           context,
+                          isDark,
                           Icons.settings_outlined,
                           'Settings',
                           '/settings',
                         ),
                         _buildItem(
                           context,
+                          isDark,
                           Icons.event_note_outlined,
                           'My Events',
-                          '/my_events',
+                          '/my-events',
                         ),
-
-                        const Spacer(),
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(
-                            Icons.logout,
-                            color: Colors.redAccent,
-                            size: 22.sp,
+                            Icons.logout_rounded,
+                            color: AppColors.getError(isDark),
+                            size: AppSizes.iconMedium.sp,
                           ),
                           title: Text(
                             'Logout',
-                            style: TextStyle(
-                              color: Colors.redAccent,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15.sp,
-                            ),
+                            style: AppTextStyles.bodyLarge(isDark: isDark)
+                                .copyWith(
+                                  color: AppColors.getError(isDark),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: AppSizes.fontMedium.sp,
+                                ),
                           ),
                           onTap: () async {
                             final shouldLogout = await showDialog<bool>(
                               context: context,
                               builder: (context) => AlertDialog(
+                                backgroundColor: AppColors.getCard(isDark),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20.r),
+                                  borderRadius: BorderRadius.circular(
+                                    AppSizes.radiusXl.r,
+                                  ),
                                 ),
                                 title: Text(
                                   'Confirm Logout',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: AppTextStyles.headingSmall(
+                                    isDark: isDark,
+                                  ).copyWith(fontSize: AppSizes.fontXl.sp),
                                 ),
                                 content: Text(
                                   'Are you sure you want to log out?',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: Colors.black87,
-                                  ),
+                                  style: AppTextStyles.bodyMedium(
+                                    isDark: isDark,
+                                  ).copyWith(fontSize: AppSizes.fontMedium.sp),
                                 ),
                                 actions: [
                                   TextButton(
@@ -230,18 +258,25 @@ class CustomDrawer extends ConsumerWidget {
                                         Navigator.pop(context, false),
                                     child: Text(
                                       'Cancel',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: Colors.grey[700],
-                                      ),
+                                      style:
+                                          AppTextStyles.labelLarge(
+                                            isDark: isDark,
+                                          ).copyWith(
+                                            fontSize: AppSizes.fontMedium.sp,
+                                            color: AppColors.getTextSecondary(
+                                              isDark,
+                                            ),
+                                          ),
                                     ),
                                   ),
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.redAccent,
+                                      backgroundColor: AppColors.getError(
+                                        isDark,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(
-                                          8.r,
+                                          AppSizes.radiusSmall.r,
                                         ),
                                       ),
                                     ),
@@ -249,10 +284,13 @@ class CustomDrawer extends ConsumerWidget {
                                         Navigator.pop(context, true),
                                     child: Text(
                                       'Logout',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: Colors.white,
-                                      ),
+                                      style:
+                                          AppTextStyles.labelLarge(
+                                            isDark: false,
+                                          ).copyWith(
+                                            fontSize: AppSizes.fontMedium.sp,
+                                            color: Colors.white,
+                                          ),
                                     ),
                                   ),
                                 ],
@@ -265,6 +303,8 @@ class CustomDrawer extends ConsumerWidget {
                             }
                           },
                         ),
+
+                        // Animated Theme Toggle with Haptic Feedback
                       ],
                     ),
                   ),
@@ -279,18 +319,25 @@ class CustomDrawer extends ConsumerWidget {
 
   Widget _buildItem(
     BuildContext context,
+    bool isDark,
     IconData icon,
     String label,
     String route,
   ) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
+      padding: EdgeInsets.symmetric(vertical: AppSizes.paddingXs.h),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: Colors.black87, size: 22.sp),
+        leading: Icon(
+          icon,
+          color: AppColors.getTextPrimary(isDark),
+          size: AppSizes.iconMedium.sp,
+        ),
         title: Text(
           label,
-          style: TextStyle(color: Colors.black87, fontSize: 15.sp),
+          style: AppTextStyles.bodyLarge(
+            isDark: isDark,
+          ).copyWith(fontSize: AppSizes.fontMedium.sp),
         ),
         onTap: () {
           context.push(route);

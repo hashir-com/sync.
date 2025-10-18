@@ -1,13 +1,14 @@
+// File: features/map/domain/repositories/marker_repository.dart
+// Purpose: Define interface for marker icon operations
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-/// Abstract repository for marker operations
 abstract class MarkerRepository {
-  /// Get marker icon for event
+  // GetMarkerIcon: Fetch or create marker icon from image URL
   Future<BitmapDescriptor> getMarkerIcon(String? imageUrl, String eventId);
 
-  /// Get cached icon if available
-  BitmapDescriptor? getCachedIcon(String eventId);
+  // GetCachedIcon: Retrieve cached icon for event
+  Future<BitmapDescriptor?> getCachedIcon(String eventId);
 
-  /// Clear all marker cache
+  // ClearCache: Remove all cached icons
   void clearCache();
 }

@@ -7,27 +7,57 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 class SocialButtons extends ConsumerWidget {
   const SocialButtons({super.key});
 
+  void _showSnackBar(
+    BuildContext context,
+    String message, {
+    required bool isDark,
+    bool isError = false,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: AppTextStyles.bodyMedium(
+            isDark: true,
+          ).copyWith(fontSize: AppSizes.fontMedium.sp, color: Colors.white),
+        ),
+        backgroundColor: isError
+            ? AppColors.getError(isDark)
+            : AppColors.getSuccess(isDark),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusXxl.r),
+        ),
+        margin: EdgeInsets.all(AppSizes.paddingLarge.w),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final isDark = ThemeUtils.isDark(context);
     final authState = ref.watch(authNotifierProvider);
     final authNotifier = ref.read(authNotifierProvider.notifier);
 
     return Column(
       children: [
+        // Google Sign-In Button
         SizedBox(
           width: 320.w,
           child: Material(
-            elevation: 5,
-            borderRadius: BorderRadius.circular(14.r),
-            shadowColor: theme.shadowColor.withOpacity(0.26),
+            elevation: AppSizes.cardElevationMedium,
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+            shadowColor: AppColors.getShadow(isDark),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
               onTap: authState.isLoading
                   ? null
                   : () async {
@@ -35,67 +65,54 @@ class SocialButtons extends ConsumerWidget {
                         forceAccountChooser: true,
                       );
                       if (success && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Successfully signed in!',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: theme.colorScheme.onPrimary,
-                              ),
-                            ),
-                            backgroundColor: theme.colorScheme.primary,
-                          ),
+                        _showSnackBar(
+                          context,
+                          'Successfully signed in!',
+                          isDark: isDark,
                         );
                         context.go('/root');
                       } else if (authState.error != null && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Sign-in failed: ${authState.error}',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: theme.colorScheme.onPrimary,
-                              ),
-                            ),
-                            backgroundColor: theme.colorScheme.error,
-                          ),
+                        _showSnackBar(
+                          context,
+                          'Sign-in failed: ${authState.error}',
+                          isDark: isDark,
+                          isError: true,
                         );
                       }
                     },
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
+                padding: EdgeInsets.symmetric(
+                  vertical: AppSizes.paddingMedium.h,
+                  horizontal: AppSizes.paddingLarge.w,
+                ),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14.r),
-                  color: theme.colorScheme.surface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.shadowColor.withOpacity(0.12),
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+                  color: AppColors.getCard(isDark),
+                  border: Border.all(
+                    color: AppColors.getBorder(isDark).withOpacity(0.3),
+                    width: AppSizes.borderWidthThin,
+                  ),
                 ),
                 child: authState.isLoading
                     ? Shimmer.fromColors(
-                        baseColor: Colors.grey.shade300,
-                        highlightColor: Colors.grey.shade100,
+                        baseColor: AppColors.getShimmerBase(isDark),
+                        highlightColor: AppColors.getShimmerHighlight(isDark),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             FaIcon(
                               FontAwesomeIcons.google,
-                              color: AppColors.textSecondaryLight,
-                              size: 22,
+                              color: AppColors.getTextSecondary(isDark),
+                              size: AppSizes.iconMedium.sp,
                             ),
-                            SizedBox(width: 16.w),
+                            SizedBox(width: AppSizes.spacingLarge.w),
                             Text(
                               "Continue with Google",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: AppColors.textSecondaryLight,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: AppTextStyles.labelLarge(isDark: isDark)
+                                  .copyWith(
+                                    fontSize: AppSizes.fontMedium.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                           ],
                         ),
@@ -105,17 +122,17 @@ class SocialButtons extends ConsumerWidget {
                         children: [
                           FaIcon(
                             FontAwesomeIcons.google,
-                            color: theme.colorScheme.error,
-                            size: 22,
+                            color: AppColors.error,
+                            size: AppSizes.iconMedium.sp,
                           ),
-                          SizedBox(width: 16.w),
+                          SizedBox(width: AppSizes.spacingLarge.w),
                           Text(
                             "Continue with Google",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: AppTextStyles.labelLarge(isDark: isDark)
+                                .copyWith(
+                                  fontSize: AppSizes.fontMedium.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         ],
                       ),
@@ -123,50 +140,44 @@ class SocialButtons extends ConsumerWidget {
             ),
           ),
         ),
-        SizedBox(height: 20.h),
+        SizedBox(height: AppSizes.spacingXl.h),
+
+        // Phone Sign-In Button
         SizedBox(
           width: 320.w,
           child: Material(
-            elevation: 5,
-            borderRadius: BorderRadius.circular(14.r),
-            shadowColor: theme.shadowColor.withOpacity(0.26),
+            elevation: AppSizes.cardElevationMedium,
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+            shadowColor: AppColors.getShadow(isDark),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
               onTap: () => context.push('/phone'),
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
+                padding: EdgeInsets.symmetric(
+                  vertical: AppSizes.paddingMedium.h,
+                  horizontal: AppSizes.paddingLarge.w,
+                ),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14.r),
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.surface,
-                      theme.colorScheme.surface.withOpacity(0.9),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+                  color: AppColors.getCard(isDark),
+                  border: Border.all(
+                    color: AppColors.getBorder(isDark).withOpacity(0.3),
+                    width: AppSizes.borderWidthThin,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.shadowColor.withOpacity(0.12),
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.phone,
-                      color: theme.colorScheme.primary,
-                      size: 22,
+                      Icons.phone_rounded,
+                      color: AppColors.getPrimary(isDark),
+                      size: AppSizes.iconMedium.sp,
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: AppSizes.spacingLarge.w),
                     Text(
                       "Continue with Phone",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: theme.colorScheme.onSurface,
+                      style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
+                        fontSize: AppSizes.fontMedium.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

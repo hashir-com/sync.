@@ -5,7 +5,7 @@ class JoinEventUseCase {
 
   JoinEventUseCase(this.repository);
 
-  /// Join an event by adding userId to attendees
+  // Join an event by adding userId to attendees
   Future<void> call(String eventId, String userId) {
     return repository.joinEvent(eventId, userId);
   }

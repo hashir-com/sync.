@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import '../providers/event_providers.dart';
 import '../widgets/create_event_app_bar.dart';
 import '../widgets/create_event_form_sections.dart';
@@ -21,8 +23,7 @@ class CreateEventScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(createEventNotifierProvider);
     final notifier = ref.read(createEventNotifierProvider.notifier);
-    final isDark = ref.watch(themeProvider);
-    final colors = AppColors(isDark);
+    final isDark = ThemeUtils.isDark(context);
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
     final userName =
         FirebaseAuth.instance.currentUser?.displayName ?? 'Anonymous';
@@ -76,22 +77,49 @@ class CreateEventScreen extends ConsumerWidget {
         organizerName: userName,
       );
       if (error != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error,
+              style: AppTextStyles.bodyMedium(isDark: true)
+                  .copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getError(isDark),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
+            margin: EdgeInsets.all(AppSizes.paddingLarge),
+          ),
+        );
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event submitted for approval!')),
+        SnackBar(
+          content: Text(
+            'Event submitted for approval!',
+            style: AppTextStyles.bodyMedium(isDark: true)
+                .copyWith(color: Colors.white),
+          ),
+          backgroundColor: AppColors.getSuccess(isDark),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          ),
+          margin: EdgeInsets.all(AppSizes.paddingLarge),
+        ),
       );
       Navigator.pop(context);
     }
 
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: AppColors.getBackground(isDark),
       appBar: const CreateEventAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.screenPaddingHorizontal,
+          vertical: AppSizes.paddingLarge,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -99,17 +127,17 @@ class CreateEventScreen extends ConsumerWidget {
             children: [
               // Title Input
               const TitleField(),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSizes.spacingXxl),
 
               // Description
               DescriptionTile(
                 onTap: () => DescriptionDialog.show(context, ref),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSizes.spacingMedium),
 
               // Cover Photo
               const CoverTile(),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSizes.spacingMedium),
 
               // Location
               LocationTile(
@@ -125,7 +153,7 @@ class CreateEventScreen extends ConsumerWidget {
                   return result;
                 },
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSizes.spacingMedium),
 
               // Date and Time
               DateTimeTile(
@@ -138,47 +166,59 @@ class CreateEventScreen extends ConsumerWidget {
                   pickEndDateTime,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSizes.spacingMedium),
 
               // Max Attendees
               CapacityTile(onTap: () => MaxAttendeesDialog.show(context, ref)),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSizes.spacingMedium),
 
               // Ticket Pricing
               PriceTile(onTap: () => PriceDialog.show(context, ref)),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSizes.spacingMedium),
 
               // Event Type (Category)
               CategoryTile(onTap: () => CategoryDialog.show(context, ref)),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSizes.spacingMedium),
 
               // Document (Optional)
               const DocumentTile(),
 
-              const SizedBox(height: 32),
+              SizedBox(height: AppSizes.spacingXxxl),
 
               // Submit Button
               SizedBox(
                 width: double.infinity,
-                height: 54,
+                height: AppSizes.buttonHeightLarge,
                 child: ElevatedButton(
                   onPressed: state.isSubmitting ? null : submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5E72E4),
+                    backgroundColor: AppColors.getPrimary(isDark),
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        AppColors.getDisabled(isDark).withOpacity(0.6),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'SUBMIT',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1,
-                    ),
-                  ),
+                  child: state.isSubmitting
+                      ? SizedBox(
+                          height: AppSizes.iconMedium,
+                          width: AppSizes.iconMedium,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : Text(
+                          'SUBMIT',
+                          style: AppTextStyles.button(isDark: isDark).copyWith(
+                            color: Colors.white,
+                            fontSize: AppSizes.fontLarge,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: AppSizes.letterSpacingExtraWide,
+                          ),
+                        ),
                 ),
               ),
             ],

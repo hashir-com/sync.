@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/features/onboarding/controller/onboarding_controler.dart';
 import 'package:sync_event/features/onboarding/data/onboarding_items.dart';
-import '../widgets/onboarding_card.dart';
-import '../widgets/onboarding_bottom_nav.dart';
+import 'package:sync_event/features/onboarding/presentation/widgets/onboarding_card.dart';
+import 'package:sync_event/features/onboarding/presentation/widgets/onboarding_bottom_nav.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -77,3 +77,4 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     );
   }
 }
+

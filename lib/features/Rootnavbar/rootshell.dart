@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/features/map/presentation/screens/map_screen.dart';
+import 'package:sync_event/features/Map/presentation/screens/map_screen.dart';
 import 'package:sync_event/features/Rootnavbar/root_tab_notifier.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
 import 'package:sync_event/features/home/screen/home.dart';
@@ -23,16 +23,16 @@ class RootShell extends ConsumerWidget {
       body: pages[selectedIndex],
       bottomNavigationBar: BottomAppBar(
         elevation: 8,
-        shape: CircularNotchedRectangle(),
+        shape: const CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 6),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavIcon(Icons.explore, 'Explore', 0, ref, context),
-              _NavIcon(Icons.event, 'Events', 1, ref, context),
+              _NavIcon(Icons.paste_rounded, 'Events', 1, ref, context),
               SizedBox(width: 48), // space for FAB
-              _NavIcon(Icons.map, 'Map', 2, ref, context),
+              _NavIcon(Icons.location_on_rounded, 'Map', 2, ref, context),
               _NavIcon(Icons.person, 'Profile', 3, ref, context),
             ],
           ),

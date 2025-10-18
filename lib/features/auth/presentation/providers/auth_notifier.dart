@@ -1,3 +1,4 @@
+// auth_notifier.dart - FIXED VERSION
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/features/auth/domain/entities/user_entity.dart';
@@ -26,12 +27,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final SignOutUseCase _signOutUseCase;
 
   AuthNotifier(this._signInWithGoogleUseCase, this._signOutUseCase)
-      : super(AuthState());
+      : super(AuthState()) {
+    // ✅ Initialize with current Firebase user on app start
+    _initializeWithCurrentUser();
+  }
+
+  void _initializeWithCurrentUser() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final userEntity = UserEntity(
+        uid: currentUser.uid,
+        email: currentUser.email!,
+        name: currentUser.displayName,
+        image: currentUser.photoURL,
+        phoneNumber: currentUser.phoneNumber,
+      );
+      state = state.copyWith(user: userEntity);
+    }
+  }
 
   Future<bool> signInWithGoogle({bool forceAccountChooser = true}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final params = GoogleSignInParams(forceAccountChooser: forceAccountChooser);
+      final params = GoogleSignInParams(
+        forceAccountChooser: forceAccountChooser,
+      );
       final result = await _signInWithGoogleUseCase.call(params);
       return result.fold(
         (failure) {
@@ -44,7 +64,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       );
     } on FirebaseAuthException catch (e) {
-      state = state.copyWith(isLoading: false, error: _mapFirebaseAuthException(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _mapFirebaseAuthException(e),
+      );
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -55,6 +78,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     await _signOutUseCase.call();
     state = AuthState();
+  }
+
+  // ✅ NEW: Method to refresh auth state (useful after critical operations)
+  void refreshAuthState() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final userEntity = UserEntity(
+        uid: currentUser.uid,
+        email: currentUser.email!,
+        name: currentUser.displayName,
+        image: currentUser.photoURL,
+        phoneNumber: currentUser.phoneNumber,
+      );
+      state = state.copyWith(user: userEntity);
+    }
   }
 
   String _mapFirebaseAuthException(FirebaseAuthException e) {
@@ -81,3 +119,8 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>(
     ref.read(signOutUseCaseProvider),
   ),
 );
+
+// ✅ NEW: Stream provider for real-time auth state
+final authStateProvider = StreamProvider<User?>((ref) {
+  return FirebaseAuth.instance.authStateChanges();
+});

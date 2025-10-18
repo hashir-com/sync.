@@ -7,8 +7,12 @@ class CreateEventUseCase {
 
   CreateEventUseCase(this.repository);
 
-  /// Creates a new event (saved as pending)
+  // Creates a new event (saved as pending)
   Future<void> call(EventEntity event, {File? docFile, File? coverFile}) {
-    return repository.createEvent(event, docFile: docFile, coverFile: coverFile);
+    return repository.createEvent(
+      event,
+      docFile: docFile,
+      coverFile: coverFile,
+    );
   }
 }
