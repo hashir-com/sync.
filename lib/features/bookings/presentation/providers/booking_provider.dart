@@ -1,4 +1,5 @@
 // lib/features/bookings/presentation/providers/booking_provider.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/usecases/usecase.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
@@ -13,21 +14,23 @@ import 'package:sync_event/core/di/injection_container.dart' as di;
 
 final bookingNotifierProvider =
     StateNotifierProvider<BookingNotifier, AsyncValue<BookingEntity?>>((ref) {
-  return BookingNotifier(
-    di.sl<BookTicketUseCase>(),
-    di.sl<CancelBookingUseCase>(),
-    di.sl<RefundToRazorpayUseCase>(),
-    di.sl<UpdateWalletUseCase>(),
-    ref,
-  );
-});
+      return BookingNotifier(
+        di.sl<BookTicketUseCase>(),
+        di.sl<CancelBookingUseCase>(),
+        di.sl<RefundToRazorpayUseCase>(),
+        di.sl<UpdateWalletUseCase>(),
+        ref,
+      );
+    });
 
 class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   final BookTicketUseCase bookTicketUseCase;
   final CancelBookingUseCase cancelBookingUseCase;
   final RefundToRazorpayUseCase refundToRazorpayUseCase;
   final UpdateWalletUseCase updateWalletUseCase;
-  final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>> ref;
+  // ignore: deprecated_member_use
+  final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>>
+  ref;
 
   BookingNotifier(
     this.bookTicketUseCase,
@@ -40,6 +43,15 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   Future<void> bookTicket(BookingEntity booking, String paymentId) async {
     state = const AsyncValue.loading();
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final email = currentUser?.email;
+
+    if (email == null) {
+      state = AsyncValue.error('User email not available', StackTrace.current);
+      return;
+    }
+
+    // Include email in booking
     final bookingWithPayment = BookingEntity(
       id: booking.id,
       userId: booking.userId,
@@ -53,6 +65,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
       startTime: booking.startTime,
       endTime: booking.endTime,
       status: 'confirmed',
+      userEmail: email, // Save email in booking
     );
 
     final result = await bookTicketUseCase(bookingWithPayment);
@@ -69,13 +82,19 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
     );
   }
 
-  Future<void> cancelBooking(String bookingId, String paymentId, String eventId) async {
+  Future<void> cancelBooking(
+    String bookingId,
+    String paymentId,
+    String eventId,
+  ) async {
     state = const AsyncValue.loading();
-    final result = await cancelBookingUseCase(CancelParams(
-      bookingId: bookingId,
-      paymentId: paymentId,
-      eventId: eventId,
-    ));
+    final result = await cancelBookingUseCase(
+      CancelParams(
+        bookingId: bookingId,
+        paymentId: paymentId,
+        eventId: eventId,
+      ),
+    );
 
     result.fold(
       (failure) {
@@ -85,19 +104,25 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
       (success) async {
         final currentBooking = state.value;
         if (currentBooking != null) {
-          await refundToRazorpayUseCase(RefundParams(
-            paymentId: paymentId,
-            amount: currentBooking.totalAmount,
-          ));
+          await refundToRazorpayUseCase(
+            RefundParams(
+              paymentId: paymentId,
+              amount: currentBooking.totalAmount,
+            ),
+          );
 
-          await updateWalletUseCase(WalletEntity(
-            userId: currentBooking.userId,
-            balance: currentBooking.totalAmount,
-          ));
+          await updateWalletUseCase(
+            WalletEntity(
+              userId: currentBooking.userId,
+              balance: currentBooking.totalAmount,
+            ),
+          );
 
           await _sendCancellationEmail(currentBooking);
 
-          ref.invalidate(userBookingsProvider(currentBooking.userId)); // Refresh bookings
+          ref.invalidate(
+            userBookingsProvider(currentBooking.userId),
+          ); // Refresh bookings
           state = const AsyncValue.data(null);
         }
       },
@@ -106,9 +131,11 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
 
   Future<void> _sendInvoiceEmail(BookingEntity booking) async {
     await EmailService.sendInvoice(
+      
       booking.userId, // Should be updated to use email
       booking.id,
       booking.totalAmount,
+      booking.userEmail!,
     );
   }
 
@@ -121,17 +148,16 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   }
 }
 
+// lib/features/bookings/presentation/providers/booking_provider.dart
 
-final userBookingsProvider =
-    FutureProvider.family<List<BookingEntity>, String>((ref, userId) async {
-  final useCase = di.sl<GetUserBookingsUseCase>();
-  final result = await useCase(Params(userId: userId));
+final userBookingsProvider = FutureProvider.family<List<BookingEntity>, String>(
+  (ref, userId) async {
+    final useCase = di.sl<GetUserBookingsUseCase>();
+    final result = await useCase(Params(userId: userId));
 
-  return result.fold(
-    (failure) {
+    return result.fold((failure) {
       print('Failed to fetch bookings: $failure');
       return <BookingEntity>[];
-    },
-    (bookings) => bookings,
-  );
-});
+    }, (bookings) => bookings);
+  },
+);

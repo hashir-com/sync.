@@ -90,6 +90,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         'endTime': booking.endTime is! Timestamp
             ? Timestamp.fromDate(booking.endTime)
             : booking.endTime,
+        'userEmail': booking.userEmail,
       };
 
       print('Step 8: Booking JSON ready: $bookingJson');

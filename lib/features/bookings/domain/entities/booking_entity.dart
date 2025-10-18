@@ -16,6 +16,7 @@ class BookingEntity extends Equatable {
   final double? refundAmount;
   final DateTime startTime;
   final DateTime endTime;
+  final String userEmail;
 
   const BookingEntity({
     required this.id,
@@ -32,6 +33,7 @@ class BookingEntity extends Equatable {
     this.refundAmount,
     required this.startTime,
     required this.endTime,
+    required this.userEmail,
   });
 
   @override
@@ -50,5 +52,6 @@ class BookingEntity extends Equatable {
         refundAmount,
         startTime,
         endTime,
+        userEmail
       ];
 }

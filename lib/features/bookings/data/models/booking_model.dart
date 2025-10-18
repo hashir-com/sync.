@@ -20,6 +20,7 @@ class BookingModel extends BookingEntity {
     double? refundAmount,
     required DateTime startTime,
     required DateTime endTime,
+    required String userEmail
   }) : super(
           id: id,
           userId: userId,
@@ -35,6 +36,7 @@ class BookingModel extends BookingEntity {
           refundAmount: refundAmount,
           startTime: startTime,
           endTime: endTime,
+          userEmail: userEmail
         );
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,8 @@ class BookingModel extends BookingEntity {
           : null,
       startTime: (json['startTime'] as Timestamp).toDate(),
       endTime: (json['endTime'] as Timestamp).toDate(),
+      userEmail: json['userEmail'] ?? '', // read from Firestore, fallback to empty string
+
     );
   }
 
@@ -78,6 +82,7 @@ class BookingModel extends BookingEntity {
       'refundAmount': refundAmount,
       'startTime': Timestamp.fromDate(startTime),
       'endTime': Timestamp.fromDate(endTime),
+      'userEmail': userEmail,
     };
   }
 
@@ -96,6 +101,7 @@ class BookingModel extends BookingEntity {
     double? refundAmount,
     DateTime? startTime,
     DateTime? endTime,
+    String? userEmail
   }) {
     return BookingModel(
       id: id ?? this.id,
@@ -112,6 +118,7 @@ class BookingModel extends BookingEntity {
       refundAmount: refundAmount ?? this.refundAmount,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
+      userEmail: userEmail ?? this.userEmail,
     );
   }
 
@@ -130,5 +137,7 @@ class BookingModel extends BookingEntity {
         refundAmount: entity.refundAmount,
         startTime: entity.startTime,
         endTime: entity.endTime,
+        userEmail: entity.userEmail
+        
       );
 }

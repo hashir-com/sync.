@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "firebase": "^12.3.0",
-    "firebase-admin": "^13.5.0"
+    "firebase-admin": "^13.5.0",
+    "nodemailer": "^7.0.9"
   },
   "name": "sync_event",
   "version": "1.0.0",

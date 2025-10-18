@@ -58,7 +58,7 @@ class SettingsScreen extends ConsumerWidget {
                   isDark,
                   Icons.confirmation_number,
                   'My Tickets',
-                  '/my-bookings',
+                  '/mybookings',
                 ),
                 SizedBox(height: AppSizes.spacingSmall.h),
 

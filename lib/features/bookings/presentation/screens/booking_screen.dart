@@ -18,8 +18,8 @@ import 'package:sync_event/features/events/presentation/providers/event_provider
 
 final bookingFormProvider =
     StateNotifierProvider.autoDispose<BookingFormNotifier, BookingFormState>(
-  (ref) => BookingFormNotifier(),
-);
+      (ref) => BookingFormNotifier(),
+    );
 
 class BookingFormState {
   final String selectedCategory;
@@ -76,20 +76,36 @@ class BookingScreen extends ConsumerWidget {
             return _buildErrorUI(context, isDark, 'Event not found');
           }
 
-          return _buildBookingContent(context, ref, event, isDark, bookingState);
+          return _buildBookingContent(
+            context,
+            ref,
+            event,
+            isDark,
+            bookingState,
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorUI(context, isDark, 'Error loading event', error),
+        error: (error, stack) =>
+            _buildErrorUI(context, isDark, 'Error loading event', error),
       ),
     );
   }
 
-  Widget _buildErrorUI(BuildContext context, bool isDark, String message, [dynamic error]) {
+  Widget _buildErrorUI(
+    BuildContext context,
+    bool isDark,
+    String message, [
+    dynamic error,
+  ]) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_rounded, size: AppSizes.iconXxl * 2, color: AppColors.getError(isDark)),
+          Icon(
+            Icons.error_rounded,
+            size: AppSizes.iconXxl * 2,
+            color: AppColors.getError(isDark),
+          ),
           SizedBox(height: AppSizes.spacingLarge.h),
           Text(message, style: AppTextStyles.headingSmall(isDark: isDark)),
           if (error != null)
@@ -111,7 +127,9 @@ class BookingScreen extends ConsumerWidget {
             ),
             child: Text(
               'Go Back',
-              style: AppTextStyles.labelMedium(isDark: isDark).copyWith(color: Colors.white),
+              style: AppTextStyles.labelMedium(
+                isDark: isDark,
+              ).copyWith(color: Colors.white),
             ),
           ),
         ],
@@ -120,11 +138,12 @@ class BookingScreen extends ConsumerWidget {
   }
 
   Widget _buildBookingContent(
-      BuildContext context,
-      WidgetRef ref,
-      EventEntity event,
-      bool isDark,
-      AsyncValue<BookingEntity?> bookingState) {
+    BuildContext context,
+    WidgetRef ref,
+    EventEntity event,
+    bool isDark,
+    AsyncValue<BookingEntity?> bookingState,
+  ) {
     final formState = ref.watch(bookingFormProvider);
     final formNotifier = ref.read(bookingFormProvider.notifier);
     final authState = ref.watch(authNotifierProvider);
@@ -133,7 +152,10 @@ class BookingScreen extends ConsumerWidget {
 
     // Initialize booking form state
     final validCategories = event.categoryPrices.entries
-        .where((entry) => entry.value > 0 && event.categoryCapacities[entry.key]! > 0)
+        .where(
+          (entry) =>
+              entry.value > 0 && event.categoryCapacities[entry.key]! > 0,
+        )
         .map((entry) => entry.key)
         .toList();
 
@@ -145,10 +167,12 @@ class BookingScreen extends ConsumerWidget {
       Future.microtask(() => formNotifier.setCategory(validCategories.first));
     }
 
-    final selectedCategory = validCategories.contains(formState.selectedCategory)
+    final selectedCategory =
+        validCategories.contains(formState.selectedCategory)
         ? formState.selectedCategory
         : validCategories.first;
-    final totalAmount = event.categoryPrices[selectedCategory]! * formState.quantity;
+    final totalAmount =
+        event.categoryPrices[selectedCategory]! * formState.quantity;
 
     return SingleChildScrollView(
       child: Column(
@@ -162,8 +186,9 @@ class BookingScreen extends ConsumerWidget {
               children: [
                 Text(
                   event.title,
-                  style: AppTextStyles.headingMedium(isDark: isDark)
-                      .copyWith(fontSize: AppSizes.fontDisplay3.sp),
+                  style: AppTextStyles.headingMedium(
+                    isDark: isDark,
+                  ).copyWith(fontSize: AppSizes.fontDisplay3.sp),
                 ),
                 SizedBox(height: AppSizes.spacingSmall.h),
                 Text(
@@ -175,8 +200,10 @@ class BookingScreen extends ConsumerWidget {
                     padding: EdgeInsets.only(top: AppSizes.spacingSmall.h),
                     child: Text(
                       'You are the organizer of this event',
-                      style: AppTextStyles.bodyMedium(isDark: isDark)
-                          .copyWith(color: AppColors.getPrimary(isDark), fontWeight: FontWeight.bold),
+                      style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
+                        color: AppColors.getPrimary(isDark),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
               ],
@@ -205,15 +232,16 @@ class BookingScreen extends ConsumerWidget {
                             height: 180.h,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 180.h,
-                              color: AppColors.getSurface(isDark),
-                              child: Icon(
-                                Icons.event,
-                                size: AppSizes.iconXxl,
-                                color: AppColors.getTextSecondary(isDark),
-                              ),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 180.h,
+                                  color: AppColors.getSurface(isDark),
+                                  child: Icon(
+                                    Icons.event,
+                                    size: AppSizes.iconXxl,
+                                    color: AppColors.getTextSecondary(isDark),
+                                  ),
+                                ),
                           )
                         : Container(
                             height: 180.h,
@@ -238,7 +266,9 @@ class BookingScreen extends ConsumerWidget {
                         _buildDetailRow(
                           icon: Icons.calendar_today,
                           label: 'Date',
-                          value: DateFormat('EEEE, MMMM d, y').format(event.startTime),
+                          value: DateFormat(
+                            'EEEE, MMMM d, y',
+                          ).format(event.startTime),
                           isDark: isDark,
                         ),
                         _buildDetailRow(
@@ -289,19 +319,23 @@ class BookingScreen extends ConsumerWidget {
                         labelText: 'Ticket Type',
                         labelStyle: AppTextStyles.bodyMedium(isDark: isDark),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusSmall.r,
+                          ),
                         ),
                         filled: true,
                         fillColor: AppColors.getSurface(isDark),
                       ),
                       items: validCategories
-                          .map((category) => DropdownMenuItem<String>(
-                                value: category,
-                                child: Text(
-                                  '${category.toUpperCase()} - ₹${event.categoryPrices[category]!.toStringAsFixed(2)} (Available: ${event.categoryCapacities[category]})',
-                                  style: AppTextStyles.bodyMedium(isDark: isDark),
-                                ),
-                              ))
+                          .map(
+                            (category) => DropdownMenuItem<String>(
+                              value: category,
+                              child: Text(
+                                '${category.toUpperCase()} - ₹${event.categoryPrices[category]!.toStringAsFixed(2)} (Available: ${event.categoryCapacities[category]})',
+                                style: AppTextStyles.bodyMedium(isDark: isDark),
+                              ),
+                            ),
+                          )
                           .toList(),
                       onChanged: (value) {
                         if (value != null) {
@@ -325,7 +359,9 @@ class BookingScreen extends ConsumerWidget {
                                 color: AppColors.getTextSecondary(isDark),
                               ),
                               onPressed: formState.quantity > 1
-                                  ? () => formNotifier.setQuantity(formState.quantity - 1)
+                                  ? () => formNotifier.setQuantity(
+                                      formState.quantity - 1,
+                                    )
                                   : null,
                             ),
                             Container(
@@ -338,7 +374,9 @@ class BookingScreen extends ConsumerWidget {
                                   color: AppColors.getBorder(isDark),
                                   width: AppSizes.borderWidthThin,
                                 ),
-                                borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusSmall.r,
+                                ),
                               ),
                               child: Text(
                                 '${formState.quantity}',
@@ -350,9 +388,13 @@ class BookingScreen extends ConsumerWidget {
                                 Icons.add_circle_outline,
                                 color: AppColors.getTextSecondary(isDark),
                               ),
-                              onPressed: formState.quantity <
-                                      event.categoryCapacities[selectedCategory]!
-                                  ? () => formNotifier.setQuantity(formState.quantity + 1)
+                              onPressed:
+                                  formState.quantity <
+                                      event
+                                          .categoryCapacities[selectedCategory]!
+                                  ? () => formNotifier.setQuantity(
+                                      formState.quantity + 1,
+                                    )
                                   : null,
                             ),
                           ],
@@ -365,13 +407,15 @@ class BookingScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'Total Amount',
-                          style: AppTextStyles.bodyLarge(isDark: isDark)
-                              .copyWith(fontWeight: FontWeight.w600),
+                          style: AppTextStyles.bodyLarge(
+                            isDark: isDark,
+                          ).copyWith(fontWeight: FontWeight.w600),
                         ),
                         Text(
                           '₹${totalAmount.toStringAsFixed(2)}',
-                          style: AppTextStyles.bodyLarge(isDark: isDark)
-                              .copyWith(fontWeight: FontWeight.w600),
+                          style: AppTextStyles.bodyLarge(
+                            isDark: isDark,
+                          ).copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -393,17 +437,18 @@ class BookingScreen extends ConsumerWidget {
                 amount: totalAmount,
                 onSuccess: (paymentId) async {
                   final user = FirebaseAuth.instance.currentUser;
-  print('Current user: ${user?.uid}');
-  print('User authenticated: ${user != null}');
-  print('Booking userId: $userId');
-  print('Match: ${user?.uid == userId}');
+                  print('Current user: ${user?.uid}');
+                  print('User authenticated: ${user != null}');
+                  print('Booking userId: $userId');
+                  print('Match: ${user?.uid == userId}');
                   if (userId.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           'Please log in to book tickets',
-                          style: AppTextStyles.bodyMedium(isDark: true)
-                              .copyWith(color: Colors.white),
+                          style: AppTextStyles.bodyMedium(
+                            isDark: true,
+                          ).copyWith(color: Colors.white),
                         ),
                         backgroundColor: AppColors.getError(isDark),
                       ),
@@ -424,27 +469,31 @@ class BookingScreen extends ConsumerWidget {
                     startTime: event.startTime,
                     endTime: event.endTime,
                     status: 'confirmed',
+                    userEmail: user?.email ?? '',
                   );
 
                   try {
-                    await ref.read(bookingNotifierProvider.notifier).bookTicket(booking, paymentId);
+                    await ref
+                        .read(bookingNotifierProvider.notifier)
+                        .bookTicket(booking, paymentId);
 
                     final bookingState = ref.read(bookingNotifierProvider);
                     bookingState.when(
                       data: (bookingResult) {
                         if (bookingResult != null) {
                           ref.invalidate(userBookingsProvider(userId));
-                          context.go('/booking-details', extra: {
-                            'booking': bookingResult,
-                            'event': event,
-                          });
+                          context.go(
+                            '/booking-details',
+                            extra: {'booking': bookingResult, 'event': event},
+                          );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 'Booking failed: No booking data returned',
-                                style: AppTextStyles.bodyMedium(isDark: true)
-                                    .copyWith(color: Colors.white),
+                                style: AppTextStyles.bodyMedium(
+                                  isDark: true,
+                                ).copyWith(color: Colors.white),
                               ),
                               backgroundColor: AppColors.getError(isDark),
                             ),
@@ -456,8 +505,9 @@ class BookingScreen extends ConsumerWidget {
                           SnackBar(
                             content: Text(
                               'Booking failed: ${error is Failure ? error.message : error.toString()}',
-                              style: AppTextStyles.bodyMedium(isDark: true)
-                                  .copyWith(color: Colors.white),
+                              style: AppTextStyles.bodyMedium(
+                                isDark: true,
+                              ).copyWith(color: Colors.white),
                             ),
                             backgroundColor: AppColors.getError(isDark),
                           ),
@@ -473,8 +523,9 @@ class BookingScreen extends ConsumerWidget {
                       SnackBar(
                         content: Text(
                           'Booking failed: $e',
-                          style: AppTextStyles.bodyMedium(isDark: true)
-                              .copyWith(color: Colors.white),
+                          style: AppTextStyles.bodyMedium(
+                            isDark: true,
+                          ).copyWith(color: Colors.white),
                         ),
                         backgroundColor: AppColors.getError(isDark),
                       ),
@@ -491,15 +542,17 @@ class BookingScreen extends ConsumerWidget {
               data: (booking) => booking != null
                   ? Text(
                       'Processing booking...',
-                      style: AppTextStyles.bodyMedium(isDark: isDark)
-                          .copyWith(color: AppColors.getSuccess(isDark)),
+                      style: AppTextStyles.bodyMedium(
+                        isDark: isDark,
+                      ).copyWith(color: AppColors.getSuccess(isDark)),
                     )
                   : const SizedBox.shrink(),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Text(
                 'Error: ${error is Failure ? error.message : error.toString()}',
-                style: AppTextStyles.bodyMedium(isDark: isDark)
-                    .copyWith(color: AppColors.getError(isDark)),
+                style: AppTextStyles.bodyMedium(
+                  isDark: isDark,
+                ).copyWith(color: AppColors.getError(isDark)),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -529,14 +582,12 @@ class BookingScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: AppTextStyles.bodySmall(isDark: isDark),
-                ),
+                Text(label, style: AppTextStyles.bodySmall(isDark: isDark)),
                 Text(
                   value,
-                  style: AppTextStyles.bodyMedium(isDark: isDark)
-                      .copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium(
+                    isDark: isDark,
+                  ).copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
