@@ -75,7 +75,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
       ),
       body: walletState.when(
         data: (wallet) =>
-            _buildWalletUI(context, isDark, wallet as WalletModel, userName),
+            _buildWalletUI(context, isDark, wallet, userName),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Text(
