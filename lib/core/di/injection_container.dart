@@ -57,6 +57,7 @@ import 'package:sync_event/features/wallet/data/datasources/wallet_remote_dataso
 import 'package:sync_event/features/wallet/data/repositories/wallet_repository_impl.dart';
 import 'package:sync_event/features/wallet/domain/repositories/wallet_repositories.dart';
 import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
+import 'package:sync_event/features/wallet/domain/usecases/get_wallet_usecase.dart';
 
 final sl = GetIt.instance;
 
@@ -250,5 +251,8 @@ void _initWallet() {
   // Use case
   sl.registerLazySingleton<UpdateWalletUseCase>(
     () => UpdateWalletUseCase(sl<WalletRepository>()),
+  );
+  sl.registerLazySingleton<GetWalletUseCase>(
+    () => GetWalletUseCase(sl<WalletRepository>()),
   );
 }

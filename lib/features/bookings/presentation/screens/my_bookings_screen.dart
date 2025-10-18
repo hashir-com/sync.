@@ -14,6 +14,7 @@ import 'package:sync_event/features/bookings/presentation/providers/booking_prov
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/core/error/failures.dart';
+import 'package:sync_event/features/bookings/presentation/utils/booking_utils.dart';
 
 class MyBookingsScreen extends ConsumerWidget {
   const MyBookingsScreen({super.key});
@@ -476,6 +477,23 @@ class MyBookingsScreen extends ConsumerWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
+                          final eligible = BookingUtils.isEligibleForCancellation(booking.startTime);
+                          if (!eligible) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Cannot cancel within 48 hours of event start.',
+                                    style: AppTextStyles.bodyMedium(isDark: true)
+                                        .copyWith(color: Colors.white),
+                                  ),
+                                  backgroundColor: AppColors.getError(isDark),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                            return;
+                          }
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(

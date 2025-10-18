@@ -95,6 +95,13 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
         (bookingEntity) => bookingEntity,
       );
 
+      // Enforce 48-hour cancellation policy
+      final now = DateTime.now();
+      final hoursUntilStart = booking.startTime.difference(now).inHours;
+      if (hoursUntilStart < 48) {
+        throw Exception('Cannot cancel within 48 hours of event start');
+      }
+
       // Step 2: Cancel the booking
       final cancelResult = await cancelBookingUseCase(
         CancelParams(

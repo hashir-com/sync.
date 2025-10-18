@@ -11,6 +11,8 @@ import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart
 import 'package:sync_event/features/bookings/presentation/screens/booking_detail_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/my_bookings_screen.dart';
+import 'package:sync_event/features/bookings/presentation/screens/booking_details_loader.dart';
+import 'package:sync_event/features/bookings/presentation/screens/cancellation_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/edit_event/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
@@ -71,6 +73,14 @@ final GoRouter appRouter = GoRouter(
         },
       ),
     ),
+    // Dedicated cancellation route
+    GoRoute(
+      path: '/bookings/:bookingId/cancel',
+      builder: (context, state) {
+        final bookingId = state.pathParameters['bookingId']!;
+        return CancellationScreen(bookingId: bookingId);
+      },
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
     GoRoute(path: '/root', builder: (context, state) => const RootShell()),
@@ -127,6 +137,11 @@ final GoRouter appRouter = GoRouter(
       path: '/mybookings',
       builder: (context, state) => const MyBookingsScreen(),
     ),
+    // Alias for my bookings to match spec
+    GoRoute(
+      path: '/bookings',
+      builder: (context, state) => const MyBookingsScreen(),
+    ),
     GoRoute(
       path: '/edit-event',
       builder: (context, state) {
@@ -162,6 +177,22 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) =>
           BookingScreen(eventId: state.pathParameters['eventId']!),
     ),
+    // Aliases for booking flow to match spec without breaking existing screens
+    GoRoute(
+      path: '/events/:eventId/book',
+      builder: (context, state) =>
+          BookingScreen(eventId: state.pathParameters['eventId']!),
+    ),
+    GoRoute(
+      path: '/booking/tickets/:eventId',
+      builder: (context, state) =>
+          BookingScreen(eventId: state.pathParameters['eventId']!),
+    ),
+    GoRoute(
+      path: '/booking/payment/:eventId',
+      builder: (context, state) =>
+          BookingScreen(eventId: state.pathParameters['eventId']!),
+    ),
     GoRoute(
       path: '/booking-details',
       builder: (context, state) {
@@ -170,6 +201,22 @@ final GoRouter appRouter = GoRouter(
           booking: extra['booking'] as BookingEntity,
           event: extra['event'] as EventEntity,
         );
+      },
+    ),
+    // New parametric route for direct booking details via bookingId
+    GoRoute(
+      path: '/bookings/:bookingId',
+      builder: (context, state) {
+        final bookingId = state.pathParameters['bookingId']!;
+        return BookingDetailsLoaderScreen(bookingId: bookingId);
+      },
+    ),
+    // Alias for confirmation page to loader
+    GoRoute(
+      path: '/booking/confirmation/:bookingId',
+      builder: (context, state) {
+        final bookingId = state.pathParameters['bookingId']!;
+        return BookingDetailsLoaderScreen(bookingId: bookingId);
       },
     ),
     GoRoute(
