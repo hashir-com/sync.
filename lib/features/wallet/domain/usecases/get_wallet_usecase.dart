@@ -2,15 +2,15 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/core/usecases/usecase.dart';
-import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
 import 'package:sync_event/features/wallet/domain/repositories/wallet_repositories.dart';
 
-class GetWalletUseCase implements UseCase<WalletEntity, GetWalletParams> {
+class GetWalletUseCase implements UseCase<WalletModel, GetWalletParams> {
   final WalletRepository repository;
   GetWalletUseCase(this.repository);
 
   @override
-  Future<Either<Failure, WalletEntity>> call(GetWalletParams params) {
+  Future<Either<Failure, WalletModel>> call(GetWalletParams params) {
     return repository.getWallet(params.userId);
   }
 }

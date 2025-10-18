@@ -159,7 +159,6 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         final capacities = Map<String, int>.from(
           eventData['categoryCapacities'] ?? {},
         );
-        final takenSeats = List<int>.from(eventData['takenSeats'] ?? []);
         final type = bookingData['ticketType'] as String;
         final qty = (bookingData['ticketQuantity'] as num).toInt();
         final seats = List<int>.from(bookingData['seatNumbers'] ?? []);

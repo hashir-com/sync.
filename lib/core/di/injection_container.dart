@@ -248,7 +248,7 @@ void _initWallet() {
     ),
   );
 
-  // Use case
+  // Use cases
   sl.registerLazySingleton<UpdateWalletUseCase>(
     () => UpdateWalletUseCase(sl<WalletRepository>()),
   );

@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
 import 'package:sync_event/features/wallet/presentation/provider/wallet_provider.dart';
 
 class WalletScreen extends ConsumerStatefulWidget {
@@ -22,7 +24,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
   void initState() {
     super.initState();
     _flipController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(
+        milliseconds: 600,
+      ), // Slightly longer for smoother animation
       vsync: this,
     );
 
@@ -70,12 +74,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
         elevation: 0,
       ),
       body: walletState.when(
-        data: (wallet) => _buildWalletUI(
-          context,
-          isDark,
-          wallet.balance.toStringAsFixed(2),
-          userName,
-        ),
+        data: (wallet) =>
+            _buildWalletUI(context, isDark, wallet as WalletModel, userName),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Text(
@@ -90,7 +90,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
   Widget _buildWalletUI(
     BuildContext context,
     bool isDark,
-    String balance,
+    WalletModel wallet,
     String userName,
   ) {
     return SingleChildScrollView(
@@ -104,16 +104,25 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               child: AnimatedBuilder(
                 animation: _flipAnimation,
                 builder: (context, child) {
-                  final angle = _flipAnimation.value * 3.14159;
+                  final angle =
+                      _flipAnimation.value * 3.14159; // Rotation in radians
                   final isBack = _flipAnimation.value > 0.5;
 
                   return Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.001)
+                      ..setEntry(3, 2, 0.001) // Perspective effect
                       ..rotateY(angle),
                     child: isBack
-                        ? _buildCardBack(balance, isDark)
+                        ? Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..rotateY(-angle), // Counter-rotate
+                            child: _buildCardBack(
+                              wallet.balance.toStringAsFixed(2),
+                              isDark,
+                            ),
+                          )
                         : _buildCardFront(userName, isDark),
                   );
                 },
@@ -122,7 +131,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
             const SizedBox(height: 32),
             _buildQuickActions(isDark),
             const SizedBox(height: 32),
-            _buildRecentTransactions(isDark),
+            _buildRecentTransactions(isDark, wallet.transactionHistory),
           ],
         ),
       ),
@@ -161,7 +170,6 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
       ),
       child: Stack(
         children: [
-          // Decorative elements
           Positioned(
             top: -50,
             right: -50,
@@ -186,7 +194,6 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               ),
             ),
           ),
-          // Card content
           Padding(
             padding: const EdgeInsets.all(28),
             child: Column(
@@ -253,7 +260,6 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               ],
             ),
           ),
-          // Tap instruction
           Positioned(
             bottom: 12,
             right: 20,
@@ -274,6 +280,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
   Widget _buildCardBack(String balance, bool isDark) {
     return Container(
       height: 220,
+      width: 320,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
@@ -303,7 +310,6 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
       ),
       child: Stack(
         children: [
-          // Magnetic stripe
           Positioned(
             top: 50,
             left: 0,
@@ -317,7 +323,6 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               ),
             ),
           ),
-          // Content
           Padding(
             padding: const EdgeInsets.all(28),
             child: Column(
@@ -333,7 +338,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                     letterSpacing: 2,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 36),
                 Text(
                   '₹$balance',
                   style: TextStyle(
@@ -430,7 +435,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
     );
   }
 
-  Widget _buildRecentTransactions(bool isDark) {
+  Widget _buildRecentTransactions(
+    bool isDark,
+    List<Map<String, dynamic>> transactions,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -452,28 +460,47 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
             ),
           ),
-          child: Column(
-            children: [
-              _buildTransactionItem(
-                isDark: isDark,
-                title: 'Event Booking',
-                subtitle: 'Today at 10:30 AM',
-                amount: '- ₹500',
-                icon: Icons.event,
-              ),
-              const SizedBox(height: 12),
-              Divider(color: isDark ? Colors.grey[800] : Colors.grey[200]),
-              const SizedBox(height: 12),
-              _buildTransactionItem(
-                isDark: isDark,
-                title: 'Added to Wallet',
-                subtitle: 'Yesterday at 5:15 PM',
-                amount: '+ ₹2000',
-                icon: Icons.add_circle,
-                isCredit: true,
-              ),
-            ],
-          ),
+          child: transactions.isEmpty
+              ? Center(
+                  child: Text(
+                    'No transactions yet',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                )
+              : Column(
+                  children: transactions.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final transaction = entry.value;
+                    final isCredit = transaction['type'] == 'refund';
+                    final timestamp = (transaction['timestamp'] as Timestamp?)
+                        ?.toDate();
+                    return Column(
+                      children: [
+                        _buildTransactionItem(
+                          isDark: isDark,
+                          title: transaction['description'] ?? 'Transaction',
+                          subtitle: timestamp != null
+                              ? _formatTimestamp(timestamp)
+                              : 'Unknown time',
+                          amount: isCredit
+                              ? '+ ₹${transaction['amount'].toStringAsFixed(2)}'
+                              : '- ₹${transaction['amount'].toStringAsFixed(2)}',
+                          icon: isCredit ? Icons.add_circle : Icons.event,
+                          isCredit: isCredit,
+                        ),
+                        if (index < transactions.length - 1) ...[
+                          const SizedBox(height: 12),
+                          Divider(
+                            color: isDark ? Colors.grey[800] : Colors.grey[200],
+                          ),
+                        ],
+                      ],
+                    );
+                  }).toList(),
+                ),
         ),
       ],
     );
@@ -540,5 +567,21 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
         ),
       ],
     );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(timestamp.year, timestamp.month, timestamp.day);
+    final time =
+        '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
+
+    if (date == today) {
+      return 'Today at $time';
+    } else if (date == DateTime(now.year, now.month, now.day - 1)) {
+      return 'Yesterday at $time';
+    } else {
+      return '${timestamp.day}/${timestamp.month}/${timestamp.year} at $time';
+    }
   }
 }

@@ -73,7 +73,7 @@ class BookingDetailsLoaderScreen extends ConsumerWidget {
                 updatedAt: booking.bookingDate,
               );
             }
-            return BookingDetailsScreen(booking: booking, event: event!);
+            return BookingDetailsScreen(booking: booking, event: event);
           },
           loading: () => Scaffold(
             appBar: AppBar(

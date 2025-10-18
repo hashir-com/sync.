@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/core/usecases/usecase.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
@@ -10,6 +9,7 @@ import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_
 import 'package:sync_event/features/bookings/domain/usecases/request_refund_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart';
 import 'package:sync_event/core/di/injection_container.dart' as di;
+import 'package:sync_event/features/wallet/presentation/provider/wallet_notifier.dart';
 
 final bookingNotifierProvider =
     StateNotifierProvider<BookingNotifier, AsyncValue<BookingEntity?>>((ref) {
@@ -138,6 +138,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
           final currentUser = FirebaseAuth.instance.currentUser;
           if (currentUser != null) {
             ref.invalidate(userBookingsProvider(currentUser.uid));
+            ref.invalidate(walletNotifierProvider);
           }
           state = const AsyncValue.data(null);
           print('✓ Booking cancelled and refund processed: $refundType');
