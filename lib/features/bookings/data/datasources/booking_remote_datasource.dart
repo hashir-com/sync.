@@ -12,6 +12,7 @@ abstract class BookingRemoteDataSource {
   Future<List<BookingModel>> getUserBookings(String userId);
   Future<BookingModel> getBooking(String bookingId);
   Future<EventEntity> getEvent(String eventId);
+  Future<void> requestRefund(String bookingId, String refundType);
 }
 
 class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
@@ -24,105 +25,81 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   @override
   Future<BookingModel> bookTicket(BookingModel booking) async {
     try {
-      print('Step 1: Starting booking process for user: ${booking.userId}');
-
       final eventRef = firestore.collection('events').doc(booking.eventId);
-      final bookingRef = firestore.collection('bookings');
+      final bookingsCol = firestore.collection('bookings');
 
-      print('Step 2: Reading event data...');
-      final eventSnap = await eventRef.get();
+      late BookingModel result;
 
-      if (!eventSnap.exists) {
-        throw Exception('Event not found: ${booking.eventId}');
-      }
+      await firestore.runTransaction((transaction) async {
+        final eventSnap = await transaction.get(eventRef);
+        if (!eventSnap.exists) {
+          throw Exception('Event not found: ${booking.eventId}');
+        }
 
-      final eventData = eventSnap.data()!;
-      print('Step 3: Event data retrieved');
+        final eventData = eventSnap.data()! as Map<String, dynamic>;
+        if (!eventData.containsKey('categoryCapacities') ||
+            !eventData.containsKey('takenSeats')) {
+          throw Exception('Event missing required fields');
+        }
 
-      if (!eventData.containsKey('categoryCapacities') ||
-          !eventData.containsKey('takenSeats')) {
-        throw Exception('Event missing required fields');
-      }
+        final capacities = Map<String, int>.from(eventData['categoryCapacities']);
+        final takenSeats = List<int>.from(eventData['takenSeats'] ?? []);
 
-      final capacities = Map<String, int>.from(eventData['categoryCapacities']);
-      final takenSeats = List<int>.from(eventData['takenSeats'] ?? []);
+        if (!capacities.containsKey(booking.ticketType)) {
+          throw Exception('Invalid ticket type: ${booking.ticketType}');
+        }
 
-      print('Step 4: Capacities: $capacities, Taken seats: $takenSeats');
+        final available = capacities[booking.ticketType] ?? 0;
+        if (available < booking.ticketQuantity) {
+          throw Exception('Not enough tickets available');
+        }
 
-      // Validate ticket availability
-      if (!capacities.containsKey(booking.ticketType)) {
-        throw Exception('Invalid ticket type: ${booking.ticketType}');
-      }
-      final available = capacities[booking.ticketType]!;
-      print(
-        'Step 5: Available tickets for ${booking.ticketType}: $available, Requested: ${booking.ticketQuantity}',
-      );
+        final newSeats = _allocateSeatNumbers(
+          takenSeats: takenSeats,
+          quantity: booking.ticketQuantity,
+          maxSeats: capacities[booking.ticketType]!,
+        );
 
-      if (available < booking.ticketQuantity) {
-        throw Exception('Not enough tickets available');
-      }
+        final docRef = bookingsCol.doc();
+        final bookingJson = {
+          'userId': booking.userId,
+          'eventId': booking.eventId,
+          'ticketType': booking.ticketType,
+          'ticketQuantity': booking.ticketQuantity,
+          'totalAmount': booking.totalAmount,
+          'paymentId': booking.paymentId,
+          'status': 'confirmed',
+          'seatNumbers': newSeats,
+          'bookingDate': FieldValue.serverTimestamp(),
+          'startTime': booking.startTime is! Timestamp
+              ? Timestamp.fromDate(booking.startTime)
+              : booking.startTime,
+          'endTime': booking.endTime is! Timestamp
+              ? Timestamp.fromDate(booking.endTime)
+              : booking.endTime,
+          'userEmail': booking.userEmail,
+        };
 
-      // Allocate seat numbers
-      final newSeats = _allocateSeatNumbers(
-        takenSeats: takenSeats,
-        quantity: booking.ticketQuantity,
-        maxSeats: capacities[booking.ticketType]!,
-      );
-      print('Step 6: Allocated seats: $newSeats');
+        transaction.set(docRef, bookingJson);
+        transaction.update(eventRef, {
+          'categoryCapacities': {
+            ...capacities,
+            booking.ticketType: available - booking.ticketQuantity,
+          },
+          'takenSeats': FieldValue.arrayUnion(newSeats),
+        });
 
-      // Step 7: Create booking document FIRST
-      print('Step 7: Creating booking document');
-      final docRef = bookingRef.doc();
-
-      final bookingJson = {
-        'userId': booking.userId,
-        'eventId': booking.eventId,
-        'ticketType': booking.ticketType,
-        'ticketQuantity': booking.ticketQuantity,
-        'totalAmount': booking.totalAmount,
-        'paymentId': booking.paymentId,
-        'status': 'confirmed',
-        'seatNumbers': newSeats,
-        'bookingDate': FieldValue.serverTimestamp(),
-        'startTime': booking.startTime is! Timestamp
-            ? Timestamp.fromDate(booking.startTime)
-            : booking.startTime,
-        'endTime': booking.endTime is! Timestamp
-            ? Timestamp.fromDate(booking.endTime)
-            : booking.endTime,
-        'userEmail': booking.userEmail,
-      };
-
-      print('Step 8: Booking JSON ready: $bookingJson');
-      await docRef.set(bookingJson);
-      print(
-        'Step 9: Booking document created successfully with ID: ${docRef.id}',
-      );
-
-      // Step 10: Update event document AFTER booking is created
-      print('Step 10: Updating event document with new capacities and seats');
-      await eventRef.update({
-        'categoryCapacities': {
-          ...capacities,
-          booking.ticketType: available - booking.ticketQuantity,
-        },
-        'takenSeats': FieldValue.arrayUnion(newSeats),
+        result = booking.copyWith(
+          id: docRef.id,
+          seatNumbers: newSeats,
+          status: 'confirmed',
+          bookingDate: DateTime.now(),
+        );
       });
-      print('Step 11: Event document updated successfully');
 
-      final updatedBooking = booking.copyWith(
-        id: docRef.id,
-        seatNumbers: newSeats,
-        status: 'confirmed',
-        bookingDate: DateTime.now(),
-      );
-
-      print('✓ Booking completed successfully: ${updatedBooking.id}');
-      return updatedBooking;
+      return result;
     } catch (e, stackTrace) {
-      print('✗ BOOKING FAILED');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
+      print('✗ BOOKING FAILED: $e\n$stackTrace');
       throw Exception('Failed to book ticket: $e');
     }
   }
@@ -265,6 +242,22 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     } catch (e, stackTrace) {
       print('✗ Failed to fetch event: $e\n$stackTrace');
       throw Exception('Failed to fetch event: $e');
+    }
+  }
+
+  @override
+  Future<void> requestRefund(String bookingId, String refundType) async {
+    try {
+      final requestRef = firestore.collection('refundRequests').doc();
+      await requestRef.set({
+        'bookingId': bookingId,
+        'refundType': refundType, // 'wallet' or 'bank'
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e, stackTrace) {
+      print('✗ Failed to create refund request: $e\n$stackTrace');
+      throw Exception('Failed to request refund: $e');
     }
   }
 }

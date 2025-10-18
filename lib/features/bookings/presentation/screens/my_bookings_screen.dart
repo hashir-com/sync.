@@ -111,6 +111,25 @@ class MyBookingsScreen extends ConsumerWidget {
     bool isDark,
     String userId,
   ) {
+    // Local state for search and filters
+    final searchController = TextEditingController();
+    String statusFilter = 'all';
+    DateTimeRange? dateFilter;
+
+    List<BookingEntity> applyFilters() {
+      final query = searchController.text.toLowerCase();
+      return bookings.where((b) {
+        final matchesStatus = statusFilter == 'all' || b.status == statusFilter;
+        final matchesDate = dateFilter == null ||
+            (b.startTime.isAfter(dateFilter!.start.subtract(const Duration(days: 1))) &&
+                b.startTime.isBefore(dateFilter!.end.add(const Duration(days: 1))));
+        final matchesSearch = b.id.toLowerCase().contains(query) ||
+            b.ticketType.toLowerCase().contains(query) ||
+            b.paymentId.toLowerCase().contains(query);
+        return matchesStatus && matchesDate && matchesSearch;
+      }).toList();
+    }
+
     if (bookings.isEmpty) {
       return Center(
         child: Column(
@@ -152,12 +171,100 @@ class MyBookingsScreen extends ConsumerWidget {
       );
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
-      itemCount: bookings.length,
-      itemBuilder: (context, index) {
-        final booking = bookings[index];
-        return _buildBookingCard(context, ref, booking, isDark, userId);
+    // Header with search and filters
+    return StatefulBuilder(
+      builder: (context, setState) {
+        final filtered = applyFilters();
+        return ListView(
+          padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+          children: [
+            Card(
+              color: AppColors.getCard(isDark),
+              elevation: AppSizes.cardElevationMedium,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search),
+                        hintText: 'Search by ID, type, payment ID',
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    SizedBox(height: AppSizes.spacingSmall.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: statusFilter,
+                            items: const [
+                              DropdownMenuItem(value: 'all', child: Text('All')),
+                              DropdownMenuItem(value: 'confirmed', child: Text('Confirmed')),
+                              DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+                              DropdownMenuItem(value: 'refunded', child: Text('Refunded')),
+                            ],
+                            onChanged: (v) => setState(() => statusFilter = v ?? 'all'),
+                            decoration: const InputDecoration(labelText: 'Status'),
+                          ),
+                        ),
+                        SizedBox(width: AppSizes.spacingSmall.w),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await showDateRangePicker(
+                                context: context,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                                initialDateRange: dateFilter,
+                              );
+                              setState(() => dateFilter = picked);
+                            },
+                            icon: const Icon(Icons.date_range),
+                            label: Text(dateFilter == null
+                                ? 'Filter by date'
+                                : '${DateFormat('MMM d').format(dateFilter!.start)} - ${DateFormat('MMM d').format(dateFilter!.end)}'),
+                          ),
+                        ),
+                        if (dateFilter != null)
+                          IconButton(
+                            tooltip: 'Clear date',
+                            onPressed: () => setState(() => dateFilter = null),
+                            icon: const Icon(Icons.clear),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: AppSizes.spacingMedium.h),
+            if (filtered.isEmpty)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+                  child: Text(
+                    'No bookings match your filters',
+                    style: AppTextStyles.bodyMedium(isDark: isDark),
+                  ),
+                ),
+              )
+            else
+              ...filtered.map(
+                (booking) => _buildBookingCard(
+                  context,
+                  ref,
+                  booking,
+                  isDark,
+                  userId,
+                ),
+              ),
+          ],
+        );
       },
     );
   }
@@ -373,8 +480,12 @@ class MyBookingsScreen extends ConsumerWidget {
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Cancel Booking?'),
-                              content: const Text(
-                                'Are you sure you want to cancel this booking? A refund will be processed.',
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text('Choose your refund method:'),
+                                ],
                               ),
                               actions: [
                                 TextButton(
@@ -384,18 +495,17 @@ class MyBookingsScreen extends ConsumerWidget {
                                 ),
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  child: Text(
-                                    'Cancel',
-                                    style: TextStyle(
-                                      color: AppColors.getError(isDark),
-                                    ),
-                                  ),
+                                  child: const Text('Refund to Wallet'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, null),
+                                  child: const Text('Refund to Bank'),
                                 ),
                               ],
                             ),
                           );
 
-                          if (confirmed == true) {
+                          if (confirmed != null) {
                             try {
                               await ref
                                   .read(bookingNotifierProvider.notifier)
@@ -403,6 +513,7 @@ class MyBookingsScreen extends ConsumerWidget {
                                     booking.id,
                                     booking.paymentId,
                                     booking.eventId,
+                                    refundType: confirmed ? 'wallet' : 'bank',
                                   );
                               ref.invalidate(userBookingsProvider(userId));
                               if (context.mounted) {

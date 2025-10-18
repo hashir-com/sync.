@@ -26,6 +26,7 @@ import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecas
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart'; // Added
 import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/request_refund_usecase.dart';
 
 // Events
 import 'package:sync_event/features/events/data/datasources/event_local_datasource.dart';
@@ -216,6 +217,9 @@ void _initBooking() {
   );
   sl.registerLazySingleton<GetUserBookingsUseCase>(
     () => GetUserBookingsUseCase(sl<BookingRepository>()), // Added registration
+  );
+  sl.registerLazySingleton<RequestRefundUseCase>(
+    () => RequestRefundUseCase(sl<BookingRepository>()),
   );
 }
 

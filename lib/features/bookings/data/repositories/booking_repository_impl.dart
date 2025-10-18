@@ -104,4 +104,17 @@ class BookingRepositoryImpl implements BookingRepository {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, Unit>> requestRefund(String bookingId, String refundType) async {
+    if (!(await networkInfo.isConnected)) {
+      return Left(NetworkFailure(message: 'No internet connection'));
+    }
+    try {
+      await remoteDataSource.requestRefund(bookingId, refundType);
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
 }

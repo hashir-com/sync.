@@ -18,7 +18,9 @@ class CancelBookingUseCase implements UseCase<Unit, CancelParams> {
     if (eventResult.isLeft()) return Left(eventResult.fold((l) => l, (r) => null)!);
 
     final event = eventResult.getOrElse(() => throw UnknownFailure(message: 'Event not found'));
-    if (DateTime.now().difference(booking.startTime).inHours < 48) {
+    // Allow cancellation only if more than 48 hours remain before event start
+    final hoursUntilStart = booking.startTime.difference(DateTime.now()).inHours;
+    if (hoursUntilStart < 48) {
       return Left(ValidationFailure(message: 'Cancellation not allowed within 48 hours of event start'));
     }
     // Additional validation (e.g., event status)
