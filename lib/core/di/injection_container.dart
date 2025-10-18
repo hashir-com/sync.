@@ -19,13 +19,18 @@ import 'package:sync_event/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/signup_with_email_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/verify_phone_number_usecase.dart';
+
+// Bookings
 import 'package:sync_event/features/bookings/data/datasources/booking_remote_datasource.dart';
 import 'package:sync_event/features/bookings/data/repositories/booking_repository_impl.dart';
 import 'package:sync_event/features/bookings/domain/repositories/booking_repositories.dart';
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
-import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart'; // Added
+import 'package:sync_event/features/bookings/domain/usecases/get_booking_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/process_refund_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/request_refund_usecase.dart';
 
 // Events
 import 'package:sync_event/features/events/data/datasources/event_local_datasource.dart';
@@ -37,6 +42,7 @@ import 'package:sync_event/features/events/domain/usecases/approved_event_usecas
 import 'package:sync_event/features/events/domain/usecases/get_user_events_usecase.dart';
 import 'package:sync_event/features/events/domain/usecases/join_event_usecase.dart';
 import 'package:sync_event/features/events/domain/usecases/update_event_usecase.dart';
+import 'package:sync_event/features/events/domain/usecases/delete_event_usecase.dart';
 
 // Profile
 import 'package:sync_event/features/profile/data/datasources/profile_local_datasource.dart';
@@ -45,12 +51,12 @@ import 'package:sync_event/features/profile/data/repositories/profile_repository
 import 'package:sync_event/features/profile/domain/repositories/profile_repository.dart';
 import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
+
+// Wallet
 import 'package:sync_event/features/wallet/data/datasources/wallet_remote_datasource.dart';
 import 'package:sync_event/features/wallet/data/repositories/wallet_repository_impl.dart';
 import 'package:sync_event/features/wallet/domain/repositories/wallet_repositories.dart';
 import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
-
-import '../../features/events/domain/usecases/delete_event_usecase.dart';
 
 final sl = GetIt.instance;
 
@@ -130,8 +136,7 @@ void _initProfile() {
   );
 
   sl.registerLazySingleton<ProfileLocalDataSource>(
-    () =>
-        ProfileLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
+    () => ProfileLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
   );
 
   // Repository
@@ -211,11 +216,20 @@ void _initBooking() {
   sl.registerLazySingleton<CancelBookingUseCase>(
     () => CancelBookingUseCase(sl<BookingRepository>()),
   );
+  sl.registerLazySingleton<GetBookingUseCase>(
+    () => GetBookingUseCase(sl<BookingRepository>()),
+  );
   sl.registerLazySingleton<RefundToRazorpayUseCase>(
     () => RefundToRazorpayUseCase(sl<BookingRepository>()),
   );
   sl.registerLazySingleton<GetUserBookingsUseCase>(
-    () => GetUserBookingsUseCase(sl<BookingRepository>()), // Added registration
+    () => GetUserBookingsUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<RequestRefundUseCase>(
+    () => RequestRefundUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<ProcessRefundUseCase>(
+    () => ProcessRefundUseCase(sl<BookingRepository>()),
   );
 }
 

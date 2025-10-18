@@ -22,7 +22,69 @@ class BookingRepositoryImpl implements BookingRepository {
   });
 
   @override
-  Future<Either<Failure, BookingEntity>> bookTicket(BookingEntity booking) async {
+Future<Either<Failure, Unit>> refundToWallet(
+  String userId,
+  double amount,
+  String bookingId,
+) async {
+  if (!(await networkInfo.isConnected)) {
+    return Left(NetworkFailure(message: 'No internet connection'));
+  }
+  try {
+    // Add refund to wallet
+    await remoteDataSource.addRefundToWallet(userId, amount, bookingId);
+    
+    // Update booking refund status
+    await remoteDataSource.updateBookingRefundStatus(
+      bookingId,
+      'wallet',
+      amount,
+    );
+    
+    return const Right(unit);
+  } catch (e) {
+    return Left(ServerFailure(message: e.toString()));
+  }
+}
+
+@override
+Future<Either<Failure, Unit>> refundToBank(
+  String userId,
+  String paymentId,
+  double amount,
+  String bookingId,
+) async {
+  if (!(await networkInfo.isConnected)) {
+    return Left(NetworkFailure(message: 'No internet connection'));
+  }
+  try {
+    // Process Razorpay refund
+    await remoteDataSource.refundToRazorpay(paymentId, amount);
+    
+    // Record refund in database
+    await remoteDataSource.recordRefundToBank(
+      bookingId,
+      paymentId,
+      amount,
+    );
+    
+    // Update booking refund status
+    await remoteDataSource.updateBookingRefundStatus(
+      bookingId,
+      'bank',
+      amount,
+    );
+    
+    return const Right(unit);
+  } catch (e) {
+    return Left(ServerFailure(message: e.toString()));
+  }
+}
+
+  @override
+  Future<Either<Failure, BookingEntity>> bookTicket(
+    BookingEntity booking,
+  ) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
@@ -37,7 +99,10 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> cancelBooking(String bookingId, String paymentId) async {
+  Future<Either<Failure, Unit>> cancelBooking(
+    String bookingId,
+    String paymentId,
+  ) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
@@ -50,7 +115,10 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> refundToRazorpay(String paymentId, double amount) async {
+  Future<Either<Failure, Unit>> refundToRazorpay(
+    String paymentId,
+    double amount,
+  ) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
@@ -63,7 +131,9 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
-  Future<Either<Failure, List<BookingEntity>>> getUserBookings(String userId) async {
+  Future<Either<Failure, List<BookingEntity>>> getUserBookings(
+    String userId,
+  ) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
@@ -73,7 +143,9 @@ class BookingRepositoryImpl implements BookingRepository {
     } catch (e) {
       if (e.toString().contains('PERMISSION_DENIED') ||
           e.toString().contains('does not exist')) {
-        return Right([]); // Return empty list if collection missing or no permission
+        return Right(
+          [],
+        ); // Return empty list if collection missing or no permission
       }
       return Left(ServerFailure(message: e.toString()));
     }
@@ -100,6 +172,22 @@ class BookingRepositoryImpl implements BookingRepository {
     try {
       final event = await eventRepository.getEvent(eventId);
       return Right(event);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> requestRefund(
+    String bookingId,
+    String refundType,
+  ) async {
+    if (!(await networkInfo.isConnected)) {
+      return Left(NetworkFailure(message: 'No internet connection'));
+    }
+    try {
+      await remoteDataSource.requestRefund(bookingId, refundType);
+      return const Right(unit);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

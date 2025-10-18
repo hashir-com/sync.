@@ -11,6 +11,8 @@ import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_provider.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
+import 'package:printing/printing.dart';
+import 'package:sync_event/features/bookings/presentation/utils/invoice_generator.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
   final BookingEntity booking;
@@ -37,40 +39,72 @@ class BookingDetailsScreen extends ConsumerWidget {
         actions: [
           if (booking.status == 'confirmed')
             IconButton(
+              tooltip: 'Cancel & Refund',
               icon: Icon(
                 Icons.cancel_outlined,
                 color: AppColors.getError(isDark),
               ),
               onPressed: () async {
+                final choice = await showModalBottomSheet<String>(
+                  context: context,
+                  builder: (context) {
+                    return SafeArea(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+                        child: Wrap(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.account_balance_wallet_outlined),
+                              title: const Text('Refund to Wallet'),
+                              onTap: () => Navigator.pop(context, 'wallet'),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.account_balance_outlined),
+                              title: const Text('Refund to Bank'),
+                              onTap: () => Navigator.pop(context, 'bank'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                if (choice == null) return;
                 try {
                   await ref.read(bookingNotifierProvider.notifier).cancelBooking(
                         booking.id,
                         booking.paymentId,
                         booking.eventId,
+                        refundType: choice,
                       );
                   ref.invalidate(userBookingsProvider(booking.userId));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Booking cancelled successfully',
-                        style: AppTextStyles.bodyMedium(isDark: true)
-                            .copyWith(color: Colors.white),
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Cancellation requested. Refund will be processed shortly.',
+                          style: AppTextStyles.bodyMedium(isDark: true)
+                              .copyWith(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.getSuccess(isDark),
                       ),
-                      backgroundColor: AppColors.getSuccess(isDark),
-                    ),
-                  );
-                  context.pop();
+                    );
+                  }
+                  if (context.canPop()) context.pop();
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Error cancelling booking: $e',
-                        style: AppTextStyles.bodyMedium(isDark: true)
-                            .copyWith(color: Colors.white),
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Error cancelling booking: $e',
+                          style: AppTextStyles.bodyMedium(isDark: true)
+                              .copyWith(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.getError(isDark),
                       ),
-                      backgroundColor: AppColors.getError(isDark),
-                    ),
-                  );
+                    );
+                  }
                 }
               },
             ),
@@ -236,29 +270,51 @@ class BookingDetailsScreen extends ConsumerWidget {
               ),
             ),
             SizedBox(height: AppSizes.spacingLarge.h),
-            SizedBox(
-              width: double.infinity,
-              height: AppSizes.buttonHeightLarge.h,
-              child: ElevatedButton(
-                onPressed: () {
-  if (context.canPop()) {
-    context.pop();
-  } else {
-    context.go('/home'); // or wherever your main route is
-  }
-},
-
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.getPrimary(isDark),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: AppSizes.buttonHeightLarge.h,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final bytes = await InvoiceGenerator.generate(booking, event);
+                        await Printing.layoutPdf(
+                          onLayout: (_) async => bytes,
+                          name: 'Invoice_${booking.id}.pdf',
+                        );
+                      },
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('Download Invoice'),
+                    ),
                   ),
                 ),
-                child: Text(
-                  'Back',
-                  style: AppTextStyles.labelMedium(isDark: isDark).copyWith(color: Colors.white),
+                SizedBox(width: AppSizes.spacingMedium.w),
+                Expanded(
+                  child: SizedBox(
+                    height: AppSizes.buttonHeightLarge.h,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/home');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.getPrimary(isDark),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Back',
+                        style: AppTextStyles.labelMedium(isDark: isDark)
+                            .copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),

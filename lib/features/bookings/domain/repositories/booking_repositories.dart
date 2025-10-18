@@ -10,4 +10,18 @@ abstract class BookingRepository {
   Future<Either<Failure, List<BookingEntity>>> getUserBookings(String userId);
   Future<Either<Failure, BookingEntity>> getBooking(String bookingId); // Added
   Future<Either<Failure, EventEntity>> getEvent(String eventId);
+  Future<Either<Failure, Unit>> requestRefund(String bookingId, String refundType);
+
+Future<Either<Failure, Unit>> refundToWallet(
+    String userId,
+    double amount,
+    String bookingId,
+  );
+  Future<Either<Failure, Unit>> refundToBank(
+    String userId,
+    String paymentId,
+    double amount,
+    String bookingId,
+  );
+
 }

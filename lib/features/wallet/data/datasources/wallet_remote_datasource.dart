@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
-import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
 
 abstract class WalletRemoteDataSource {
-  Future<WalletEntity> getWallet(String userId);
-  Future<void> updateWallet(WalletModel wallet); // Updated to WalletModel
+  Future<WalletModel> getWallet(String userId);
+  Future<void> updateWallet(WalletModel wallet);
+  Future<void> addRefundToWallet(String userId, double amount, String bookingId);
 }
 
 class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
@@ -13,21 +13,74 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
   WalletRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<WalletEntity> getWallet(String userId) async {
-    final doc = await firestore.collection('wallets').doc(userId).get();
-    if (doc.exists) {
-      return WalletModel.fromJson(doc.data()!); // Return as WalletEntity
+  Future<WalletModel> getWallet(String userId) async {
+    try {
+      final doc = await firestore.collection('wallets').doc(userId).get();
+      if (doc.exists) {
+        return WalletModel.fromJson(doc.data()!..['userId'] = userId);
+      } else {
+        final newWallet = WalletModel(
+          userId: userId,
+          balance: 0.0,
+          transactionHistory: [],
+        );
+        await firestore.collection('wallets').doc(userId).set(newWallet.toJson());
+        return newWallet;
+      }
+    } catch (e) {
+      throw Exception('Failed to get wallet: $e');
     }
-    // Create a new wallet with zero balance if not found
-    await firestore.collection('wallets').doc(userId).set({'balance': 0.0});
-    return WalletModel(userId: userId, balance: 0.0);
   }
 
   @override
   Future<void> updateWallet(WalletModel wallet) async {
-    await firestore.collection('wallets').doc(wallet.userId).set(
-      wallet.toJson(),
-      SetOptions(merge: true),
-    );
+    try {
+      await firestore
+          .collection('wallets')
+          .doc(wallet.userId)
+          .update(wallet.toJson());
+    } catch (e) {
+      throw Exception('Failed to update wallet: $e');
+    }
+  }
+
+  @override
+  Future<void> addRefundToWallet(
+    String userId,
+    double amount,
+    String bookingId,
+  ) async {
+    try {
+      final walletRef = firestore.collection('wallets').doc(userId);
+
+      await firestore.runTransaction((transaction) async {
+        final walletSnap = await transaction.get(walletRef);
+
+        double currentBalance = 0.0;
+        if (walletSnap.exists) {
+          currentBalance =
+              (walletSnap.data()?['balance'] as num?)?.toDouble() ?? 0.0;
+        }
+
+        final newBalance = currentBalance + amount;
+        final newTransaction = {
+          'type': 'refund',
+          'amount': amount,
+          'bookingId': bookingId,
+          'timestamp': FieldValue.serverTimestamp(),
+          'description': 'Refund for cancelled booking',
+        };
+
+        transaction.update(walletRef, {
+          'balance': newBalance,
+          'transactionHistory': FieldValue.arrayUnion([newTransaction]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+      print('✓ Refund added to wallet: $userId, Amount: ₹$amount');
+    } catch (e) {
+      throw Exception('Failed to add refund to wallet: $e');
+    }
   }
 }

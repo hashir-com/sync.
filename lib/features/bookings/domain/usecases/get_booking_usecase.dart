@@ -1,16 +1,17 @@
 import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
 import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/core/usecases/usecase.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/domain/repositories/booking_repositories.dart';
 
-class BookTicketUseCase implements UseCase<BookingEntity, BookingEntity> {
+class GetBookingUseCase implements UseCase<BookingEntity, String> {
   final BookingRepository repository;
 
-  BookTicketUseCase(this.repository);
+  GetBookingUseCase(this.repository);
 
   @override
-  Future<Either<Failure, BookingEntity>> call(BookingEntity booking) async {
-    return await repository.bookTicket(booking);
+  Future<Either<Failure, BookingEntity>> call(String bookingId) async {
+    return await repository.getBooking(bookingId);
   }
 }
