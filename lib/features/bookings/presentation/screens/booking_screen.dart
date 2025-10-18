@@ -513,9 +513,7 @@ class BookingScreen extends ConsumerWidget {
                           ),
                         );
                       },
-                      loading: () {
-                        // Should not reach here after await
-                      },
+                      loading: () {},
                     );
                   } catch (e, stackTrace) {
                     print('Booking error in UI: $e\n$stackTrace');

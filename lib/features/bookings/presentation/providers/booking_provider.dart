@@ -6,6 +6,7 @@ import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/request_refund_usecase.dart';
 import 'package:sync_event/features/email/services/email_services.dart';
 import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
@@ -19,6 +20,7 @@ final bookingNotifierProvider =
         di.sl<CancelBookingUseCase>(),
         di.sl<RefundToRazorpayUseCase>(),
         di.sl<UpdateWalletUseCase>(),
+        di.sl<RequestRefundUseCase>(),
         ref,
       );
     });
@@ -28,6 +30,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   final CancelBookingUseCase cancelBookingUseCase;
   final RefundToRazorpayUseCase refundToRazorpayUseCase;
   final UpdateWalletUseCase updateWalletUseCase;
+  final RequestRefundUseCase requestRefundUseCase;
   // ignore: deprecated_member_use
   final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>>
   ref;
@@ -37,6 +40,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
     this.cancelBookingUseCase,
     this.refundToRazorpayUseCase,
     this.updateWalletUseCase,
+    this.requestRefundUseCase,
     this.ref,
   ) : super(const AsyncValue.data(null));
 
@@ -77,7 +81,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
       (booked) async {
         state = AsyncValue.data(booked);
         ref.invalidate(userBookingsProvider(booked.userId)); // Refresh bookings
-        await _sendInvoiceEmail(booked);
+        // Confirmation email is sent by Cloud Function on booking creation
       },
     );
   }
@@ -86,6 +90,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
     String bookingId,
     String paymentId,
     String eventId,
+    {String refundType = 'wallet'},
   ) async {
     state = const AsyncValue.loading();
     final result = await cancelBookingUseCase(
@@ -102,46 +107,32 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
         print('Cancellation failed: $failure');
       },
       (success) async {
-        final currentBooking = state.value;
-        if (currentBooking != null) {
-          await refundToRazorpayUseCase(
-            RefundParams(
-              paymentId: paymentId,
-              amount: currentBooking.totalAmount,
-            ),
-          );
-
-          await updateWalletUseCase(
-            WalletEntity(
-              userId: currentBooking.userId,
-              balance: currentBooking.totalAmount,
-            ),
-          );
-
-          await _sendCancellationEmail(currentBooking);
-
-          ref.invalidate(
-            userBookingsProvider(currentBooking.userId),
-          ); // Refresh bookings
-          state = const AsyncValue.data(null);
+        // Defer refund processing to backend via refund request
+        await requestRefundUseCase(
+          RequestRefundParams(bookingId: bookingId, refundType: refundType),
+        );
+        // Note: backend Cloud Function will process refund and send emails
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null) {
+          ref.invalidate(userBookingsProvider(currentUser.uid));
         }
+        state = const AsyncValue.data(null);
       },
     );
   }
 
   Future<void> _sendInvoiceEmail(BookingEntity booking) async {
     await EmailService.sendInvoice(
-      
-      booking.userId, // Should be updated to use email
+      booking.userId,
       booking.id,
       booking.totalAmount,
-      booking.userEmail!,
+      booking.userEmail,
     );
   }
 
   Future<void> _sendCancellationEmail(BookingEntity booking) async {
     await EmailService.sendCancellationNotice(
-      booking.userId, // Should be updated to use email
+      booking.userId,
       booking.id,
       booking.totalAmount,
     );
