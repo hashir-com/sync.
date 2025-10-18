@@ -205,7 +205,7 @@ class CustomDrawer extends ConsumerWidget {
                           isDark,
                           Icons.settings_outlined,
                           'Settings',
-                          '/mybookings',
+                          '/settings',
                         ),
                         _buildItem(
                           context,
@@ -214,131 +214,6 @@ class CustomDrawer extends ConsumerWidget {
                           'My Events',
                           '/my-events',
                         ),
-
-                        // Animated Theme Toggle with Haptic Feedback
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: AppSizes.paddingMedium.h,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.brightness_6_outlined,
-                                    color: AppColors.getTextPrimary(isDark),
-                                    size: AppSizes.iconMedium.sp,
-                                  ),
-                                  SizedBox(width: AppSizes.spacingLarge.w),
-                                  Text(
-                                    'Theme',
-                                    style:
-                                        AppTextStyles.bodyLarge(
-                                          isDark: isDark,
-                                        ).copyWith(
-                                          fontSize: AppSizes.fontMedium.sp,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                              Consumer(
-                                builder: (context, ref, _) {
-                                  final themeIsDark = ref.watch(themeProvider);
-
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      HapticFeedback.mediumImpact();
-                                      await ref
-                                          .read(themeProvider.notifier)
-                                          .toggleTheme(!themeIsDark);
-                                    },
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 400,
-                                      ),
-                                      width: 60.w,
-                                      height: AppSizes.chipHeight.h,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: AppSizes.paddingXs.w,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: themeIsDark
-                                            ? AppColors.getPrimary(isDark)
-                                            : AppColors.getDisabled(isDark),
-                                        borderRadius: BorderRadius.circular(
-                                          AppSizes.radiusXl.r,
-                                        ),
-                                      ),
-                                      child: Stack(
-                                        children: [
-                                          AnimatedAlign(
-                                            duration: const Duration(
-                                              milliseconds: 400,
-                                            ),
-                                            curve: Curves.easeInOut,
-                                            alignment: themeIsDark
-                                                ? Alignment.centerRight
-                                                : Alignment.centerLeft,
-                                            child: Container(
-                                              width: AppSizes.iconMedium.w,
-                                              height: AppSizes.iconMedium.h,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: AppColors.getShadow(
-                                                      isDark,
-                                                    ),
-                                                    blurRadius: AppSizes
-                                                        .cardElevationLow,
-                                                    offset: const Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: AnimatedSwitcher(
-                                                duration: const Duration(
-                                                  milliseconds: 400,
-                                                ),
-                                                transitionBuilder:
-                                                    (child, animation) =>
-                                                        ScaleTransition(
-                                                          scale: animation,
-                                                          child: child,
-                                                        ),
-                                                child: Icon(
-                                                  themeIsDark
-                                                      ? Icons.dark_mode_rounded
-                                                      : Icons
-                                                            .light_mode_rounded,
-                                                  key: ValueKey<bool>(
-                                                    themeIsDark,
-                                                  ),
-                                                  size: AppSizes.iconSmall.sp,
-                                                  color: themeIsDark
-                                                      ? AppColors.getPrimary(
-                                                          isDark,
-                                                        )
-                                                      : Colors.orangeAccent,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const Spacer(),
-
-                        // Logout Button
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(
@@ -428,6 +303,8 @@ class CustomDrawer extends ConsumerWidget {
                             }
                           },
                         ),
+
+                        // Animated Theme Toggle with Haptic Feedback
                       ],
                     ),
                   ),

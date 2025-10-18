@@ -23,6 +23,7 @@ import 'package:sync_event/features/onboarding/presentation/pages/onboarding_pag
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
 import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart';
 import 'package:sync_event/features/Rootnavbar/rootshell.dart';
+import 'package:sync_event/features/settings/presentation/settings_screen.dart';
 import 'package:sync_event/features/splash/presentation/splash_screen.dart';
 import 'package:sync_event/features/wallet/presentation/screens/wallet_screen.dart';
 
@@ -171,5 +172,10 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    GoRoute(
+  path: '/settings',
+  name: 'settings',
+  builder: (context, state) => const SettingsScreen(),
+),
   ],
 );
