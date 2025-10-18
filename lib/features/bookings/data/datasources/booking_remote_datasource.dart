@@ -332,22 +332,39 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         double currentBalance = 0.0;
         if (walletSnap.exists) {
           currentBalance = (walletSnap.data()?['balance'] as num?)?.toDouble() ?? 0.0;
+          final newBalance = currentBalance + amount;
+          final newTransaction = {
+            'type': 'refund',
+            'amount': amount,
+            'bookingId': bookingId,
+            'timestamp': FieldValue.serverTimestamp(),
+            'description': 'Refund for cancelled booking',
+            'status': 'completed',
+            'source': 'booking_cancellation',
+          };
+          transaction.update(walletRef, {
+            'balance': newBalance,
+            'transactionHistory': FieldValue.arrayUnion([newTransaction]),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          final initTransaction = {
+            'type': 'refund',
+            'amount': amount,
+            'bookingId': bookingId,
+            'timestamp': FieldValue.serverTimestamp(),
+            'description': 'Refund for cancelled booking',
+            'status': 'completed',
+            'source': 'booking_cancellation',
+          };
+          transaction.set(walletRef, {
+            'userId': userId,
+            'balance': amount,
+            'transactionHistory': [initTransaction],
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         }
-
-        final newBalance = currentBalance + amount;
-        final newTransaction = {
-          'type': 'refund',
-          'amount': amount,
-          'bookingId': bookingId,
-          'timestamp': FieldValue.serverTimestamp(),
-          'description': 'Refund for cancelled booking',
-        };
-
-        transaction.update(walletRef, {
-          'balance': newBalance,
-          'transactionHistory': FieldValue.arrayUnion([newTransaction]),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
       });
 
       print('✓ Refund added to wallet: $userId, Amount: ₹$amount');

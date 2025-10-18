@@ -15,6 +15,7 @@ import 'package:sync_event/features/bookings/presentation/providers/booking_prov
 import 'package:sync_event/features/bookings/presentation/widgets/razorpay_payment_widget.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
+import 'package:sync_event/features/email/services/email_services.dart';
 
 final bookingFormProvider =
     StateNotifierProvider.autoDispose<BookingFormNotifier, BookingFormState>(
@@ -477,10 +478,22 @@ class BookingScreen extends ConsumerWidget {
                         .read(bookingNotifierProvider.notifier)
                         .bookTicket(booking, paymentId);
 
+
                     final bookingState = ref.read(bookingNotifierProvider);
                     bookingState.when(
                       data: (bookingResult) {
                         if (bookingResult != null) {
+                          // Send invoice email with confirmed booking id
+                          () async {
+                            try {
+                              await EmailService.sendInvoice(
+                                userId,
+                                bookingResult.id,
+                                totalAmount,
+                                user?.email ?? '',
+                              );
+                            } catch (_) {}
+                          }();
                           ref.invalidate(userBookingsProvider(userId));
                           context.go(
                             '/booking-details',

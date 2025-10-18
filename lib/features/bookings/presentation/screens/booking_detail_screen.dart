@@ -12,7 +12,9 @@ import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart
 import 'package:sync_event/features/bookings/presentation/providers/booking_provider.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:printing/printing.dart';
+import 'package:sync_event/features/email/services/email_services.dart';
 import 'package:sync_event/features/bookings/presentation/utils/invoice_generator.dart';
+import 'package:sync_event/features/bookings/presentation/utils/booking_utils.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
   final BookingEntity booking;
@@ -45,6 +47,23 @@ class BookingDetailsScreen extends ConsumerWidget {
                 color: AppColors.getError(isDark),
               ),
               onPressed: () async {
+                final eligible = BookingUtils.isEligibleForCancellation(booking.startTime);
+                if (!eligible) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Cannot cancel within 48 hours of event start.',
+                          style: AppTextStyles.bodyMedium(isDark: true)
+                              .copyWith(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.getError(isDark),
+                      ),
+                    );
+                  }
+                  return;
+                }
+
                 final choice = await showModalBottomSheet<String>(
                   context: context,
                   builder: (context) {
@@ -79,6 +98,14 @@ class BookingDetailsScreen extends ConsumerWidget {
                         refundType: choice,
                       );
                   ref.invalidate(userBookingsProvider(booking.userId));
+                  // Fire-and-forget cancellation email
+                  try {
+                    await EmailService.sendCancellationNotice(
+                      booking.userId,
+                      booking.id,
+                      booking.totalAmount,
+                    );
+                  } catch (_) {}
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
