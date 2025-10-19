@@ -9,7 +9,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/features/profile/presentation/provider/user_provider.dart';
+import 'package:sync_event/features/profile/presentation/providers/user_provider.dart';
 
 // Provider for the picked image
 final pickedImageProvider = StateProvider<File?>((ref) => null);

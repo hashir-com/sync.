@@ -67,6 +67,7 @@ dependencies:
   mailer: ^6.5.0
   pdf: ^3.11.1
   printing: ^5.13.4
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:
