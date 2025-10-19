@@ -1,359 +1,183 @@
-// lib/features/bookings/data/datasources/booking_remote_datasource.dart
-// COMPLETE FIXED FILE
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sync_event/core/error/exceptions.dart';
 import 'package:sync_event/features/bookings/data/models/booking_model.dart';
-import 'package:sync_event/features/events/domain/entities/event_entity.dart';
+import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 
 abstract class BookingRemoteDataSource {
-  Future<BookingModel> bookTicket(BookingModel booking);
-  Future<void> cancelBooking(String bookingId);
+  Future<BookingModel> bookTicket(BookingEntity booking);
+  Future<void> cancelBooking(String bookingId, String paymentId, String eventId, int ticketQuantity);
   Future<void> refundToRazorpay(String paymentId, double amount);
-  Future<List<BookingModel>> getUserBookings(String userId);
-  Future<BookingModel> getBooking(String bookingId);
-  Future<EventEntity> getEvent(String eventId);
   Future<void> requestRefund(String bookingId, String refundType);
-  Future<void> updateBookingRefundStatus(
-    String bookingId,
-    String refundType,
-    double amount,
-  );
-  Future<void> recordRefundToBank(
-    String bookingId,
-    String paymentId,
-    double amount,
-  );
-  Future<void> addRefundToWallet(String userId, double amount, String bookingId);
+  Future<void> updateBookingStatus(String bookingId, String status, double refundAmount);
+  Future<BookingModel> getBooking(String bookingId);
+  Future<List<BookingModel>> getUserBookings(String userId);
 }
 
 class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   final FirebaseFirestore firestore;
-  final String razorpayKey = 'rzp_test_RU0yq41o7lOiIN';
-  final String razorpaySecret = 'Oc9zrPqN7ag3530N4f0QC9lc';
+  final FirebaseAuth auth;
 
-  BookingRemoteDataSourceImpl({required this.firestore});
+  BookingRemoteDataSourceImpl({required this.firestore, required this.auth});
 
   @override
-  Future<BookingModel> bookTicket(BookingModel booking) async {
+  Future<BookingModel> bookTicket(BookingEntity booking) async {
     try {
-      final eventRef = firestore.collection('events').doc(booking.eventId);
-      final bookingsCol = firestore.collection('bookings');
+      final userId = auth.currentUser?.uid;
+      if (userId == null) throw ServerException(message: 'User not authenticated');
+      if (booking.id.isEmpty) throw ServerException(message: 'Booking ID cannot be empty');
+      if (booking.eventId.isEmpty) throw ServerException(message: 'Event ID cannot be empty');
+      if (booking.userId != userId) {
+        print('BookingRemoteDataSource: User ID mismatch - input=${booking.userId}, auth=$userId');
+      }
 
-      late BookingModel result;
+      print('BookingRemoteDataSource: Fetching event with id=${booking.eventId}');
+      final eventDoc = await firestore.collection('events').doc(booking.eventId).get();
+      if (!eventDoc.exists) throw ServerException(message: 'Event not found');
+      final eventData = eventDoc.data()!;
+      final availableTickets = (eventData['availableTickets'] as num?)?.toInt() ?? 0;
+      print('BookingRemoteDataSource: Event availableTickets=$availableTickets, requested=${booking.ticketQuantity}');
+      if (availableTickets < booking.ticketQuantity) {
+        throw ServerException(message: 'Not enough tickets available');
+      }
 
-      await firestore.runTransaction((transaction) async {
-        final eventSnap = await transaction.get(eventRef);
-        if (!eventSnap.exists) {
-          throw Exception('Event not found: ${booking.eventId}');
-        }
+      final bookingMap = {
+        'id': booking.id,
+        'userId': userId,
+        'eventId': booking.eventId,
+        'ticketType': booking.ticketType,
+        'ticketQuantity': booking.ticketQuantity,
+        'totalAmount': booking.totalAmount,
+        'paymentId': booking.paymentId,
+        'seatNumbers': booking.seatNumbers,
+        'status': booking.status ?? 'confirmed',
+        'bookingDate': Timestamp.fromDate(booking.bookingDate),
+        'startTime': Timestamp.fromDate(booking.startTime),
+        'endTime': Timestamp.fromDate(booking.endTime),
+        'userEmail': booking.userEmail ?? auth.currentUser?.email ?? '',
+      };
 
-        final eventData = eventSnap.data()!;
-        if (!eventData.containsKey('categoryCapacities') ||
-            !eventData.containsKey('takenSeats')) {
-          throw Exception('Event missing required fields');
-        }
+      print('BookingRemoteDataSource: Saving booking with id=${booking.id}, userId=$userId, map=$bookingMap');
+      await firestore.collection('bookings').doc(booking.id).set(bookingMap);
+      print('BookingRemoteDataSource: Booking saved successfully');
 
-        final capacities = Map<String, int>.from(eventData['categoryCapacities']);
-        final takenSeats = List<int>.from(eventData['takenSeats'] ?? []);
-
-        if (!capacities.containsKey(booking.ticketType)) {
-          throw Exception('Invalid ticket type: ${booking.ticketType}');
-        }
-
-        final available = capacities[booking.ticketType] ?? 0;
-        if (available < booking.ticketQuantity) {
-          throw Exception('Not enough tickets available');
-        }
-
-        final newSeats = _allocateSeatNumbers(
-          takenSeats: takenSeats,
-          quantity: booking.ticketQuantity,
-          maxSeats: capacities[booking.ticketType]!,
-        );
-
-        final docRef = bookingsCol.doc();
-        final bookingJson = {
-          'userId': booking.userId,
-          'eventId': booking.eventId,
-          'ticketType': booking.ticketType,
-          'ticketQuantity': booking.ticketQuantity,
-          'totalAmount': booking.totalAmount,
-          'paymentId': booking.paymentId,
-          'status': 'confirmed',
-          'seatNumbers': newSeats,
-          'bookingDate': FieldValue.serverTimestamp(),
-          'startTime': booking.startTime is! Timestamp
-              ? Timestamp.fromDate(booking.startTime)
-              : booking.startTime,
-          'endTime': booking.endTime is! Timestamp
-              ? Timestamp.fromDate(booking.endTime)
-              : booking.endTime,
-          'userEmail': booking.userEmail,
-        };
-
-        transaction.set(docRef, bookingJson);
-        transaction.update(eventRef, {
-          'categoryCapacities': {
-            ...capacities,
-            booking.ticketType: available - booking.ticketQuantity,
-          },
-          'takenSeats': FieldValue.arrayUnion(newSeats),
-        });
-
-        result = booking.copyWith(
-          id: docRef.id,
-          seatNumbers: newSeats,
-          status: 'confirmed',
-          bookingDate: DateTime.now(),
-        );
+      print('BookingRemoteDataSource: Updating event with id=${booking.eventId}, userId=$userId');
+      await firestore.collection('events').doc(booking.eventId).update({
+        'availableTickets': FieldValue.increment(-booking.ticketQuantity),
+        'attendees': FieldValue.arrayUnion([userId]),
       });
+      print('BookingRemoteDataSource: Event updated successfully');
 
-      return result;
-    } catch (e, stackTrace) {
-      print('✗ BOOKING FAILED: $e\n$stackTrace');
-      throw Exception('Failed to book ticket: $e');
+      return BookingModel.fromJson(bookingMap, booking.id);
+    } catch (e) {
+      print('BookingRemoteDataSource: Error - $e');
+      throw ServerException(message: 'Failed to book ticket: $e');
     }
-  }
-
-  List<int> _allocateSeatNumbers({
-    required List<int> takenSeats,
-    required int quantity,
-    required int maxSeats,
-  }) {
-    final availableSeats = List.generate(
-      maxSeats,
-      (index) => index + 1,
-    ).where((seat) => !takenSeats.contains(seat)).toList();
-
-    if (availableSeats.length < quantity) {
-      throw Exception('Not enough seats available');
-    }
-
-    return availableSeats.take(quantity).toList();
   }
 
   @override
-  Future<void> cancelBooking(String bookingId) async {
+  Future<void> cancelBooking(String bookingId, String paymentId, String eventId, int ticketQuantity) async {
     try {
-      final bookingRef = firestore.collection('bookings').doc(bookingId);
+      if (bookingId.isEmpty) throw ServerException(message: 'Booking ID cannot be empty');
+      if (paymentId.isEmpty) throw ServerException(message: 'Payment ID cannot be empty');
+      if (eventId.isEmpty) throw ServerException(message: 'Event ID cannot be empty');
+      if (ticketQuantity <= 0) throw ServerException(message: 'Ticket quantity must be positive');
 
-      final bookingSnap = await bookingRef.get();
-      if (!bookingSnap.exists) throw Exception('Booking not found: $bookingId');
-
-      final bookingData = bookingSnap.data()!;
-
-      await bookingRef.update({
+      print('BookingRemoteDataSource: Cancelling booking with id=$bookingId');
+      await firestore.collection('bookings').doc(bookingId).update({
         'status': 'cancelled',
         'cancellationDate': FieldValue.serverTimestamp(),
       });
 
-      // Restore event capacity and seats
-      final eventRef = firestore
-          .collection('events')
-          .doc(bookingData['eventId']);
-      final eventSnap = await eventRef.get();
-      if (eventSnap.exists) {
-        final eventData = eventSnap.data()!;
-        final capacities = Map<String, int>.from(
-          eventData['categoryCapacities'] ?? {},
-        );
-        final takenSeats = List<int>.from(eventData['takenSeats'] ?? []);
-        final type = bookingData['ticketType'] as String;
-        final qty = (bookingData['ticketQuantity'] as num).toInt();
-        final seats = List<int>.from(bookingData['seatNumbers'] ?? []);
-
-        capacities[type] = (capacities[type] ?? 0) + qty;
-        await eventRef.update({
-          'categoryCapacities': capacities,
-          'takenSeats': FieldValue.arrayRemove(seats),
-        });
-      }
-      print('✓ Booking cancelled: $bookingId');
-    } catch (e, stackTrace) {
-      print('✗ Cancellation failed: $e\n$stackTrace');
-      throw Exception('Failed to cancel booking: $e');
+      print('BookingRemoteDataSource: Updating event with id=$eventId, ticketQuantity=$ticketQuantity');
+      await firestore.collection('events').doc(eventId).update({
+        'availableTickets': FieldValue.increment(ticketQuantity),
+      });
+    } catch (e) {
+      print('BookingRemoteDataSource: Error - $e');
+      throw ServerException(message: 'Failed to cancel booking: $e');
     }
   }
 
   @override
   Future<void> refundToRazorpay(String paymentId, double amount) async {
     try {
-      final response = await http.post(
-        Uri.parse('https://api.razorpay.com/v1/payments/$paymentId/refund'),
-        headers: {
-          'Authorization':
-              'Basic ${base64Encode(utf8.encode('$razorpayKey:$razorpaySecret'))}',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'amount': (amount * 100).toInt(),
-          'notes': {'reason': 'Event cancellation'},
-        }),
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Refund failed: ${response.body}');
-      }
-      print('✓ Refund processed: $paymentId');
-    } catch (e, stackTrace) {
-      print('✗ Refund failed: $e\n$stackTrace');
-      throw Exception('Failed to process refund: $e');
-    }
-  }
-
-  @override
-  Future<List<BookingModel>> getUserBookings(String userId) async {
-    try {
-      print('DEBUG: Starting getUserBookings for userId: $userId');
-
-      final snapshot = await firestore
-          .collection('bookings')
-          .where('userId', isEqualTo: userId)
-          .get();
-
-      print('DEBUG: Query returned ${snapshot.docs.length} documents');
-
-      final bookings = snapshot.docs.map((doc) {
-        print('DEBUG: Processing booking doc: ${doc.id}, data: ${doc.data()}');
-        return BookingModel.fromJson(doc.data()..['id'] = doc.id);
-      }).toList();
-
-      print('✓ Fetched ${bookings.length} bookings for user: $userId');
-      return bookings;
-    } catch (e, stackTrace) {
-      print('✗ Failed to fetch bookings: $e\n$stackTrace');
-      return [];
-    }
-  }
-
-  @override
-  Future<BookingModel> getBooking(String bookingId) async {
-    try {
-      final doc = await firestore.collection('bookings').doc(bookingId).get();
-      if (doc.exists) {
-        return BookingModel.fromJson(doc.data()!..['id'] = doc.id);
-      } else {
-        throw Exception('Booking not found: $bookingId');
-      }
-    } catch (e, stackTrace) {
-      print('✗ Failed to fetch booking: $e\n$stackTrace');
-      throw Exception('Failed to fetch booking: $e');
-    }
-  }
-
-  @override
-  Future<EventEntity> getEvent(String eventId) async {
-    try {
-      final doc = await firestore.collection('events').doc(eventId).get();
-      if (doc.exists) {
-        return EventEntity.fromJson(doc.data()!..['id'] = doc.id);
-      } else {
-        throw Exception('Event not found: $eventId');
-      }
-    } catch (e, stackTrace) {
-      print('✗ Failed to fetch event: $e\n$stackTrace');
-      throw Exception('Failed to fetch event: $e');
+      if (paymentId.isEmpty) throw ServerException(message: 'Payment ID cannot be empty');
+      print('BookingRemoteDataSource: Processing Razorpay refund for paymentId=$paymentId, amount=$amount');
+    } catch (e) {
+      throw ServerException(message: 'Failed to process Razorpay refund: $e');
     }
   }
 
   @override
   Future<void> requestRefund(String bookingId, String refundType) async {
     try {
-      final requestRef = firestore.collection('refundRequests').doc();
-      await requestRef.set({
-        'bookingId': bookingId,
-        'refundType': refundType,
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      print('✓ Refund request created: $bookingId, Type: $refundType');
-    } catch (e, stackTrace) {
-      print('✗ Failed to create refund request: $e\n$stackTrace');
-      throw Exception('Failed to request refund: $e');
-    }
-  }
+      if (bookingId.isEmpty) throw ServerException(message: 'Booking ID cannot be empty');
+      if (refundType.isEmpty) throw ServerException(message: 'Refund type cannot be empty');
 
-  @override
-  Future<void> updateBookingRefundStatus(
-    String bookingId,
-    String refundType,
-    double amount,
-  ) async {
-    try {
+      print('BookingRemoteDataSource: Requesting refund for bookingId=$bookingId, refundType=$refundType');
       await firestore.collection('bookings').doc(bookingId).update({
-        'refundAmount': amount,
         'refundType': refundType,
-        'refundProcessedAt': FieldValue.serverTimestamp(),
-        'refundStatus': 'processed',
+        'refundRequestedAt': FieldValue.serverTimestamp(),
       });
-      print('✓ Booking refund status updated: $bookingId');
-    } catch (e, stackTrace) {
-      print('✗ Failed to update refund status: $e\n$stackTrace');
-      throw Exception('Failed to update booking refund status: $e');
+    } catch (e) {
+      print('BookingRemoteDataSource: Error - $e');
+      throw ServerException(message: 'Failed to request refund: $e');
     }
   }
 
   @override
-  Future<void> recordRefundToBank(
-    String bookingId,
-    String paymentId,
-    double amount,
-  ) async {
+  Future<void> updateBookingStatus(String bookingId, String status, double refundAmount) async {
     try {
-      await firestore.collection('refundRecords').add({
-        'bookingId': bookingId,
-        'paymentId': paymentId,
-        'amount': amount,
-        'refundType': 'bank',
-        'status': 'initiated',
-        'createdAt': FieldValue.serverTimestamp(),
+      if (bookingId.isEmpty) throw ServerException(message: 'Booking ID cannot be empty');
+
+      print('BookingRemoteDataSource: Updating booking status for id=$bookingId, status=$status');
+      await firestore.collection('bookings').doc(bookingId).update({
+        'status': status,
+        'refundAmount': refundAmount,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
-      print('✓ Bank refund recorded: $paymentId');
-    } catch (e, stackTrace) {
-      print('✗ Failed to record bank refund: $e\n$stackTrace');
-      throw Exception('Failed to record bank refund: $e');
+    } catch (e) {
+      print('BookingRemoteDataSource: Error - $e');
+      throw ServerException(message: 'Failed to update booking status: $e');
     }
   }
 
   @override
-  Future<void> addRefundToWallet(
-    String userId,
-    double amount,
-    String bookingId,
-  ) async {
+  Future<BookingModel> getBooking(String bookingId) async {
     try {
-      final walletRef = firestore.collection('wallets').doc(userId);
+      if (bookingId.isEmpty) throw ServerException(message: 'Booking ID cannot be empty');
 
-      await firestore.runTransaction((transaction) async {
-        final walletSnap = await transaction.get(walletRef);
+      print('BookingRemoteDataSource: Fetching booking with id=$bookingId');
+      final doc = await firestore.collection('bookings').doc(bookingId).get();
+      if (!doc.exists) throw ServerException(message: 'Booking not found');
+      return BookingModel.fromJson(doc.data()!, doc.id);
+    } catch (e) {
+      print('BookingRemoteDataSource: Error - $e');
+      throw ServerException(message: 'Failed to get booking: $e');
+    }
+  }
 
-        double currentBalance = 0.0;
-        if (walletSnap.exists) {
-          currentBalance = (walletSnap.data()?['balance'] as num?)?.toDouble() ?? 0.0;
-        }
+  @override
+  Future<List<BookingModel>> getUserBookings(String userId) async {
+    try {
+      final authUserId = auth.currentUser?.uid;
+      if (authUserId == null) throw ServerException(message: 'User not authenticated');
+      if (userId != authUserId) {
+        print('BookingRemoteDataSource: User ID mismatch - input=$userId, auth=$authUserId');
+      }
 
-        final newBalance = currentBalance + amount;
-        final newTransaction = {
-          'type': 'refund',
-          'amount': amount,
-          'bookingId': bookingId,
-          'timestamp': FieldValue.serverTimestamp(),
-          'description': 'Refund for cancelled booking',
-        };
-
-        transaction.update(walletRef, {
-          'balance': newBalance,
-          'transactionHistory': FieldValue.arrayUnion([newTransaction]),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      });
-
-      print('✓ Refund added to wallet: $userId, Amount: ₹$amount');
-    } catch (e, stackTrace) {
-      print('✗ Failed to add refund to wallet: $e\n$stackTrace');
-      throw Exception('Failed to add refund to wallet: $e');
+      print('BookingRemoteDataSource: Fetching bookings for userId=$authUserId');
+      final querySnapshot = await firestore
+          .collection('bookings')
+          .where('userId', isEqualTo: authUserId)
+          .get();
+      return querySnapshot.docs
+          .map((doc) => BookingModel.fromJson(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      print('BookingRemoteDataSource: Error - $e');
+      throw ServerException(message: 'Failed to get user bookings: $e');
     }
   }
 }

@@ -1,39 +1,84 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:sync_event/core/di/injection_container.dart' as di;
+import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
+import 'package:sync_event/features/wallet/domain/usecases/get_wallet_usecase.dart';
 import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
-import 'package:sync_event/features/wallet/presentation/provider/wallet_provider.dart';
 
-final walletNotifierProvider =
-    StateNotifierProvider<WalletNotifier, AsyncValue<WalletEntity>>((ref) {
-  final updateWalletUseCase = ref.watch(updateWalletUseCaseProvider);
-  return WalletNotifier(updateWalletUseCase);
+final updateWalletUseCaseProvider = Provider<UpdateWalletUseCase>((ref) {
+  return di.sl<UpdateWalletUseCase>();
 });
 
-class WalletNotifier extends StateNotifier<AsyncValue<WalletEntity>> {
-  final UpdateWalletUseCase updateWalletUseCase;
+final getWalletUseCaseProvider = Provider<GetWalletUseCase>((ref) {
+  return di.sl<GetWalletUseCase>();
+});
 
-  WalletNotifier(this.updateWalletUseCase) : super(const AsyncValue.loading());
+final walletNotifierProvider =
+    StateNotifierProvider<WalletNotifier, AsyncValue<WalletModel>>((ref) {
+  final updateWalletUseCase = ref.watch(updateWalletUseCaseProvider);
+  final getWalletUseCase = ref.watch(getWalletUseCaseProvider);
+  return WalletNotifier(updateWalletUseCase, getWalletUseCase);
+});
+
+class WalletNotifier extends StateNotifier<AsyncValue<WalletModel>> {
+  final UpdateWalletUseCase updateWalletUseCase;
+  final GetWalletUseCase getWalletUseCase;
+
+  WalletNotifier(this.updateWalletUseCase, this.getWalletUseCase)
+      : super(const AsyncValue.loading());
 
   Future<void> fetchWallet(String userId) async {
+    if (userId.isEmpty) {
+      state = AsyncValue.error('User ID is empty', StackTrace.current);
+      return;
+    }
     state = const AsyncValue.loading();
-    // Assume getWallet use case exists; implement in repository if needed
-    // final result = await getWalletUseCase(NoParams());
-    // state = result.fold(
-    //   (failure) => AsyncValue.error(failure, StackTrace.current),
-    //   (wallet) => AsyncValue.data(wallet),
-    // );
-    state = AsyncValue.data(WalletEntity(userId: userId, balance: 0.0)); // Mock for now
+    final result = await getWalletUseCase(GetWalletParams(userId));
+    state = result.fold(
+      (failure) => AsyncValue.error(failure.message, StackTrace.current),
+      (wallet) => AsyncValue.data(wallet),
+    );
   }
 
   Future<void> updateWallet(double amount) async {
-    final currentWallet = state.value ?? WalletEntity(userId: '', balance: 0.0);
-    final newWallet = WalletEntity(
+    final currentWallet = state.value ??
+        WalletModel(userId: '', balance: 0.0, transactionHistory: []);
+    final newWallet = WalletModel(
       userId: currentWallet.userId,
       balance: currentWallet.balance + amount,
+      transactionHistory: currentWallet.transactionHistory,
     );
     final result = await updateWalletUseCase(newWallet);
     state = result.fold(
-      (failure) => AsyncValue.error(failure, StackTrace.current),
+      (failure) => AsyncValue.error(failure.message, StackTrace.current),
+      (_) => AsyncValue.data(newWallet),
+    );
+  }
+
+  Future<void> addRefund({
+    required String userId,
+    required double amount,
+    required String bookingId,
+    required String reason,
+  }) async {
+    state = const AsyncValue.loading();
+    final currentWallet = state.value ??
+        WalletModel(userId: userId, balance: 0.0, transactionHistory: []);
+    final newTransaction = {
+      'type': 'refund',
+      'amount': amount,
+      'bookingId': bookingId,
+      'timestamp': DateTime.now().toIso8601String(),
+      'description': 'Refund for cancelled booking',
+      'reason': reason,
+    };
+    final newWallet = WalletModel(
+      userId: currentWallet.userId.isNotEmpty ? currentWallet.userId : userId,
+      balance: currentWallet.balance + amount,
+      transactionHistory: [...currentWallet.transactionHistory, newTransaction],
+    );
+    final result = await updateWalletUseCase(newWallet);
+    state = result.fold(
+      (failure) => AsyncValue.error(failure.message, StackTrace.current),
       (_) => AsyncValue.data(newWallet),
     );
   }

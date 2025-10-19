@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
 import 'package:sync_event/features/wallet/presentation/provider/wallet_provider.dart';
+import 'dart:math' as math;
 
 class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
@@ -22,7 +26,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
   void initState() {
     super.initState();
     _flipController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
@@ -66,16 +70,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           'My Wallet',
           style: AppTextStyles.headingMedium(isDark: isDark),
         ),
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: AppColors.getBackground(isDark),
         elevation: 0,
       ),
       body: walletState.when(
-        data: (wallet) => _buildWalletUI(
-          context,
-          isDark,
-          wallet.balance.toStringAsFixed(2),
-          userName,
-        ),
+        data: (wallet) =>
+            _buildWalletUI(context, isDark, wallet, userName),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Text(
@@ -90,12 +90,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
   Widget _buildWalletUI(
     BuildContext context,
     bool isDark,
-    String balance,
+    WalletModel wallet,
     String userName,
   ) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 40.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -104,7 +104,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               child: AnimatedBuilder(
                 animation: _flipAnimation,
                 builder: (context, child) {
-                  final angle = _flipAnimation.value * 3.14159;
+                  final angle = _flipAnimation.value * math.pi;
                   final isBack = _flipAnimation.value > 0.5;
 
                   return Transform(
@@ -113,16 +113,23 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                       ..setEntry(3, 2, 0.001)
                       ..rotateY(angle),
                     child: isBack
-                        ? _buildCardBack(balance, isDark)
+                        ? Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()..rotateY(math.pi),
+                            child: _buildCardBack(
+                              wallet.balance.toStringAsFixed(2),
+                              isDark,
+                            ),
+                          )
                         : _buildCardFront(userName, isDark),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32.h),
             _buildQuickActions(isDark),
-            const SizedBox(height: 32),
-            _buildRecentTransactions(isDark),
+            SizedBox(height: 32.h),
+            _buildRecentTransactions(isDark, wallet.transactionHistory),
           ],
         ),
       ),
@@ -131,9 +138,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
 
   Widget _buildCardFront(String userName, bool isDark) {
     return Container(
-      height: 220,
+      height: 220.h,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24.r),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -161,13 +168,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
       ),
       child: Stack(
         children: [
-          // Decorative elements
           Positioned(
-            top: -50,
-            right: -50,
+            top: -50.h,
+            right: -50.w,
             child: Container(
-              width: 200,
-              height: 200,
+              width: 200.w,
+              height: 200.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withAlpha(51),
@@ -175,20 +181,19 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
             ),
           ),
           Positioned(
-            bottom: -40,
-            left: -40,
+            bottom: -40.h,
+            left: -40.w,
             child: Container(
-              width: 180,
-              height: 180,
+              width: 180.w,
+              height: 180.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withAlpha(38),
               ),
             ),
           ),
-          // Card content
           Padding(
-            padding: const EdgeInsets.all(28),
+            padding: EdgeInsets.all(28.w),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,25 +205,25 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                       'SyncEvent',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 2,
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withAlpha(76),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(20.r),
                       ),
-                      child: const Text(
+                      child: Text(
                         'WALLET',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
                         ),
@@ -233,17 +238,17 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                       'Cardholder',
                       style: TextStyle(
                         color: Colors.white.withAlpha(178),
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         letterSpacing: 1,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6.h),
                     Text(
                       userName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
@@ -253,15 +258,14 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               ],
             ),
           ),
-          // Tap instruction
           Positioned(
-            bottom: 12,
-            right: 20,
+            bottom: 12.h,
+            right: 20.w,
             child: Text(
               'Tap to reveal balance',
               style: TextStyle(
                 color: Colors.white.withAlpha(140),
-                fontSize: 11,
+                fontSize: 11.sp,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -273,9 +277,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
 
   Widget _buildCardBack(String balance, bool isDark) {
     return Container(
-      height: 220,
+      height: 220.h,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24.r),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -303,13 +307,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
       ),
       child: Stack(
         children: [
-          // Magnetic stripe
           Positioned(
-            top: 50,
+            top: 50.h,
             left: 0,
             right: 0,
             child: Container(
-              height: 40,
+              height: 40.h,
               decoration: BoxDecoration(
                 color: isDark
                     ? const Color(0xFF2A2A2E)
@@ -317,9 +320,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               ),
             ),
           ),
-          // Content
           Padding(
-            padding: const EdgeInsets.all(28),
+            padding: EdgeInsets.all(28.w),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -328,27 +330,27 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                   'AVAILABLE BALANCE',
                   style: TextStyle(
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2,
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 36.h),
                 Text(
                   '₹$balance',
                   style: TextStyle(
                     color: isDark ? Colors.white : Colors.black87,
-                    fontSize: 42,
+                    fontSize: 42.sp,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 Text(
                   'Tap to return to front',
                   style: TextStyle(
                     color: isDark ? Colors.grey[500] : Colors.grey[500],
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -362,10 +364,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
 
   Widget _buildQuickActions(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
         ),
@@ -409,19 +411,19 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.getPrimary(isDark).withAlpha(76),
             ),
-            child: Icon(icon, color: AppColors.getPrimary(isDark), size: 20),
+            child: Icon(icon, color: AppColors.getPrimary(isDark), size: 20.sp),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Text(
             label,
             style: TextStyle(
               color: isDark ? Colors.grey[300] : Colors.grey[700],
-              fontSize: 12,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -430,7 +432,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
     );
   }
 
-  Widget _buildRecentTransactions(bool isDark) {
+  Widget _buildRecentTransactions(
+    bool isDark,
+    List<Map<String, dynamic>> transactions,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -438,42 +443,63 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           'Recent Transactions',
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black87,
-            fontSize: 16,
+            fontSize: 16.sp,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
               color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
             ),
           ),
-          child: Column(
-            children: [
-              _buildTransactionItem(
-                isDark: isDark,
-                title: 'Event Booking',
-                subtitle: 'Today at 10:30 AM',
-                amount: '- ₹500',
-                icon: Icons.event,
-              ),
-              const SizedBox(height: 12),
-              Divider(color: isDark ? Colors.grey[800] : Colors.grey[200]),
-              const SizedBox(height: 12),
-              _buildTransactionItem(
-                isDark: isDark,
-                title: 'Added to Wallet',
-                subtitle: 'Yesterday at 5:15 PM',
-                amount: '+ ₹2000',
-                icon: Icons.add_circle,
-                isCredit: true,
-              ),
-            ],
-          ),
+          child: transactions.isEmpty
+              ? Center(
+                  child: Text(
+                    'No transactions yet',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                )
+              : Column(
+                  children: transactions.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final transaction = entry.value;
+                    final isCredit = transaction['type'] == 'refund';
+                    final timestamp = transaction['timestamp'] is String
+                        ? DateTime.tryParse(transaction['timestamp'])
+                        : (transaction['timestamp'] as Timestamp?)?.toDate();
+                    return Column(
+                      children: [
+                        _buildTransactionItem(
+                          isDark: isDark,
+                          title: transaction['description'] ?? 'Transaction',
+                          subtitle: timestamp != null
+                              ? _formatTimestamp(timestamp)
+                              : 'Unknown time',
+                          amount: isCredit
+                              ? '+ ₹${transaction['amount'].toStringAsFixed(2)}'
+                              : '- ₹${transaction['amount'].toStringAsFixed(2)}',
+                          icon: isCredit ? Icons.add_circle : Icons.event,
+                          isCredit: isCredit,
+                          reason: transaction['reason'] ?? 'No reason provided',
+                        ),
+                        if (index < transactions.length - 1) ...[
+                          SizedBox(height: 12.h),
+                          Divider(
+                            color: isDark ? Colors.grey[800] : Colors.grey[200],
+                          ),
+                        ],
+                      ],
+                    );
+                  }).toList(),
+                ),
         ),
       ],
     );
@@ -486,59 +512,93 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
     required String amount,
     required IconData icon,
     bool isCredit = false,
+    required String reason,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isCredit
-                    ? Colors.green.withAlpha(76)
-                    : Colors.red.withAlpha(76),
-              ),
-              child: Icon(
-                icon,
-                size: 16,
-                color: isCredit ? Colors.green : Colors.red,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCredit
+                      ? Colors.green.withAlpha(76)
+                      : Colors.red.withAlpha(76),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: isDark ? Colors.grey[500] : Colors.grey[600],
-                    fontSize: 11,
-                  ),
+                child: Icon(
+                  icon,
+                  size: 16.sp,
+                  color: isCredit ? Colors.green : Colors.red,
                 ),
-              ],
-            ),
-          ],
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: isDark ? Colors.grey[500] : Colors.grey[600],
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Reason: $reason',
+                      style: TextStyle(
+                        color: isDark ? Colors.grey[400] : Colors.grey[700],
+                        fontSize: 11.sp,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         Text(
           amount,
           style: TextStyle(
             color: isCredit ? Colors.green : Colors.red,
-            fontSize: 14,
+            fontSize: 14.sp,
             fontWeight: FontWeight.bold,
           ),
         ),
       ],
     );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(timestamp.year, timestamp.month, timestamp.day);
+    final time =
+        '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
+
+    if (date == today) {
+      return 'Today at $time';
+    } else if (date == DateTime(now.year, now.month, now.day - 1)) {
+      return 'Yesterday at $time';
+    } else {
+      return '${timestamp.day}/${timestamp.month}/${timestamp.year} at $time';
+    }
   }
 }

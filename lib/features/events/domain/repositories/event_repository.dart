@@ -1,27 +1,18 @@
-import '../entities/event_entity.dart';
 import 'dart:io';
+import 'package:dartz/dartz.dart';
+import 'package:sync_event/core/error/failures.dart';
+import '../entities/event_entity.dart';
 
 abstract class EventRepository {
-  // Create a new event (pending approval)
-  Future<void> createEvent(EventEntity event, {File? docFile, File? coverFile});
-
-  // Approve an event (admin action)
-  Future<void> approveEvent(String eventId, {required String approvedBy});
-
-  // Get all approved events (for users)
-  Future<List<EventEntity>> getApprovedEvents();
-
-  // Get all pending events (for admin dashboard)
-  Future<List<EventEntity>> getPendingEvents();
-
-  // Join an event (add user to attendees)
-  Future<void> joinEvent(String eventId, String userId);
+  Future<Either<Failure, void>> createEvent(EventEntity event, {File? docFile, File? coverFile});
+  Future<Either<Failure, void>> approveEvent(String eventId, {required String approvedBy});
+  Future<Either<Failure, List<EventEntity>>> getApprovedEvents();
+  Future<Either<Failure, List<EventEntity>>> getPendingEvents();
+  Future<Either<Failure, void>> joinEvent(String eventId, String userId);
   Stream<List<EventEntity>> getApprovedEventsStream();
-
   Stream<List<EventEntity>> getUserEventsStream(String userId);
-  Future<void> updateEvent(EventEntity event, {File? docFile, File? coverFile});
-  Future<void> deleteEvent(String eventId);
-
-  // Added: Fetch a single event by ID
-  Future<EventEntity> getEvent(String eventId); // Added
+  Future<Either<Failure, void>> updateEvent(EventEntity event, {File? docFile, File? coverFile});
+  Future<Either<Failure, void>> deleteEvent(String eventId);
+  Future<Either<Failure, EventEntity>> getEvent(String eventId);
+  Future<Either<Failure, void>> updateEventAvailability(String eventId, int ticketQuantity);
 }

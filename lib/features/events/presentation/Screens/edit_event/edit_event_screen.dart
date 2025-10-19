@@ -112,7 +112,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       documentUrl: formData.existingDocumentUrl,
       status: 'pending',
       approvalReason: null,
-      rejectionReason: null,
+      rejectionReason: null, availableTickets: 0,
     );
 
     // Submit update

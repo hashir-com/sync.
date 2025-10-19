@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -11,6 +12,7 @@ abstract class EventRemoteDataSource {
   Stream<List<EventModel>> getUserEventsStream(String userId);
   Future<void> updateEvent(EventModel event, {File? docFile, File? coverFile});
   Future<void> deleteEvent(String eventId);
+  Future<void> updateEventAvailability(String eventId, int ticketQuantity);
 }
 
 class EventRemoteDataSourceImpl implements EventRemoteDataSource {
@@ -69,9 +71,10 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       ticketPrice: event.ticketPrice,
       status: event.status,
       categoryCapacities: event.categoryCapacities,
-  categoryPrices: event.categoryPrices,
+      categoryPrices: event.categoryPrices,
       approvalReason: event.approvalReason,
       rejectionReason: event.rejectionReason,
+      availableTickets: event.maxAttendees, // Initialize to maxAttendees
     );
 
     await docRef.set(model.toMap());
@@ -97,7 +100,7 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
         });
   }
 
-@override
+  @override
   Future<List<EventModel>> getApprovedEvents() async {
     final query = await firebaseFirestore
         .collection('events')
@@ -137,9 +140,7 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
     String? docUrl = event.documentUrl;
     String? imageUrl = event.imageUrl;
 
-    // Upload new document if provided
     if (docFile != null) {
-      // Delete old document if exists
       if (event.documentUrl != null) {
         try {
           await firebaseStorage.refFromURL(event.documentUrl!).delete();
@@ -153,9 +154,7 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       docUrl = await docSnapshot.ref.getDownloadURL();
     }
 
-    // Upload new cover image if provided
     if (coverFile != null) {
-      // Delete old image if exists
       if (event.imageUrl != null) {
         try {
           await firebaseStorage.refFromURL(event.imageUrl!).delete();
@@ -190,7 +189,10 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       ticketPrice: event.ticketPrice,
       status: event.status,
       categoryCapacities: event.categoryCapacities,
-  categoryPrices: event.categoryPrices,
+      categoryPrices: event.categoryPrices,
+      approvalReason: event.approvalReason,
+      rejectionReason: event.rejectionReason,
+      availableTickets: event.availableTickets,
     );
 
     await firebaseFirestore
@@ -201,14 +203,10 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
 
   @override
   Future<void> deleteEvent(String eventId) async {
-    // Get event data to delete associated files
-    final eventDoc =
-        await firebaseFirestore.collection('events').doc(eventId).get();
-    
+    final eventDoc = await firebaseFirestore.collection('events').doc(eventId).get();
+
     if (eventDoc.exists) {
       final eventData = eventDoc.data();
-      
-      // Delete cover image if exists
       if (eventData?['imageUrl'] != null) {
         try {
           await firebaseStorage.refFromURL(eventData!['imageUrl']).delete();
@@ -216,8 +214,6 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
           // Ignore if file doesn't exist
         }
       }
-      
-      // Delete document if exists
       if (eventData?['documentUrl'] != null) {
         try {
           await firebaseStorage.refFromURL(eventData!['documentUrl']).delete();
@@ -227,7 +223,17 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       }
     }
 
-    // Delete the event document
     await firebaseFirestore.collection('events').doc(eventId).delete();
+  }
+
+  @override
+  Future<void> updateEventAvailability(String eventId, int ticketQuantity) async {
+    try {
+      await firebaseFirestore.collection('events').doc(eventId).update({
+        'availableTickets': FieldValue.increment(ticketQuantity),
+      });
+    } catch (e) {
+      throw Exception('Failed to update event availability: $e');
+    }
   }
 }

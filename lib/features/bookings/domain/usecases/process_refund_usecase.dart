@@ -11,20 +11,14 @@ class ProcessRefundUseCase implements UseCase<void, ProcessRefundParams> {
 
   @override
   Future<Either<Failure, void>> call(ProcessRefundParams params) async {
-    if (params.refundType == 'wallet') {
-      return await repository.refundToWallet(
-        params.userId,
-        params.amount,
-        params.bookingId,
-      );
-    } else {
-      return await repository.refundToBank(
-        params.userId,
-        params.paymentId,
-        params.amount,
-        params.bookingId,
-      );
-    }
+    return await repository.processRefund(
+      params.userId,
+      params.bookingId,
+      params.paymentId,
+      params.amount,
+      params.refundType,
+      params.reason,
+    );
   }
 }
 
@@ -34,6 +28,7 @@ class ProcessRefundParams extends Equatable {
   final String paymentId;
   final double amount;
   final String refundType;
+  final String? reason;
 
   const ProcessRefundParams({
     required this.userId,
@@ -41,8 +36,9 @@ class ProcessRefundParams extends Equatable {
     required this.paymentId,
     required this.amount,
     required this.refundType,
+    this.reason,
   });
 
   @override
-  List<Object> get props => [userId, bookingId, paymentId, amount, refundType];
+  List<Object?> get props => [userId, bookingId, paymentId, amount, refundType, reason];
 }

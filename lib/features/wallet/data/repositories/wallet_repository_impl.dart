@@ -3,7 +3,6 @@ import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/core/network/network_info.dart';
 import 'package:sync_event/features/wallet/data/datasources/wallet_remote_datasource.dart';
 import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
-import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:sync_event/features/wallet/domain/repositories/wallet_repositories.dart';
 
 class WalletRepositoryImpl implements WalletRepository {
@@ -16,7 +15,7 @@ class WalletRepositoryImpl implements WalletRepository {
   });
 
   @override
-  Future<Either<Failure, WalletEntity>> getWallet(String userId) async {
+  Future<Either<Failure, WalletModel>> getWallet(String userId) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
@@ -29,13 +28,12 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> updateWallet(WalletEntity wallet) async {
+  Future<Either<Failure, Unit>> updateWallet(WalletModel wallet) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
     try {
-      final walletModel = WalletModel.fromEntity(wallet);
-      await remoteDataSource.updateWallet(walletModel);
+      await remoteDataSource.updateWallet(wallet);
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -47,12 +45,13 @@ class WalletRepositoryImpl implements WalletRepository {
     String userId,
     double amount,
     String bookingId,
+    String? reason,
   ) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
     try {
-      await remoteDataSource.addRefundToWallet(userId, amount, bookingId);
+      await remoteDataSource.addRefundToWallet(userId, amount, bookingId, reason);
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
