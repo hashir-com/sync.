@@ -129,7 +129,7 @@ class BookingRepositoryImpl implements BookingRepository {
     }
   }
 
-  @override
+ @override
   Future<Either<Failure, void>> processRefund(
     String userId,
     String bookingId,
@@ -144,30 +144,35 @@ class BookingRepositoryImpl implements BookingRepository {
           'BookingRepositoryImpl: Processing refund for bookingId=$bookingId, refundType=$refundType, amount=$amount',
         );
 
-        // Update booking status to refunded
+        // CRITICAL: Process wallet refund FIRST (before updating booking status)
+        if (refundType == 'wallet') {
+          print('BookingRepositoryImpl: Adding refund to wallet first...');
+          try {
+            await walletRemoteDataSource.addRefundToWallet(
+              userId,
+              amount,
+              bookingId,
+              reason ?? 'Booking cancelled',
+            );
+            print('✓ Refund added to wallet successfully');
+          } catch (e) {
+            print('❌ BookingRepositoryImpl: Error adding refund to wallet - $e');
+            // If wallet refund fails, don't proceed with booking status update
+            return Left(ServerFailure(message: 'Failed to add refund to wallet: $e'));
+          }
+        } else if (refundType == 'bank') {
+          print('BookingRepositoryImpl: Bank refund marked for processing (5-7 days)');
+          // For bank refunds, just log it - actual processing handled by admin
+        }
+
+        // ONLY AFTER wallet refund succeeds, update booking status
+        print('BookingRepositoryImpl: Now updating booking status to refunded...');
         await remoteDataSource.updateBookingStatus(
           bookingId,
           'refunded',
           amount,
         );
         print('✓ Booking status updated to refunded');
-
-        // Process refund based on type
-        if (refundType == 'wallet') {
-          // Add refund directly to wallet
-          await walletRemoteDataSource.addRefundToWallet(
-            userId,
-            amount,
-            bookingId,
-            reason ?? 'Booking cancelled',
-          );
-          print('✓ Refund added to wallet');
-        } else if (refundType == 'bank') {
-          // For bank refunds, we just mark as refunded in booking
-          // The actual bank refund is handled by admin/backend
-          // Create a bank refund transaction record for tracking
-          print('✓ Bank refund marked for processing (5-7 days)');
-        }
 
         return const Right(null);
       } else {

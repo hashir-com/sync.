@@ -4,7 +4,12 @@ import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
 abstract class WalletRemoteDataSource {
   Future<WalletModel> getWallet(String userId);
   Future<void> updateWallet(WalletModel wallet);
-  Future<void> addRefundToWallet(String userId, double amount, String bookingId, String? reason);
+  Future<void> addRefundToWallet(
+    String userId,
+    double amount,
+    String bookingId,
+    String? reason,
+  );
 }
 
 class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
@@ -24,7 +29,10 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
           balance: 0.0,
           transactionHistory: [],
         );
-        await firestore.collection('wallets').doc(userId).set(newWallet.toJson());
+        await firestore
+            .collection('wallets')
+            .doc(userId)
+            .set(newWallet.toJson());
         return newWallet;
       }
     } catch (e) {
@@ -52,40 +60,83 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
     String? reason,
   ) async {
     try {
+      print('💰 WalletRemoteDataSource: Adding refund to wallet');
+      print('   userId: $userId');
+      print('   amount: ₹$amount');
+      print('   bookingId: $bookingId');
+
       final walletRef = firestore.collection('wallets').doc(userId);
 
-      await firestore.runTransaction((transaction) async {
-        final walletSnap = await transaction.get(walletRef);
+      // First, ensure wallet document exists
+      print('📝 Checking if wallet exists...');
+      final walletSnap = await walletRef.get();
+      print('   Wallet exists: ${walletSnap.exists}');
 
-        double currentBalance = 0.0;
-        List<Map<String, dynamic>> currentTransactions = [];
-        if (walletSnap.exists) {
-          currentBalance =
-              (walletSnap.data()?['balance'] as num?)?.toDouble() ?? 0.0;
-          currentTransactions = List<Map<String, dynamic>>.from(
-              walletSnap.data()?['transactionHistory'] ?? []);
+      if (!walletSnap.exists) {
+        print('   ⚠️ Wallet does not exist, creating new one...');
+        try {
+          await walletRef.set({
+            'userId': userId,
+            'balance': 0.0,
+            'transactionHistory': [],
+            'createdAt': DateTime.now().toIso8601String(),
+            'updatedAt': DateTime.now().toIso8601String(),
+          });
+          print('   ✓ Wallet created successfully');
+        } catch (e) {
+          print('   ❌ Error creating wallet: $e');
+          rethrow;
         }
+      } else {
+        print('   ✓ Wallet already exists');
+      }
 
+      // Now add the refund
+      print('💾 Adding refund transaction...');
+      final newTransaction = {
+        'type': 'refund',
+        'amount': amount,
+        'bookingId': bookingId,
+        'timestamp': DateTime.now().toIso8601String(),
+        'description': 'Refund for cancelled booking',
+        'reason': reason ?? 'No reason provided',
+      };
+
+      try {
+        // Get current data first
+        final currentSnap = await walletRef.get();
+        final currentBalance =
+            (currentSnap.data()?['balance'] as num?)?.toDouble() ?? 0.0;
+        final currentTransactions = List<Map<String, dynamic>>.from(
+          currentSnap.data()?['transactionHistory'] ?? [],
+        );
+
+        print('   Current balance: ₹$currentBalance');
+        print('   Current transactions: ${currentTransactions.length}');
+
+        // Calculate new values
         final newBalance = currentBalance + amount;
-        final newTransaction = {
-          'type': 'refund',
-          'amount': amount,
-          'bookingId': bookingId,
-          'timestamp': FieldValue.serverTimestamp(),
-          'description': 'Refund for cancelled booking',
-          'reason': reason ?? 'No reason provided',
-        };
+        final updatedTransactions = [...currentTransactions, newTransaction];
 
-        transaction.set(walletRef, {
+        // Use set with merge instead of update
+        await walletRef.set({
           'userId': userId,
           'balance': newBalance,
-          'transactionHistory': [...currentTransactions, newTransaction],
+          'transactionHistory': updatedTransactions,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
-      });
 
-      print('✓ Refund added to wallet: $userId, Amount: ₹$amount, Reason: $reason');
+        print('   ✓ Wallet updated successfully');
+        print('   New balance: ₹$newBalance');
+        print('   Total transactions: ${updatedTransactions.length}');
+      } catch (e) {
+        print('   ❌ Error updating wallet: $e');
+        rethrow;
+      }
+
+      print('✓ Refund added to wallet successfully: $userId, Amount: ₹$amount');
     } catch (e) {
+      print('❌ Error adding refund to wallet: $e');
       throw Exception('Failed to add refund to wallet: $e');
     }
   }

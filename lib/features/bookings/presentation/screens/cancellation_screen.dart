@@ -151,13 +151,13 @@ class _CancellationScreenState extends ConsumerState<CancellationScreen> {
                                     return;
                                   }
                                   final notifier = ref.read(bookingNotifierProvider.notifier);
-                                  await notifier.cancelBooking(
-                                    booking.id,
-                                    booking.paymentId,
-                                    booking.eventId,
-                                    refundType: _refundType!,
-                                    reason: reason,
-                                  );
+                                  // await notifier.cancelBooking(
+                                  //   booking.id,
+                                  //   booking.paymentId,
+                                  //   booking.eventId,
+                                  //   refundType: _refundType!,
+                                  //   reason: reason,
+                                  // );
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

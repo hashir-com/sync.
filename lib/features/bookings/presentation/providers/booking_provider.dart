@@ -33,7 +33,8 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   final RequestRefundUseCase requestRefundUseCase;
   final GetBookingUseCase getBookingUseCase;
   final ProcessRefundUseCase processRefundUseCase;
-  final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>> ref;
+  final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>>
+      ref;
 
   BookingNotifier(
     this.bookTicketUseCase,
@@ -60,7 +61,6 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
     state = const AsyncValue.loading();
 
     try {
-      // Validate inputs
       if (eventId.isEmpty) {
         throw 'Event ID cannot be empty';
       }
@@ -80,7 +80,6 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
         throw 'User email cannot be empty';
       }
 
-      // Generate unique booking ID
       const uuid = Uuid();
       final bookingId = uuid.v4();
 
@@ -122,80 +121,82 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
     }
   }
 
-  Future<void> cancelBooking(
-  String bookingId,
-  String paymentId,
-  String eventId, {
-  String refundType = 'wallet',
-  String? reason,
-}) async {
-  state = const AsyncValue.loading();
+  /// Unified cancellation method with proper refund handling
+  Future<void> cancelBooking({
+    required String bookingId,
+    required String paymentId,
+    required String eventId,
+    required String userId,
+    required String refundType, // 'wallet' or 'bank'
+    required String cancellationReason,
+  }) async {
+    state = const AsyncValue.loading();
 
-  try {
-    final bookingResult = await getBookingUseCase(bookingId);
+    try {
+      print('BookingNotifier: Starting cancellation process');
+      print('  Booking ID: $bookingId');
+      print('  User ID: $userId');
+      print('  Refund Type: $refundType');
+      print('  Reason: $cancellationReason');
 
-    final booking = bookingResult.fold(
-      (failure) => throw failure,
-      (bookingEntity) => bookingEntity,
-    );
+      // Step 1: Get booking details
+      final bookingResult = await getBookingUseCase(bookingId);
+      final booking = bookingResult.fold(
+        (failure) => throw failure,
+        (bookingEntity) => bookingEntity,
+      );
+      print('✓ Retrieved booking details');
 
-    final now = DateTime.now();
-    final hoursUntilStart = booking.startTime.difference(now).inHours;
-    if (hoursUntilStart < 48) {
-      throw Exception('Cannot cancel within 48 hours of event start');
-    }
+      // Step 2: Cancel the booking (update status to cancelled, return tickets)
+      final cancelResult = await cancelBookingUseCase(bookingId, paymentId);
+      cancelResult.fold(
+        (failure) => throw failure,
+        (_) => null,
+      );
+      print('✓ Booking cancelled in Firestore');
 
-    // Use updated method signature
-    final cancelResult = await cancelBookingUseCase(bookingId, paymentId);
+      // Step 3: Process refund based on type
+      final refundResult = await processRefundUseCase(
+        ProcessRefundParams(
+          userId: userId,
+          bookingId: bookingId,
+          paymentId: paymentId,
+          amount: booking.totalAmount,
+          refundType: refundType,
+          reason: cancellationReason,
+        ),
+      );
 
-    final cancelSuccess = cancelResult.fold(
-      (failure) => throw failure,
-      (_) => true,
-    );
+      refundResult.fold(
+        (failure) => throw failure,
+        (_) {
+          print('✓ Refund processed: $refundType');
 
-    if (!cancelSuccess) {
-      throw Exception('Failed to cancel booking');
-    }
-
-    final refundResult = await processRefundUseCase(
-      ProcessRefundParams(
-        userId: booking.userId,
-        bookingId: bookingId,
-        paymentId: paymentId,
-        amount: booking.totalAmount,
-        refundType: refundType,
-        reason: reason,
-      ),
-    );
-
-    refundResult.fold(
-      (failure) => throw failure,
-      (_) {
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser != null) {
-          ref.invalidate(userBookingsProvider(currentUser.uid));
+          // Step 4: Refresh providers
           if (refundType == 'wallet') {
-            ref.read(walletNotifierProvider.notifier).addRefund(
-              userId: booking.userId,
-              amount: booking.totalAmount,
-              bookingId: bookingId,
-              reason: reason ?? 'No reason provided',
-            );
+            print('  Invalidating wallet provider...');
+            ref.invalidate(walletNotifierProvider);
+          } else if (refundType == 'bank') {
+            print('  Razorpay refund initiated (manual processing required)');
           }
-          ref.invalidate(walletNotifierProvider);
-        }
-        state = const AsyncValue.data(null);
-        print('✓ Booking cancelled and refund processed: $refundType');
-      },
-    );
-  } catch (e, stackTrace) {
-    state = AsyncValue.error(e, stackTrace);
-    print('Error in cancelBooking: $e');
+
+          print('  Invalidating bookings provider...');
+          ref.invalidate(userBookingsProvider(userId));
+
+          state = const AsyncValue.data(null);
+          print('✓ Cancellation completed successfully');
+        },
+      );
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+      print('✗ Error in cancelBooking: $e');
+      rethrow;
+    }
   }
 }
-}
 
-final userBookingsProvider = FutureProvider.family<List<BookingEntity>, String>(
+final userBookingsProvider =
+    FutureProvider.family<List<BookingEntity>, String>(
   (ref, userId) async {
     final useCase = di.sl<GetUserBookingsUseCase>();
     final result = await useCase(GetUserBookingsParams(userId: userId));
@@ -205,7 +206,10 @@ final userBookingsProvider = FutureProvider.family<List<BookingEntity>, String>(
         print('Failed to fetch bookings: $failure');
         return <BookingEntity>[];
       },
-      (bookings) => bookings,
+      (bookings) {
+        print('✓ Fetched ${bookings.length} bookings for user: $userId');
+        return bookings;
+      },
     );
   },
 );

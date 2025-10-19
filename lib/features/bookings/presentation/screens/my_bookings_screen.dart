@@ -11,6 +11,7 @@ import 'package:sync_event/features/auth/presentation/providers/auth_notifier.da
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_provider.dart';
 import 'package:sync_event/features/bookings/presentation/utils/booking_utils.dart';
+import 'package:sync_event/features/email/services/email_services.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/core/error/failures.dart';
@@ -587,6 +588,7 @@ class MyBookingsScreen extends ConsumerWidget {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
+                        // In my_bookings_screen.dart - ONLY the cancel button section that needs fixing
                         onPressed: () async {
                           final eligible =
                               BookingUtils.isEligibleForCancellation(
@@ -615,121 +617,320 @@ class MyBookingsScreen extends ConsumerWidget {
                             }
                             return;
                           }
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              backgroundColor: AppColors.getCard(isDark),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusMedium.r,
-                                ),
-                              ),
-                              title: Text(
-                                'Cancel Booking?',
-                                style: AppTextStyles.titleMedium(
-                                  isDark: isDark,
-                                ),
-                              ),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Choose your refund method:',
-                                    style: AppTextStyles.bodyMedium(
-                                      isDark: isDark,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: Text(
-                                    'Keep',
-                                    style: AppTextStyles.labelMedium(
-                                      isDark: isDark,
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: Text(
-                                    'Refund to Wallet',
-                                    style: AppTextStyles.labelMedium(
-                                      isDark: isDark,
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, null),
-                                  child: Text(
-                                    'Refund to Bank',
-                                    style: AppTextStyles.labelMedium(
-                                      isDark: isDark,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
 
-                          if (confirmed != null) {
-                            try {
-                              await ref
-                                  .read(bookingNotifierProvider.notifier)
-                                  .cancelBooking(
-                                    booking.id,
-                                    booking.paymentId,
-                                    booking.eventId,
-                                    refundType: confirmed ? 'wallet' : 'bank',
-                                  );
-                              ref.invalidate(userBookingsProvider(userId));
-                              ref.invalidate(walletNotifierProvider);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Booking cancelled successfully',
-                                      style: AppTextStyles.bodyMedium(
-                                        isDark: true,
-                                      ).copyWith(color: Colors.white),
-                                    ),
-                                    backgroundColor: AppColors.getSuccess(
-                                      isDark,
-                                    ),
-                                    duration: const Duration(seconds: 2),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppSizes.radiusSmall.r,
+                          // Step 1: Show cancellation reason dialog
+                          String? cancellationReason;
+                          String? selectedReason;
+                          final otherReasonController = TextEditingController();
+
+                          if (context.mounted) {
+                            cancellationReason = await showModalBottomSheet<String>(
+                              context: context,
+                              isScrollControlled: true,
+                              builder: (context) {
+                                return StatefulBuilder(
+                                  builder: (context, setModalState) {
+                                    return SafeArea(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(
+                                          AppSizes.paddingMedium.w,
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Why are you cancelling?',
+                                              style: AppTextStyles.headingSmall(
+                                                isDark: isDark,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: AppSizes.spacingMedium.h,
+                                            ),
+                                            ...[
+                                              'Ordered by mistake',
+                                              'Can\'t attend the event',
+                                              'Event rescheduled',
+                                              'Found a better alternative',
+                                              'Other',
+                                            ].map(
+                                              (reason) => RadioListTile<String>(
+                                                value: reason,
+                                                groupValue: selectedReason,
+                                                onChanged: (value) {
+                                                  setModalState(() {
+                                                    selectedReason = value;
+                                                  });
+                                                },
+                                                title: Text(reason),
+                                              ),
+                                            ),
+                                            if (selectedReason == 'Other')
+                                              Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal:
+                                                      AppSizes.paddingMedium.w,
+                                                ),
+                                                child: TextField(
+                                                  controller:
+                                                      otherReasonController,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Please specify',
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            AppSizes
+                                                                .radiusMedium
+                                                                .r,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  maxLines: 2,
+                                                ),
+                                              ),
+                                            SizedBox(
+                                              height: AppSizes.spacingLarge.h,
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: Text(
+                                                    'Cancel',
+                                                    style:
+                                                        AppTextStyles.bodyMedium(
+                                                          isDark: isDark,
+                                                        ),
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width:
+                                                      AppSizes.spacingMedium.w,
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    if (selectedReason ==
+                                                        null) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: const Text(
+                                                            'Please select a reason.',
+                                                          ),
+                                                          backgroundColor:
+                                                              AppColors.getError(
+                                                                isDark,
+                                                              ),
+                                                        ),
+                                                      );
+                                                      return;
+                                                    }
+                                                    if (selectedReason ==
+                                                            'Other' &&
+                                                        otherReasonController
+                                                            .text
+                                                            .isEmpty) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: const Text(
+                                                            'Please enter a reason.',
+                                                          ),
+                                                          backgroundColor:
+                                                              AppColors.getError(
+                                                                isDark,
+                                                              ),
+                                                        ),
+                                                      );
+                                                      return;
+                                                    }
+                                                    Navigator.pop(
+                                                      context,
+                                                      selectedReason == 'Other'
+                                                          ? otherReasonController
+                                                                .text
+                                                          : selectedReason,
+                                                    );
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        AppColors.getPrimary(
+                                                          isDark,
+                                                        ),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            AppSizes
+                                                                .radiusLarge
+                                                                .r,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    'Next',
+                                                    style:
+                                                        AppTextStyles.bodyMedium(
+                                                          isDark: isDark,
+                                                        ).copyWith(
+                                                          color: Colors.white,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(
+                                              height: MediaQuery.of(
+                                                context,
+                                              ).viewInsets.bottom,
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          }
+
+                          if (cancellationReason == null) return;
+
+                          // Step 2: Show refund method selection
+                          String? refundType;
+                          if (context.mounted) {
+                            refundType = await showModalBottomSheet<String>(
+                              context: context,
+                              builder: (context) {
+                                return SafeArea(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(
+                                      AppSizes.paddingMedium.w,
+                                    ),
+                                    child: Wrap(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons
+                                                .account_balance_wallet_outlined,
+                                          ),
+                                          title: const Text(
+                                            'Refund to Wallet (Instant)',
+                                          ),
+                                          subtitle: const Text(
+                                            'Amount credited immediately',
+                                          ),
+                                          onTap: () =>
+                                              Navigator.pop(context, 'wallet'),
+                                        ),
+                                        Divider(indent: 50.w, endIndent: 20.w),
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons.account_balance_outlined,
+                                          ),
+                                          title: const Text(
+                                            'Refund to Bank (5-7 days)',
+                                          ),
+                                          subtitle: const Text('Via Razorpay'),
+                                          onTap: () =>
+                                              Navigator.pop(context, 'bank'),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Error cancelling booking: $e',
-                                      style: AppTextStyles.bodyMedium(
-                                        isDark: true,
-                                      ).copyWith(color: Colors.white),
-                                    ),
-                                    backgroundColor: AppColors.getError(isDark),
-                                    duration: const Duration(seconds: 3),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppSizes.radiusSmall.r,
-                                      ),
+                              },
+                            );
+                          }
+
+                          if (refundType == null) return;
+
+                          // Step 3: Process cancellation with refund
+                          try {
+                            print('Starting cancellation process...');
+                            print('Booking ID: ${booking.id}');
+                            print('User ID: $userId');
+                            print('Refund Type: $refundType');
+                            print('Cancellation Reason: $cancellationReason');
+
+                            // Cancel the booking
+                            await ref
+                                .read(bookingNotifierProvider.notifier)
+                                .cancelBooking(
+                                  bookingId: booking.id,
+                                  paymentId: booking.paymentId,
+                                  eventId: booking.eventId,
+                                  userId: userId,
+                                  refundType: refundType,
+                                  cancellationReason: cancellationReason,
+                                );
+
+                            // Send detailed cancellation email
+                            await EmailService.sendDetailedCancellationEmail(
+                              userId: userId,
+                              bookingId: booking.id,
+                              eventTitle: event
+                                  .title, // Use event title from the event object
+                              refundAmount: booking.totalAmount,
+                              refundType: refundType,
+                              cancellationReason: cancellationReason,
+                            );
+
+                            // Invalidate providers to refresh UI
+                            ref.invalidate(userBookingsProvider(userId));
+                            ref.invalidate(walletNotifierProvider);
+
+                            if (context.mounted) {
+                              final message = refundType == 'wallet'
+                                  ? '✓ Booking cancelled!\n₹${booking.totalAmount.toStringAsFixed(0)} added to your wallet'
+                                  : '✓ Booking cancelled!\nRefund will be processed to your bank account in 5-7 business days';
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    message,
+                                    style: AppTextStyles.bodyMedium(
+                                      isDark: true,
+                                    ).copyWith(color: Colors.white),
+                                  ),
+                                  backgroundColor: AppColors.getSuccess(isDark),
+                                  duration: const Duration(seconds: 4),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusSmall.r,
                                     ),
                                   ),
-                                );
-                              }
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            print('✗ Error cancelling booking: $e');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Error cancelling booking: $e',
+                                    style: AppTextStyles.bodyMedium(
+                                      isDark: true,
+                                    ).copyWith(color: Colors.white),
+                                  ),
+                                  backgroundColor: AppColors.getError(isDark),
+                                  duration: const Duration(seconds: 3),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusSmall.r,
+                                    ),
+                                  ),
+                                ),
+                              );
                             }
                           }
                         },
