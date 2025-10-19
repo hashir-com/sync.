@@ -1,7 +1,6 @@
 import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/event_entity.dart';
+import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 
 class EventModel extends EventEntity {
   const EventModel({
@@ -29,10 +28,10 @@ class EventModel extends EventEntity {
     super.takenSeats = const [],
     super.categoryCapacities,
     super.categoryPrices,
+    required super.availableTickets,
   });
 
   factory EventModel.fromMap(Map<String, dynamic> map, String id) {
-    //  Parse capacities with migration from legacy maxAttendees.
     Map<String, int> capacities = {'vip': 0, 'premium': 0, 'regular': 0};
     if (map['categoryCapacities'] is Map<String, dynamic>) {
       (map['categoryCapacities'] as Map<String, dynamic>).forEach((k, v) {
@@ -40,16 +39,14 @@ class EventModel extends EventEntity {
       });
     } else if (map['maxAttendees'] != null &&
         capacities.values.fold(0, (a, b) => a + b) == 0) {
-      // Migration: If no map but legacy exists, replicate across categories or set to regular.
       final legacyMax = (map['maxAttendees'] as num).toInt();
       capacities = {
         'vip': legacyMax ~/ 3,
         'premium': legacyMax ~/ 3,
         'regular': legacyMax ~/ 3,
-      }; // Or custom split
+      };
     }
 
-    //  Parse prices with migration from legacy ticketPrice.
     Map<String, double> prices = {'vip': 0.0, 'premium': 0.0, 'regular': 0.0};
     if (map['categoryPrices'] is Map<String, dynamic>) {
       (map['categoryPrices'] as Map<String, dynamic>).forEach((k, v) {
@@ -57,16 +54,14 @@ class EventModel extends EventEntity {
       });
     } else if (map['ticketPrice'] != null &&
         prices.values.every((p) => p == 0.0)) {
-      // Migration: Replicate legacy price or set to regular.
       final legacyPrice = (map['ticketPrice'] as num).toDouble();
       prices = {
         'vip': legacyPrice * 1.5,
         'premium': legacyPrice,
         'regular': legacyPrice * 0.5,
-      }; // Example tiering; adjust or uniform
+      };
     }
 
-    //  Compute legacy from maps if missing (for old code paths).
     int maxAttendees =
         map['maxAttendees'] ?? capacities.values.fold(0, (a, b) => a + b);
     double ticketPrice =
@@ -92,24 +87,22 @@ class EventModel extends EventEntity {
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
       ticketPrice: ticketPrice,
-      status: map['status'] ?? "pending",
+      status: map['status'] ?? 'pending',
       approvalReason: map['approvalReason'],
       rejectionReason: map['rejectionReason'],
       takenSeats: List<int>.from(map['takenSeats'] ?? []),
       categoryCapacities: capacities,
       categoryPrices: prices,
+      availableTickets: (map['availableTickets'] as num?)?.toInt() ?? maxAttendees,
     );
   }
 
   Map<String, dynamic> toMap() {
-    // Always compute and save legacy from maps for consistency.
     final totalMax = categoryCapacities.values.fold(0, (a, b) => a + b);
-
-    // FIX: Handle case where all prices are 0 (free event)
     final positivePrices = categoryPrices.values.where((p) => p > 0).toList();
     final minPrice = positivePrices.isNotEmpty
         ? positivePrices.reduce(min)
-        : 0.0; // Default to 0.0 if all are free
+        : 0.0;
 
     return {
       'title': title,
@@ -124,15 +117,18 @@ class EventModel extends EventEntity {
       'organizerId': organizerId,
       'organizerName': organizerName,
       'attendees': attendees,
-      'maxAttendees': totalMax, // Synced
+      'maxAttendees': totalMax,
       'category': category,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
-      'ticketPrice': minPrice, // Synced to min (or 0 if all free)
+      'ticketPrice': minPrice,
       'status': status,
+      'approvalReason': approvalReason,
+      'rejectionReason': rejectionReason,
       'takenSeats': takenSeats,
       'categoryCapacities': categoryCapacities,
       'categoryPrices': categoryPrices,
+      'availableTickets': availableTickets,
     };
   }
 
@@ -156,9 +152,12 @@ class EventModel extends EventEntity {
     DateTime? updatedAt,
     double? ticketPrice,
     String? status,
+    String? approvalReason,
+    String? rejectionReason,
     List<int>? takenSeats,
     Map<String, int>? categoryCapacities,
     Map<String, double>? categoryPrices,
+    int? availableTickets,
   }) {
     return EventModel(
       id: id ?? this.id,
@@ -180,9 +179,40 @@ class EventModel extends EventEntity {
       updatedAt: updatedAt ?? this.updatedAt,
       ticketPrice: ticketPrice ?? this.ticketPrice,
       status: status ?? this.status,
+      approvalReason: approvalReason ?? this.approvalReason,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
       takenSeats: takenSeats ?? this.takenSeats,
       categoryCapacities: categoryCapacities ?? this.categoryCapacities,
       categoryPrices: categoryPrices ?? this.categoryPrices,
+      availableTickets: availableTickets ?? this.availableTickets,
     );
   }
+
+  EventEntity toEntity() => EventEntity(
+        id: id,
+        title: title,
+        description: description,
+        location: location,
+        latitude: latitude,
+        longitude: longitude,
+        startTime: startTime,
+        endTime: endTime,
+        imageUrl: imageUrl,
+        documentUrl: documentUrl,
+        organizerId: organizerId,
+        organizerName: organizerName,
+        attendees: attendees,
+        maxAttendees: maxAttendees,
+        category: category,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+        ticketPrice: ticketPrice,
+        status: status,
+        approvalReason: approvalReason,
+        rejectionReason: rejectionReason,
+        takenSeats: takenSeats,
+        categoryCapacities: categoryCapacities,
+        categoryPrices: categoryPrices,
+        availableTickets: availableTickets,
+      );
 }

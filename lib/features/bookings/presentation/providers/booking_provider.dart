@@ -1,163 +1,215 @@
-// lib/features/bookings/presentation/providers/booking_provider.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sync_event/core/usecases/usecase.dart';
+import 'package:sync_event/core/di/injection_container.dart' as di;
+import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/get_booking_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/process_refund_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_usecase.dart';
-import 'package:sync_event/features/email/services/email_services.dart';
-import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
-import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/request_refund_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart';
-import 'package:sync_event/core/di/injection_container.dart' as di;
+import 'package:sync_event/features/wallet/presentation/provider/wallet_provider.dart';
+import 'package:uuid/uuid.dart';
 
 final bookingNotifierProvider =
     StateNotifierProvider<BookingNotifier, AsyncValue<BookingEntity?>>((ref) {
-      return BookingNotifier(
-        di.sl<BookTicketUseCase>(),
-        di.sl<CancelBookingUseCase>(),
-        di.sl<RefundToRazorpayUseCase>(),
-        di.sl<UpdateWalletUseCase>(),
-        ref,
-      );
-    });
+  return BookingNotifier(
+    di.sl<BookTicketUseCase>(),
+    di.sl<CancelBookingUseCase>(),
+    di.sl<RefundToRazorpayUseCase>(),
+    di.sl<RequestRefundUseCase>(),
+    di.sl<GetBookingUseCase>(),
+    di.sl<ProcessRefundUseCase>(),
+    ref,
+  );
+});
 
 class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   final BookTicketUseCase bookTicketUseCase;
   final CancelBookingUseCase cancelBookingUseCase;
   final RefundToRazorpayUseCase refundToRazorpayUseCase;
-  final UpdateWalletUseCase updateWalletUseCase;
-  // ignore: deprecated_member_use
+  final RequestRefundUseCase requestRefundUseCase;
+  final GetBookingUseCase getBookingUseCase;
+  final ProcessRefundUseCase processRefundUseCase;
   final StateNotifierProviderRef<BookingNotifier, AsyncValue<BookingEntity?>>
-  ref;
+      ref;
 
   BookingNotifier(
     this.bookTicketUseCase,
     this.cancelBookingUseCase,
     this.refundToRazorpayUseCase,
-    this.updateWalletUseCase,
+    this.requestRefundUseCase,
+    this.getBookingUseCase,
+    this.processRefundUseCase,
     this.ref,
   ) : super(const AsyncValue.data(null));
 
-  Future<void> bookTicket(BookingEntity booking, String paymentId) async {
+  Future<void> bookTicket({
+    required String eventId,
+    required String userId,
+    required String ticketType,
+    required int ticketQuantity,
+    required double totalAmount,
+    required String paymentId,
+    required DateTime startTime,
+    required DateTime endTime,
+    required List<String> seatNumbers,
+    required String userEmail,
+  }) async {
     state = const AsyncValue.loading();
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final email = currentUser?.email;
+    try {
+      if (eventId.isEmpty) {
+        throw 'Event ID cannot be empty';
+      }
+      if (userId.isEmpty) {
+        throw 'User ID cannot be empty';
+      }
+      if (paymentId.isEmpty) {
+        throw 'Payment ID cannot be empty';
+      }
+      if (ticketType.isEmpty) {
+        throw 'Ticket type cannot be empty';
+      }
+      if (ticketQuantity <= 0) {
+        throw 'Ticket quantity must be positive';
+      }
+      if (userEmail.isEmpty) {
+        throw 'User email cannot be empty';
+      }
 
-    if (email == null) {
-      state = AsyncValue.error('User email not available', StackTrace.current);
-      return;
-    }
+      const uuid = Uuid();
+      final bookingId = uuid.v4();
 
-    // Include email in booking
-    final bookingWithPayment = BookingEntity(
-      id: booking.id,
-      userId: booking.userId,
-      eventId: booking.eventId,
-      ticketType: booking.ticketType,
-      ticketQuantity: booking.ticketQuantity,
-      totalAmount: booking.totalAmount,
-      paymentId: paymentId,
-      seatNumbers: booking.seatNumbers,
-      bookingDate: booking.bookingDate,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-      status: 'confirmed',
-      userEmail: email, // Save email in booking
-    );
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null || currentUser.email != userEmail) {
+        throw 'User not authenticated or email mismatch';
+      }
 
-    final result = await bookTicketUseCase(bookingWithPayment);
-    result.fold(
-      (failure) {
-        state = AsyncValue.error(failure, StackTrace.current);
-        print('Booking failed: $failure');
-      },
-      (booked) async {
-        state = AsyncValue.data(booked);
-        ref.invalidate(userBookingsProvider(booked.userId)); // Refresh bookings
-        await _sendInvoiceEmail(booked);
-      },
-    );
-  }
-
-  Future<void> cancelBooking(
-    String bookingId,
-    String paymentId,
-    String eventId,
-  ) async {
-    state = const AsyncValue.loading();
-    final result = await cancelBookingUseCase(
-      CancelParams(
-        bookingId: bookingId,
-        paymentId: paymentId,
+      final booking = BookingEntity(
+        id: bookingId,
+        userId: userId,
         eventId: eventId,
-      ),
-    );
+        ticketType: ticketType,
+        ticketQuantity: ticketQuantity,
+        totalAmount: totalAmount,
+        paymentId: paymentId,
+        seatNumbers: seatNumbers,
+        status: 'confirmed',
+        bookingDate: DateTime.now(),
+        startTime: startTime,
+        endTime: endTime,
+        userEmail: userEmail,
+      );
 
-    result.fold(
-      (failure) {
-        state = AsyncValue.error(failure, StackTrace.current);
-        print('Cancellation failed: $failure');
-      },
-      (success) async {
-        final currentBooking = state.value;
-        if (currentBooking != null) {
-          await refundToRazorpayUseCase(
-            RefundParams(
-              paymentId: paymentId,
-              amount: currentBooking.totalAmount,
-            ),
-          );
+      final result = await bookTicketUseCase(booking);
+      result.fold(
+        (failure) {
+          state = AsyncValue.error(failure, StackTrace.current);
+          print('Booking failed: $failure');
+        },
+        (booked) {
+          state = AsyncValue.data(booked);
+          ref.invalidate(userBookingsProvider(booked.userId));
+        },
+      );
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+      print('Booking failed: $e');
+    }
+  }
 
-          await updateWalletUseCase(
-            WalletEntity(
-              userId: currentBooking.userId,
-              balance: currentBooking.totalAmount,
-            ),
-          );
+  /// Unified cancellation method with proper refund handling
+  Future<void> cancelBooking({
+    required String bookingId,
+    required String paymentId,
+    required String eventId,
+    required String userId,
+    required String refundType, // 'wallet' or 'bank'
+    required String cancellationReason,
+  }) async {
+    state = const AsyncValue.loading();
 
-          await _sendCancellationEmail(currentBooking);
+    try {
+      print('BookingNotifier: Starting cancellation process');
+      print('  Booking ID: $bookingId');
+      print('  User ID: $userId');
+      print('  Refund Type: $refundType');
+      print('  Reason: $cancellationReason');
 
-          ref.invalidate(
-            userBookingsProvider(currentBooking.userId),
-          ); // Refresh bookings
+      // Step 1: Get booking details
+      final bookingResult = await getBookingUseCase(bookingId);
+      final booking = bookingResult.fold(
+        (failure) => throw failure,
+        (bookingEntity) => bookingEntity,
+      );
+      print('✓ Retrieved booking details');
+
+      // Step 2: Cancel the booking (update status to cancelled, return tickets)
+      final cancelResult = await cancelBookingUseCase(bookingId, paymentId);
+      cancelResult.fold(
+        (failure) => throw failure,
+        (_) => null,
+      );
+      print('✓ Booking cancelled in Firestore');
+
+      // Step 3: Process refund based on type
+      final refundResult = await processRefundUseCase(
+        ProcessRefundParams(
+          userId: userId,
+          bookingId: bookingId,
+          paymentId: paymentId,
+          amount: booking.totalAmount,
+          refundType: refundType,
+          reason: cancellationReason,
+        ),
+      );
+
+      refundResult.fold(
+        (failure) => throw failure,
+        (_) {
+          print('✓ Refund processed: $refundType');
+
+          // Step 4: Refresh providers
+          if (refundType == 'wallet') {
+            print('  Invalidating wallet provider...');
+            ref.invalidate(walletNotifierProvider);
+          } else if (refundType == 'bank') {
+            print('  Razorpay refund initiated (manual processing required)');
+          }
+
+          print('  Invalidating bookings provider...');
+          ref.invalidate(userBookingsProvider(userId));
+
           state = const AsyncValue.data(null);
-        }
-      },
-    );
-  }
-
-  Future<void> _sendInvoiceEmail(BookingEntity booking) async {
-    await EmailService.sendInvoice(
-      
-      booking.userId, // Should be updated to use email
-      booking.id,
-      booking.totalAmount,
-      booking.userEmail!,
-    );
-  }
-
-  Future<void> _sendCancellationEmail(BookingEntity booking) async {
-    await EmailService.sendCancellationNotice(
-      booking.userId, // Should be updated to use email
-      booking.id,
-      booking.totalAmount,
-    );
+          print('✓ Cancellation completed successfully');
+        },
+      );
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+      print('✗ Error in cancelBooking: $e');
+      rethrow;
+    }
   }
 }
 
-// lib/features/bookings/presentation/providers/booking_provider.dart
-
-final userBookingsProvider = FutureProvider.family<List<BookingEntity>, String>(
+final userBookingsProvider =
+    FutureProvider.family<List<BookingEntity>, String>(
   (ref, userId) async {
     final useCase = di.sl<GetUserBookingsUseCase>();
-    final result = await useCase(Params(userId: userId));
+    final result = await useCase(GetUserBookingsParams(userId: userId));
 
-    return result.fold((failure) {
-      print('Failed to fetch bookings: $failure');
-      return <BookingEntity>[];
-    }, (bookings) => bookings);
+    return result.fold(
+      (failure) {
+        print('Failed to fetch bookings: $failure');
+        return <BookingEntity>[];
+      },
+      (bookings) {
+        print('✓ Fetched ${bookings.length} bookings for user: $userId');
+        return bookings;
+      },
+    );
   },
 );

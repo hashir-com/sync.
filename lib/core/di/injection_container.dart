@@ -19,13 +19,18 @@ import 'package:sync_event/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/signup_with_email_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/verify_phone_number_usecase.dart';
-import 'package:sync_event/features/bookings/data/datasources/booking_remote_datasource.dart';
-import 'package:sync_event/features/bookings/data/repositories/booking_repository_impl.dart';
+
+// Bookings
+import 'package:sync_event/features/bookings/data/datasources/booking_remote_datasource.dart' as booking_datasource;
+import 'package:sync_event/features/bookings/data/repositories/booking_repository_impl.dart' hide BookingRemoteDataSource, BookingRemoteDataSourceImpl;
 import 'package:sync_event/features/bookings/domain/repositories/booking_repositories.dart';
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
-import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart'; // Added
+import 'package:sync_event/features/bookings/domain/usecases/get_booking_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/get_user_bookings_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/process_refund_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/refund_to_razorpay_usecase.dart';
+import 'package:sync_event/features/bookings/domain/usecases/request_refund_usecase.dart';
 
 // Events
 import 'package:sync_event/features/events/data/datasources/event_local_datasource.dart';
@@ -37,6 +42,7 @@ import 'package:sync_event/features/events/domain/usecases/approved_event_usecas
 import 'package:sync_event/features/events/domain/usecases/get_user_events_usecase.dart';
 import 'package:sync_event/features/events/domain/usecases/join_event_usecase.dart';
 import 'package:sync_event/features/events/domain/usecases/update_event_usecase.dart';
+import 'package:sync_event/features/events/domain/usecases/delete_event_usecase.dart';
 
 // Profile
 import 'package:sync_event/features/profile/data/datasources/profile_local_datasource.dart';
@@ -45,31 +51,48 @@ import 'package:sync_event/features/profile/data/repositories/profile_repository
 import 'package:sync_event/features/profile/domain/repositories/profile_repository.dart';
 import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
+
+// Wallet
 import 'package:sync_event/features/wallet/data/datasources/wallet_remote_datasource.dart';
 import 'package:sync_event/features/wallet/data/repositories/wallet_repository_impl.dart';
 import 'package:sync_event/features/wallet/domain/repositories/wallet_repositories.dart';
 import 'package:sync_event/features/wallet/domain/usecases/update_wallet_usecase.dart';
-
-import '../../features/events/domain/usecases/delete_event_usecase.dart';
+import 'package:sync_event/features/wallet/domain/usecases/get_wallet_usecase.dart';
 
 final sl = GetIt.instance;
 
 Future<void> configureDependencies() async {
   // External
   final sharedPreferences = await SharedPreferences.getInstance();
+  print('Injection: Registering SharedPreferences');
   sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
-  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
-  sl.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+
+  final firebaseAuth = FirebaseAuth.instance;
+  print('Injection: Registering FirebaseAuth instance: $firebaseAuth');
+  sl.registerLazySingleton<FirebaseAuth>(() => firebaseAuth);
+
+  final firebaseFirestore = FirebaseFirestore.instance;
+  print('Injection: Registering FirebaseFirestore instance: $firebaseFirestore');
+  sl.registerLazySingleton<FirebaseFirestore>(() => firebaseFirestore);
+
+  final firebaseStorage = FirebaseStorage.instance;
+  print('Injection: Registering FirebaseStorage instance: $firebaseStorage');
+  sl.registerLazySingleton<FirebaseStorage>(() => firebaseStorage);
 
   // Core
+  print('Injection: Registering NetworkInfo');
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl());
 
   // Features
+  print('Injection: Initializing Auth feature');
   _initAuth();
+  print('Injection: Initializing Profile feature');
   _initProfile();
+  print('Injection: Initializing Events feature');
   _initEvents();
+  print('Injection: Initializing Booking feature');
   _initBooking();
+  print('Injection: Initializing Wallet feature');
   _initWallet();
 }
 
@@ -82,7 +105,6 @@ void _initAuth() {
       firebaseStorage: sl<FirebaseStorage>(),
     ),
   );
-
   sl.registerLazySingleton<AuthLocalDataSource>(
     () => AuthLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
   );
@@ -128,10 +150,8 @@ void _initProfile() {
       firebaseStorage: sl<FirebaseStorage>(),
     ),
   );
-
   sl.registerLazySingleton<ProfileLocalDataSource>(
-    () =>
-        ProfileLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
+    () => ProfileLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
   );
 
   // Repository
@@ -160,7 +180,6 @@ void _initEvents() {
       firebaseStorage: sl<FirebaseStorage>(),
     ),
   );
-
   sl.registerLazySingleton<EventLocalDataSource>(
     () => EventLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
   );
@@ -169,8 +188,8 @@ void _initEvents() {
   sl.registerLazySingleton<EventRepository>(
     () => EventRepositoryImpl(
       remoteDataSource: sl<EventRemoteDataSource>(),
-      localDataSource: sl<EventLocalDataSource>(),
       networkInfo: sl<NetworkInfo>(),
+      firebaseFirestore: sl<FirebaseFirestore>(),
     ),
   );
 
@@ -181,41 +200,53 @@ void _initEvents() {
   sl.registerLazySingleton<GetApprovedEventsUseCase>(
     () => GetApprovedEventsUseCase(sl<EventRepository>()),
   );
-  sl.registerLazySingleton<JoinEventUseCase>(
-    () => JoinEventUseCase(sl<EventRepository>()),
-  );
   sl.registerLazySingleton(() => GetUserEventsUseCase(sl<EventRepository>()));
+  sl.registerLazySingleton(() => JoinEventUseCase(sl<EventRepository>()));
   sl.registerLazySingleton(() => UpdateEventUseCase(sl<EventRepository>()));
   sl.registerLazySingleton(() => DeleteEventUseCase(sl<EventRepository>()));
 }
 
 void _initBooking() {
   // Data sources
-  sl.registerLazySingleton<BookingRemoteDataSource>(
-    () => BookingRemoteDataSourceImpl(firestore: sl<FirebaseFirestore>()),
+  sl.registerLazySingleton<booking_datasource.BookingRemoteDataSource>(
+    () => booking_datasource.BookingRemoteDataSourceImpl(
+      firestore: sl<FirebaseFirestore>(),
+      auth: sl<FirebaseAuth>(),
+    ),
   );
 
   // Repositories
   sl.registerLazySingleton<BookingRepository>(
-    () => BookingRepositoryImpl(
-      remoteDataSource: sl<BookingRemoteDataSource>(),
-      networkInfo: sl<NetworkInfo>(),
-      eventRepository: sl<EventRepository>(),
-    ),
-  );
+  () => BookingRepositoryImpl(
+    remoteDataSource: sl<booking_datasource.BookingRemoteDataSource>(),
+    walletRemoteDataSource: sl<WalletRemoteDataSource>(),
+    networkInfo: sl<NetworkInfo>(),
+    eventRepository: sl<EventRepository>(),
+    auth: sl<FirebaseAuth>(),
+  ),
+);
 
   // Use cases
   sl.registerLazySingleton<BookTicketUseCase>(
-    () => BookTicketUseCase(sl<BookingRepository>()),
+    () => BookTicketUseCase(sl<BookingRepository>(), sl<FirebaseAuth>()),
   );
   sl.registerLazySingleton<CancelBookingUseCase>(
     () => CancelBookingUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<GetBookingUseCase>(
+    () => GetBookingUseCase(sl<BookingRepository>()),
   );
   sl.registerLazySingleton<RefundToRazorpayUseCase>(
     () => RefundToRazorpayUseCase(sl<BookingRepository>()),
   );
   sl.registerLazySingleton<GetUserBookingsUseCase>(
-    () => GetUserBookingsUseCase(sl<BookingRepository>()), // Added registration
+    () => GetUserBookingsUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<RequestRefundUseCase>(
+    () => RequestRefundUseCase(sl<BookingRepository>()),
+  );
+  sl.registerLazySingleton<ProcessRefundUseCase>(
+    () => ProcessRefundUseCase(sl<BookingRepository>()),
   );
 }
 
@@ -233,8 +264,11 @@ void _initWallet() {
     ),
   );
 
-  // Use case
+  // Use cases
   sl.registerLazySingleton<UpdateWalletUseCase>(
     () => UpdateWalletUseCase(sl<WalletRepository>()),
+  );
+  sl.registerLazySingleton<GetWalletUseCase>(
+    () => GetWalletUseCase(sl<WalletRepository>()),
   );
 }

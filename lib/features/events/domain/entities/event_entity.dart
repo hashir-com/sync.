@@ -15,17 +15,18 @@ class EventEntity extends Equatable {
   final String organizerId;
   final String organizerName;
   final List<String> attendees;
-  final int maxAttendees; // Legacy total; use sum of categoryCapacities in code.
+  final int maxAttendees;
   final String category;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final double? ticketPrice; // Legacy single price; use categoryPrices in code.
+  final double? ticketPrice;
   final String status;
   final String? approvalReason;
   final String? rejectionReason;
   final Map<String, int> categoryCapacities;
   final Map<String, double> categoryPrices;
   final List<int> takenSeats;
+  final int availableTickets;
 
   const EventEntity({
     required this.id,
@@ -52,45 +53,46 @@ class EventEntity extends Equatable {
     this.takenSeats = const [],
     this.categoryCapacities = const {'vip': 0, 'premium': 0, 'regular': 0},
     this.categoryPrices = const {'vip': 0.0, 'premium': 0.0, 'regular': 0.0},
+    required this.availableTickets,
   });
 
   @override
   List<Object?> get props => [
-    id,
-    title,
-    description,
-    location,
-    latitude,
-    longitude,
-    startTime,
-    endTime,
-    imageUrl,
-    documentUrl,
-    organizerId,
-    organizerName,
-    attendees,
-    maxAttendees,
-    category,
-    createdAt,
-    updatedAt,
-    ticketPrice,
-    status,
-    approvalReason,
-    rejectionReason,
-    takenSeats,
-    categoryCapacities,
-    categoryPrices,
-  ];
+        id,
+        title,
+        description,
+        location,
+        latitude,
+        longitude,
+        startTime,
+        endTime,
+        imageUrl,
+        documentUrl,
+        organizerId,
+        organizerName,
+        attendees,
+        maxAttendees,
+        category,
+        createdAt,
+        updatedAt,
+        ticketPrice,
+        status,
+        approvalReason,
+        rejectionReason,
+        takenSeats,
+        categoryCapacities,
+        categoryPrices,
+        availableTickets,
+      ];
 
-  // Updated fromJson method
   factory EventEntity.fromJson(Map<String, dynamic> json) {
     return EventEntity(
       id: json['id'],
       title: json['title'],
       description: json['description'],
       location: json['location'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
       startTime: (json['startTime'] as Timestamp).toDate(),
       endTime: (json['endTime'] as Timestamp).toDate(),
       imageUrl: json['imageUrl'],
@@ -98,22 +100,23 @@ class EventEntity extends Equatable {
       organizerId: json['organizerId'],
       organizerName: json['organizerName'],
       attendees: List<String>.from(json['attendees'] ?? []),
-      maxAttendees: (json['maxAttendees'] as num?)?.toInt() ?? 0, // Cast num to int
+      maxAttendees: (json['maxAttendees'] as num?)?.toInt() ?? 0,
       category: json['category'],
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       updatedAt: (json['updatedAt'] as Timestamp).toDate(),
-      ticketPrice: json['ticketPrice'],
+      ticketPrice: json['ticketPrice'] != null ? (json['ticketPrice'] as num).toDouble() : null,
       status: json['status'],
       approvalReason: json['approvalReason'],
       rejectionReason: json['rejectionReason'],
       takenSeats: List<int>.from(json['takenSeats'] ?? []),
       categoryCapacities: Map<String, int>.from(
         (json['categoryCapacities'] ?? {'vip': 0, 'premium': 0, 'regular': 0})
-            .map((key, value) => MapEntry(key, (value as num).toInt())), // Cast num to int
+            .map((key, value) => MapEntry(key, (value as num).toInt())),
       ),
       categoryPrices: Map<String, double>.from(
         json['categoryPrices'] ?? {'vip': 0.0, 'premium': 0.0, 'regular': 0.0},
       ),
+      availableTickets: (json['availableTickets'] as num?)?.toInt() ?? (json['maxAttendees'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -143,6 +146,7 @@ class EventEntity extends Equatable {
       'takenSeats': takenSeats,
       'categoryCapacities': categoryCapacities,
       'categoryPrices': categoryPrices,
+      'availableTickets': availableTickets,
     };
   }
 }
