@@ -220,9 +220,17 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
-  path: '/settings',
-  name: 'settings',
-  builder: (context, state) => const SettingsScreen(),
-),
+      path: '/settings',
+      name: 'settings',
+      builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/cancellation/:bookingId',
+      name: 'cancellation',
+      builder: (context, state) {
+        final bookingId = state.pathParameters['bookingId']!;
+        return CancellationScreen(bookingId: bookingId);
+      },
+    ),
   ],
 );

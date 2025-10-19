@@ -106,7 +106,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
           ),
           onPressed: () {
             print('Navigating back. Can pop: ${context.canPop()}');
-            context.go('/home');
+            context.pop();
           },
         ),
         actions: [
@@ -395,10 +395,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
                     SizedBox(height: 12.h),
                     _buildDetailItem(
                       label: 'Time',
-
-                      value: DateFormat(
-                        'h:mm a',
-                      ).format(widget.booking.startTime),
+                      value: DateFormat('h:mm a').format(widget.booking.startTime),
                       isDark: isDark,
                     ),
                     SizedBox(height: 8.h),
@@ -412,8 +409,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
                     SizedBox(height: 8.h),
                     _buildDetailItem(
                       label: 'Amount',
-                      value:
-                          '₹${widget.booking.totalAmount.toStringAsFixed(0)}',
+                      value: '₹${widget.booking.totalAmount.toStringAsFixed(0)}',
                       isDark: isDark,
                       highlight: true,
                     ),
@@ -531,9 +527,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
             _buildDetailItem2(
               icon: Icons.calendar_month_outlined,
               label: 'Booking Date',
-              value: DateFormat(
-                'MMM d, y h:mm a',
-              ).format(widget.booking.bookingDate),
+              value: DateFormat('MMM d, y h:mm a').format(widget.booking.bookingDate),
               isDark: isDark,
             ),
           ],
@@ -575,9 +569,8 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
                 _buildDetailItem2(
                   icon: Icons.cancel_outlined,
                   label: 'Cancelled On',
-                  value: DateFormat(
-                    'MMM d, y h:mm a',
-                  ).format(widget.booking.cancellationDate!),
+                  value: DateFormat('MMM d, y h:mm a')
+                      .format(widget.booking.cancellationDate!),
                   isDark: isDark,
                 ),
               if (widget.booking.refundAmount != null)
@@ -772,7 +765,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
       return;
     }
 
-    final choice = await showModalBottomSheet<String>(
+    final refundType = await showModalBottomSheet<String>(
       context: context,
       builder: (context) {
         return SafeArea(
@@ -797,18 +790,23 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
       },
     );
 
-    if (choice == null) return;
+    if (refundType == null) return;
+
+    String? cancellationReason;
+    if (refundType == 'wallet') {
+      cancellationReason = await _showReasonPrompt(context, isDark);
+      if (cancellationReason == null) return;
+    }
+
     try {
       print('Invalidating bookings for userId: ${widget.booking.userId}');
-      await ref
-          .read(bookingNotifierProvider.notifier)
-          .cancelBooking(
+      await ref.read(bookingNotifierProvider.notifier).cancelBooking(
             widget.booking.id,
             widget.booking.paymentId,
             widget.booking.eventId,
-            refundType: choice,
+            refundType: refundType,
+            reason: cancellationReason,
           );
-      ref.invalidate(userBookingsProvider(widget.booking.userId));
       try {
         await EmailService.sendCancellationNotice(
           widget.booking.userId,
@@ -820,7 +818,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Cancellation requested. Refund will be processed shortly.',
+              'Cancellation requested. Refund will be processed to $refundType.',
               style: AppTextStyles.bodyMedium(
                 isDark: true,
               ).copyWith(color: Colors.white),
@@ -845,5 +843,165 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
         );
       }
     }
+  }
+
+  Future<String?> _showReasonPrompt(BuildContext context, bool isDark) async {
+    String? selectedReason;
+    final otherReasonController = TextEditingController();
+
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Cancellation Reason',
+                      style: AppTextStyles.headingSmall(isDark: isDark),
+                    ),
+                    SizedBox(height: AppSizes.spacingMedium.h),
+                    ListTile(
+                      title: const Text('Ordered by mistake'),
+                      leading: Radio<String>(
+                        value: 'Ordered by mistake',
+                        groupValue: selectedReason,
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedReason = value;
+                          });
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text('Can\'t attend the event'),
+                      leading: Radio<String>(
+                        value: 'Can\'t attend the event',
+                        groupValue: selectedReason,
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedReason = value;
+                          });
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text('Event rescheduled'),
+                      leading: Radio<String>(
+                        value: 'Event rescheduled',
+                        groupValue: selectedReason,
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedReason = value;
+                          });
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text('Found a better alternative'),
+                      leading: Radio<String>(
+                        value: 'Found a better alternative',
+                        groupValue: selectedReason,
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedReason = value;
+                          });
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text('Other'),
+                      leading: Radio<String>(
+                        value: 'Other',
+                        groupValue: selectedReason,
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedReason = value;
+                          });
+                        },
+                      ),
+                    ),
+                    if (selectedReason == 'Other')
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium.w),
+                        child: TextField(
+                          controller: otherReasonController,
+                          decoration: InputDecoration(
+                            labelText: 'Enter reason',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+                            ),
+                          ),
+                          maxLines: 2,
+                        ),
+                      ),
+                    SizedBox(height: AppSizes.spacingLarge.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'Cancel',
+                            style: AppTextStyles.bodyMedium(isDark: isDark),
+                          ),
+                        ),
+                        SizedBox(width: AppSizes.spacingMedium.w),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (selectedReason == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Please select a reason.'),
+                                  backgroundColor: AppColors.getError(isDark),
+                                ),
+                              );
+                              return;
+                            }
+                            if (selectedReason == 'Other' && otherReasonController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Please enter a reason.'),
+                                  backgroundColor: AppColors.getError(isDark),
+                                ),
+                              );
+                              return;
+                            }
+                            Navigator.pop(
+                              context,
+                              selectedReason == 'Other'
+                                  ? otherReasonController.text
+                                  : selectedReason,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.getPrimary(isDark),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+                            ),
+                          ),
+                          child: Text(
+                            'Submit',
+                            style: AppTextStyles.bodyMedium(isDark: isDark)
+                                .copyWith(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }

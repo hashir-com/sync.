@@ -21,7 +21,7 @@ class CancellationScreen extends ConsumerStatefulWidget {
 
 class _CancellationScreenState extends ConsumerState<CancellationScreen> {
   String? _reason;
-  String? _refundType; // 'wallet' or 'bank'
+  String? _refundType;
   final _notesController = TextEditingController();
 
   @override
@@ -68,8 +68,10 @@ class _CancellationScreenState extends ConsumerState<CancellationScreen> {
                   children: [
                     Text('Cancellation Policy', style: AppTextStyles.headingSmall(isDark: isDark)),
                     SizedBox(height: AppSizes.spacingSmall.h),
-                    Text('Cancellations are allowed only before 48 hours of event start time.',
-                        style: AppTextStyles.bodyMedium(isDark: isDark)),
+                    Text(
+                      'Cancellations are allowed only before 48 hours of event start time.',
+                      style: AppTextStyles.bodyMedium(isDark: isDark),
+                    ),
                     SizedBox(height: AppSizes.spacingLarge.h),
                     if (!eligible) ...[
                       Container(
@@ -88,9 +90,10 @@ class _CancellationScreenState extends ConsumerState<CancellationScreen> {
                       Text('Reason for cancellation', style: AppTextStyles.headingSmall(isDark: isDark)),
                       SizedBox(height: AppSizes.spacingSmall.h),
                       ...[
-                        'Personal reasons',
-                        'Schedule conflict',
-                        'Found better event',
+                        'Ordered by mistake',
+                        'Can\'t attend the event',
+                        'Event rescheduled',
+                        'Found a better alternative',
                         'Other',
                       ].map((r) => RadioListTile<String>(
                             value: r,
@@ -98,12 +101,20 @@ class _CancellationScreenState extends ConsumerState<CancellationScreen> {
                             onChanged: (v) => setState(() => _reason = v),
                             title: Text(r),
                           )),
-                      SizedBox(height: AppSizes.spacingSmall.h),
-                      TextField(
-                        controller: _notesController,
-                        maxLines: 3,
-                        decoration: const InputDecoration(labelText: 'Additional comments (optional)'),
-                      ),
+                      if (_reason == 'Other')
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium.w),
+                          child: TextField(
+                            controller: _notesController,
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              labelText: 'Enter reason',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+                              ),
+                            ),
+                          ),
+                        ),
                       SizedBox(height: AppSizes.spacingLarge.h),
                       Text('Refund Method', style: AppTextStyles.headingSmall(isDark: isDark)),
                       RadioListTile<String>(
@@ -125,14 +136,41 @@ class _CancellationScreenState extends ConsumerState<CancellationScreen> {
                         child: ElevatedButton(
                           onPressed: (_reason != null && _refundType != null)
                               ? () async {
+                                  final reason = _reason == 'Other'
+                                      ? _notesController.text.isNotEmpty
+                                          ? _notesController.text
+                                          : null
+                                      : _reason;
+                                  if (reason == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Please provide a reason for cancellation.'),
+                                        backgroundColor: AppColors.getError(isDark),
+                                      ),
+                                    );
+                                    return;
+                                  }
                                   final notifier = ref.read(bookingNotifierProvider.notifier);
                                   await notifier.cancelBooking(
                                     booking.id,
                                     booking.paymentId,
                                     booking.eventId,
                                     refundType: _refundType!,
+                                    reason: reason,
                                   );
-                                  if (context.mounted) context.pop();
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Cancellation requested. Refund will be processed to $_refundType.',
+                                          style: AppTextStyles.bodyMedium(isDark: true)
+                                              .copyWith(color: Colors.white),
+                                        ),
+                                        backgroundColor: AppColors.getSuccess(isDark),
+                                      ),
+                                    );
+                                    context.pop();
+                                  }
                                 }
                               : null,
                           style: ElevatedButton.styleFrom(
@@ -141,12 +179,15 @@ class _CancellationScreenState extends ConsumerState<CancellationScreen> {
                               borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
                             ),
                           ),
-                          child: Text('Confirm Cancellation',
-                              style: AppTextStyles.labelMedium(isDark: isDark)
-                                  .copyWith(color: Colors.white)),
+                          child: Text(
+                            'Confirm Cancellation',
+                            style: AppTextStyles.labelMedium(isDark: isDark)
+                                .copyWith(color: Colors.white),
+                          ),
                         ),
                       ),
                     ],
+                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
                   ],
                 ),
               ),

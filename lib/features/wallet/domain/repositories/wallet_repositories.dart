@@ -9,5 +9,6 @@ abstract class WalletRepository {
     String userId,
     double amount,
     String bookingId,
+    String? reason,
   );
 }

@@ -53,4 +53,33 @@ class WalletNotifier extends StateNotifier<AsyncValue<WalletModel>> {
       (_) => AsyncValue.data(newWallet),
     );
   }
+
+  Future<void> addRefund({
+    required String userId,
+    required double amount,
+    required String bookingId,
+    required String reason,
+  }) async {
+    state = const AsyncValue.loading();
+    final currentWallet = state.value ??
+        WalletModel(userId: userId, balance: 0.0, transactionHistory: []);
+    final newTransaction = {
+      'type': 'refund',
+      'amount': amount,
+      'bookingId': bookingId,
+      'timestamp': DateTime.now().toIso8601String(),
+      'description': 'Refund for cancelled booking',
+      'reason': reason,
+    };
+    final newWallet = WalletModel(
+      userId: currentWallet.userId.isNotEmpty ? currentWallet.userId : userId,
+      balance: currentWallet.balance + amount,
+      transactionHistory: [...currentWallet.transactionHistory, newTransaction],
+    );
+    final result = await updateWalletUseCase(newWallet);
+    state = result.fold(
+      (failure) => AsyncValue.error(failure.message, StackTrace.current),
+      (_) => AsyncValue.data(newWallet),
+    );
+  }
 }

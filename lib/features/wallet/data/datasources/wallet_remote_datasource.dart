@@ -4,7 +4,7 @@ import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
 abstract class WalletRemoteDataSource {
   Future<WalletModel> getWallet(String userId);
   Future<void> updateWallet(WalletModel wallet);
-  Future<void> addRefundToWallet(String userId, double amount, String bookingId);
+  Future<void> addRefundToWallet(String userId, double amount, String bookingId, String? reason);
 }
 
 class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
@@ -49,6 +49,7 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
     String userId,
     double amount,
     String bookingId,
+    String? reason,
   ) async {
     try {
       final walletRef = firestore.collection('wallets').doc(userId);
@@ -57,9 +58,12 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
         final walletSnap = await transaction.get(walletRef);
 
         double currentBalance = 0.0;
+        List<Map<String, dynamic>> currentTransactions = [];
         if (walletSnap.exists) {
           currentBalance =
               (walletSnap.data()?['balance'] as num?)?.toDouble() ?? 0.0;
+          currentTransactions = List<Map<String, dynamic>>.from(
+              walletSnap.data()?['transactionHistory'] ?? []);
         }
 
         final newBalance = currentBalance + amount;
@@ -69,16 +73,18 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
           'bookingId': bookingId,
           'timestamp': FieldValue.serverTimestamp(),
           'description': 'Refund for cancelled booking',
+          'reason': reason ?? 'No reason provided',
         };
 
-        transaction.update(walletRef, {
+        transaction.set(walletRef, {
+          'userId': userId,
           'balance': newBalance,
-          'transactionHistory': FieldValue.arrayUnion([newTransaction]),
+          'transactionHistory': [...currentTransactions, newTransaction],
           'updatedAt': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       });
 
-      print('✓ Refund added to wallet: $userId, Amount: ₹$amount');
+      print('✓ Refund added to wallet: $userId, Amount: ₹$amount, Reason: $reason');
     } catch (e) {
       throw Exception('Failed to add refund to wallet: $e');
     }

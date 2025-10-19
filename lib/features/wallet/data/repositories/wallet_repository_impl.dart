@@ -45,12 +45,13 @@ class WalletRepositoryImpl implements WalletRepository {
     String userId,
     double amount,
     String bookingId,
+    String? reason,
   ) async {
     if (!(await networkInfo.isConnected)) {
       return Left(NetworkFailure(message: 'No internet connection'));
     }
     try {
-      await remoteDataSource.addRefundToWallet(userId, amount, bookingId);
+      await remoteDataSource.addRefundToWallet(userId, amount, bookingId, reason);
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));

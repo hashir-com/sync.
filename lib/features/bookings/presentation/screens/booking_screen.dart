@@ -849,106 +849,101 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
             height: AppSizes.buttonHeightLarge.h,
             child: RazorpayPaymentWidget(
               amount: totalAmount,
-              onSuccess: (paymentId) async {
-                if (userId.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Please log in to book tickets',
-                        style: AppTextStyles.bodyMedium(
-                          isDark: true,
-                        ).copyWith(color: Colors.white),
-                      ),
-                      backgroundColor: AppColors.getError(isDark),
-                    ),
-                  );
-                  return;
-                }
+             onSuccess: (paymentId) async {
+  if (userId.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Please log in to book tickets',
+          style: AppTextStyles.bodyMedium(isDark: true)
+              .copyWith(color: Colors.white),
+        ),
+        backgroundColor: AppColors.getError(isDark),
+      ),
+    );
+    return;
+  }
 
-                final booking = BookingEntity(
-                  id: '',
-                  userId: userId,
-                  eventId: event.id,
-                  ticketType: selectedCategory,
-                  ticketQuantity: formState.quantity,
-                  totalAmount: totalAmount,
-                  paymentId: paymentId,
-                  seatNumbers: [],
-                  bookingDate: DateTime.now(),
-                  startTime: event.startTime,
-                  endTime: event.endTime,
-                  status: 'confirmed',
-                  userEmail: userEmail,
-                );
+  final booking = BookingEntity(
+    id: '', // Will be generated in notifier
+    userId: userId,
+    eventId: event.id,
+    ticketType: selectedCategory,
+    ticketQuantity: formState.quantity,
+    totalAmount: totalAmount,
+    paymentId: paymentId,
+    seatNumbers: const [],
+    bookingDate: DateTime.now(),
+    startTime: event.startTime,
+    endTime: event.endTime,
+    status: 'confirmed',
+    userEmail: userEmail,
+  );
 
-                try {
-                  await ref
-                      .read(bookingNotifierProvider.notifier)
-                      .bookTicket(booking, paymentId);
+  try {
+    await ref
+        .read(bookingNotifierProvider.notifier)
+        .bookTicket(
+          eventId: event.id,
+          userId: userId,
+          ticketType: selectedCategory,
+          ticketQuantity: formState.quantity,
+          totalAmount: totalAmount,
+          paymentId: paymentId,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          seatNumbers: const [],
+          userEmail: userEmail,
+        );
 
-                  final bookingStateResult = ref.read(bookingNotifierProvider);
-                  bookingStateResult.when(
-                    data: (bookingResult) {
-                      if (bookingResult != null) {
-                        () async {
-                          try {
-                            await EmailService.sendInvoice(
-                              userId,
-                              bookingResult.id,
-                              totalAmount,
-                              userEmail,
-                            );
-                          } catch (_) {}
-                        }();
-                        ref.invalidate(userBookingsProvider(userId));
-                        context.go(
-                          '/booking-details',
-                          extra: {'booking': bookingResult, 'event': event},
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Booking failed: No booking data returned',
-                              style: AppTextStyles.bodyMedium(
-                                isDark: true,
-                              ).copyWith(color: Colors.white),
-                            ),
-                            backgroundColor: AppColors.getError(isDark),
-                          ),
-                        );
-                      }
-                    },
-                    error: (error, stack) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Booking failed: ${error is Failure ? error.message : error.toString()}',
-                            style: AppTextStyles.bodyMedium(
-                              isDark: true,
-                            ).copyWith(color: Colors.white),
-                          ),
-                          backgroundColor: AppColors.getError(isDark),
-                        ),
-                      );
-                    },
-                    loading: () {},
-                  );
-                } catch (e, stackTrace) {
-                  print('Booking error in UI: $e\n$stackTrace');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Booking failed: $e',
-                        style: AppTextStyles.bodyMedium(
-                          isDark: true,
-                        ).copyWith(color: Colors.white),
-                      ),
-                      backgroundColor: AppColors.getError(isDark),
-                    ),
-                  );
-                }
-              },
+    final bookingStateResult = ref.read(bookingNotifierProvider);
+    bookingStateResult.when(
+      data: (bookingResult) {
+        if (bookingResult != null) {
+          () async {
+            try {
+              await EmailService.sendInvoice(
+                userId,
+                bookingResult.id,
+                totalAmount,
+                userEmail,
+              );
+            } catch (_) {}
+          }();
+          ref.invalidate(userBookingsProvider(userId));
+          context.go(
+            '/booking-details',
+            extra: {'booking': bookingResult, 'event': event},
+          );
+        }
+      },
+      error: (error, stack) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Booking failed: ${error.toString()}',
+              style: AppTextStyles.bodyMedium(isDark: true)
+                  .copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getError(isDark),
+          ),
+        );
+      },
+      loading: () {},
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Booking failed: $e',
+          style: AppTextStyles.bodyMedium(isDark: true)
+              .copyWith(color: Colors.white),
+        ),
+        backgroundColor: AppColors.getError(isDark),
+      ),
+    );
+  }
+}
             ),
           ),
         ),

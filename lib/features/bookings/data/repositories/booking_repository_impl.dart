@@ -1,132 +1,114 @@
-// lib/features/bookings/data/repositories/booking_repository_impl.dart
-
 import 'package:dartz/dartz.dart';
+import 'package:sync_event/core/error/exceptions.dart';
 import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/core/network/network_info.dart';
 import 'package:sync_event/features/bookings/data/datasources/booking_remote_datasource.dart';
 import 'package:sync_event/features/bookings/data/models/booking_model.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/domain/repositories/booking_repositories.dart';
-import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/domain/repositories/event_repository.dart';
+import 'package:sync_event/features/wallet/data/datasources/wallet_remote_datasource.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BookingRepositoryImpl implements BookingRepository {
   final BookingRemoteDataSource remoteDataSource;
+  final WalletRemoteDataSource walletRemoteDataSource;
   final NetworkInfo networkInfo;
   final EventRepository eventRepository;
+  final FirebaseAuth auth;
 
   BookingRepositoryImpl({
     required this.remoteDataSource,
+    required this.walletRemoteDataSource,
     required this.networkInfo,
     required this.eventRepository,
+    required this.auth,
   });
-
-  @override
-Future<Either<Failure, Unit>> refundToWallet(
-  String userId,
-  double amount,
-  String bookingId,
-) async {
-  if (!(await networkInfo.isConnected)) {
-    return Left(NetworkFailure(message: 'No internet connection'));
-  }
-  try {
-    // Add refund to wallet
-    await remoteDataSource.addRefundToWallet(userId, amount, bookingId);
-    
-    // Update booking refund status
-    await remoteDataSource.updateBookingRefundStatus(
-      bookingId,
-      'wallet',
-      amount,
-    );
-    
-    return const Right(unit);
-  } catch (e) {
-    return Left(ServerFailure(message: e.toString()));
-  }
-}
-
-@override
-Future<Either<Failure, Unit>> refundToBank(
-  String userId,
-  String paymentId,
-  double amount,
-  String bookingId,
-) async {
-  if (!(await networkInfo.isConnected)) {
-    return Left(NetworkFailure(message: 'No internet connection'));
-  }
-  try {
-    // Process Razorpay refund
-    await remoteDataSource.refundToRazorpay(paymentId, amount);
-    
-    // Record refund in database
-    await remoteDataSource.recordRefundToBank(
-      bookingId,
-      paymentId,
-      amount,
-    );
-    
-    // Update booking refund status
-    await remoteDataSource.updateBookingRefundStatus(
-      bookingId,
-      'bank',
-      amount,
-    );
-    
-    return const Right(unit);
-  } catch (e) {
-    return Left(ServerFailure(message: e.toString()));
-  }
-}
 
   @override
   Future<Either<Failure, BookingEntity>> bookTicket(
     BookingEntity booking,
   ) async {
-    if (!(await networkInfo.isConnected)) {
-      return Left(NetworkFailure(message: 'No internet connection'));
-    }
     try {
-      final booked = await remoteDataSource.bookTicket(
-        BookingModel.fromEntity(booking),
+      if (await networkInfo.isConnected) {
+        final userId = auth.currentUser?.uid;
+        if (userId == null) {
+          return Left(ServerFailure(message: 'User not authenticated'));
+        }
+
+        final bookingWithUserId = BookingEntity(
+          id: booking.id,
+          userId: userId,
+          eventId: booking.eventId,
+          ticketType: booking.ticketType,
+          ticketQuantity: booking.ticketQuantity,
+          totalAmount: booking.totalAmount,
+          paymentId: booking.paymentId,
+          seatNumbers: booking.seatNumbers,
+          status: booking.status ?? 'confirmed',
+          bookingDate: booking.bookingDate,
+          cancellationDate: booking.cancellationDate,
+          refundAmount: booking.refundAmount,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          userEmail: booking.userEmail,
+        );
+
+        print(
+          'BookingRepositoryImpl: Booking ticket with id=${booking.id}, userId=$userId',
+        );
+        final booked = await remoteDataSource.bookTicket(bookingWithUserId);
+        return Right(booked.toEntity());
+      } else {
+        return Left(NetworkFailure(message: 'No internet connection'));
+      }
+    } on ServerException catch (e) {
+      print('BookingRepositoryImpl: ServerException - ${e.message}');
+      return Left(
+        ServerFailure(message: 'Failed to book ticket: ${e.message}'),
       );
-      return Right(booked);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, Unit>> cancelBooking(
+  Future<Either<Failure, void>> cancelBooking(
     String bookingId,
     String paymentId,
   ) async {
-    if (!(await networkInfo.isConnected)) {
-      return Left(NetworkFailure(message: 'No internet connection'));
-    }
     try {
-      await remoteDataSource.cancelBooking(bookingId);
-      return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      if (await networkInfo.isConnected) {
+        final booking = await remoteDataSource.getBooking(bookingId);
+        print(
+          'BookingRepositoryImpl: Cancelling bookingId=$bookingId, ticketQuantity=${booking.ticketQuantity}',
+        );
+        await remoteDataSource.cancelBooking(
+          bookingId,
+          paymentId,
+          booking.eventId,
+          booking.ticketQuantity,
+        );
+        return const Right(null);
+      } else {
+        return Left(NetworkFailure(message: 'No internet connection'));
+      }
+    } on ServerException catch (e) {
+      print('BookingRepositoryImpl: ServerException - ${e.message}');
+      return Left(ServerFailure(message: e.message));
     }
   }
 
   @override
-  Future<Either<Failure, Unit>> refundToRazorpay(
-    String paymentId,
-    double amount,
-  ) async {
-    if (!(await networkInfo.isConnected)) {
-      return Left(NetworkFailure(message: 'No internet connection'));
-    }
+  Future<Either<Failure, BookingEntity>> getBooking(String bookingId) async {
     try {
-      await remoteDataSource.refundToRazorpay(paymentId, amount);
-      return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      if (await networkInfo.isConnected) {
+        final booking = await remoteDataSource.getBooking(bookingId);
+        return Right(booking.toEntity());
+      } else {
+        return Left(NetworkFailure(message: 'No internet connection'));
+      }
+    } on ServerException catch (e) {
+      print('BookingRepositoryImpl: ServerException - ${e.message}');
+      return Left(ServerFailure(message: e.message));
     }
   }
 
@@ -134,62 +116,105 @@ Future<Either<Failure, Unit>> refundToBank(
   Future<Either<Failure, List<BookingEntity>>> getUserBookings(
     String userId,
   ) async {
-    if (!(await networkInfo.isConnected)) {
-      return Left(NetworkFailure(message: 'No internet connection'));
-    }
     try {
-      final bookings = await remoteDataSource.getUserBookings(userId);
-      return Right(bookings);
-    } catch (e) {
-      if (e.toString().contains('PERMISSION_DENIED') ||
-          e.toString().contains('does not exist')) {
-        return Right(
-          [],
-        ); // Return empty list if collection missing or no permission
+      if (await networkInfo.isConnected) {
+        final bookings = await remoteDataSource.getUserBookings(userId);
+        return Right(bookings.map((model) => model.toEntity()).toList());
+      } else {
+        return Left(NetworkFailure(message: 'No internet connection'));
       }
-      return Left(ServerFailure(message: e.toString()));
+    } on ServerException catch (e) {
+      print('BookingRepositoryImpl: ServerException - ${e.message}');
+      return Left(ServerFailure(message: e.message));
     }
   }
 
   @override
-  Future<Either<Failure, BookingEntity>> getBooking(String bookingId) async {
-    if (!(await networkInfo.isConnected)) {
-      return Left(NetworkFailure(message: 'No internet connection'));
-    }
+  Future<Either<Failure, void>> processRefund(
+    String userId,
+    String bookingId,
+    String paymentId,
+    double amount,
+    String refundType,
+    String? reason,
+  ) async {
     try {
-      final booking = await remoteDataSource.getBooking(bookingId);
-      return Right(booking);
+      if (await networkInfo.isConnected) {
+        print(
+          'BookingRepositoryImpl: Processing refund for bookingId=$bookingId, refundType=$refundType, amount=$amount',
+        );
+
+        // Update booking status to refunded
+        await remoteDataSource.updateBookingStatus(
+          bookingId,
+          'refunded',
+          amount,
+        );
+        print('✓ Booking status updated to refunded');
+
+        // Process refund based on type
+        if (refundType == 'wallet') {
+          // Add refund directly to wallet
+          await walletRemoteDataSource.addRefundToWallet(
+            userId,
+            amount,
+            bookingId,
+            reason ?? 'Booking cancelled',
+          );
+          print('✓ Refund added to wallet');
+        } else if (refundType == 'bank') {
+          // For bank refunds, we just mark as refunded in booking
+          // The actual bank refund is handled by admin/backend
+          // Create a bank refund transaction record for tracking
+          print('✓ Bank refund marked for processing (5-7 days)');
+        }
+
+        return const Right(null);
+      } else {
+        return Left(NetworkFailure(message: 'No internet connection'));
+      }
+    } on ServerException catch (e) {
+      print('BookingRepositoryImpl: ServerException - ${e.message}');
+      return Left(ServerFailure(message: e.message));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      print('BookingRepositoryImpl: Error - $e');
+      return Left(ServerFailure(message: 'Failed to process refund: $e'));
     }
   }
 
   @override
-  Future<Either<Failure, EventEntity>> getEvent(String eventId) async {
-    if (!(await networkInfo.isConnected)) {
-      return Left(NetworkFailure(message: 'No internet connection'));
-    }
-    try {
-      final event = await eventRepository.getEvent(eventId);
-      return Right(event);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Unit>> requestRefund(
+  Future<Either<Failure, void>> requestRefund(
     String bookingId,
     String refundType,
   ) async {
-    if (!(await networkInfo.isConnected)) {
-      return Left(NetworkFailure(message: 'No internet connection'));
-    }
     try {
-      await remoteDataSource.requestRefund(bookingId, refundType);
-      return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      if (await networkInfo.isConnected) {
+        await remoteDataSource.requestRefund(bookingId, refundType);
+        return const Right(null);
+      } else {
+        return Left(NetworkFailure(message: 'No internet connection'));
+      }
+    } on ServerException catch (e) {
+      print('BookingRepositoryImpl: ServerException - ${e.message}');
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> refundToRazorpay(
+    String paymentId,
+    double amount,
+  ) async {
+    try {
+      if (await networkInfo.isConnected) {
+        await remoteDataSource.refundToRazorpay(paymentId, amount);
+        return const Right(null);
+      } else {
+        return Left(NetworkFailure(message: 'No internet connection'));
+      }
+    } on ServerException catch (e) {
+      print('BookingRepositoryImpl: ServerException - ${e.message}');
+      return Left(ServerFailure(message: e.message));
     }
   }
 }

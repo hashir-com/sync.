@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -71,6 +72,7 @@ class BookingDetailsLoaderScreen extends ConsumerWidget {
                 category: '',
                 createdAt: booking.bookingDate,
                 updatedAt: booking.bookingDate,
+                availableTickets: 0, // Added required availableTickets
               );
             }
             return BookingDetailsScreen(booking: booking, event: event);
@@ -124,4 +126,8 @@ class BookingDetailsLoaderScreen extends ConsumerWidget {
       ),
     );
   }
+
+  
 }
+
+ 

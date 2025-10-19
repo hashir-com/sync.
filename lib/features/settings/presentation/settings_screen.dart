@@ -89,7 +89,7 @@ class SettingsScreen extends ConsumerWidget {
                   isDark,
                   Icons.favorite_border_rounded,
                   'Favorites',
-                  '/favorites',
+                  '/cancellation/:bookingId',
                 ),
                 SizedBox(height: AppSizes.spacingXxxl.h),
 

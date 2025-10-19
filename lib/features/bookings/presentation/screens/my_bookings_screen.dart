@@ -202,7 +202,7 @@ class MyBookingsScreen extends ConsumerWidget {
           padding: EdgeInsets.all(AppSizes.paddingMedium.w),
           children: [
             _buildFilterCard(
-              context: context, // Pass context
+              context: context,
               searchController: searchController,
               statusFilter: statusFilter,
               dateFilter: dateFilter,
@@ -237,7 +237,7 @@ class MyBookingsScreen extends ConsumerWidget {
   }
 
   Widget _buildFilterCard({
-    required BuildContext context, // Add context parameter
+    required BuildContext context,
     required TextEditingController searchController,
     required String statusFilter,
     required DateTimeRange? dateFilter,
@@ -324,7 +324,7 @@ class MyBookingsScreen extends ConsumerWidget {
                   child: OutlinedButton.icon(
                     onPressed: () async {
                       final picked = await showDateRangePicker(
-                        context: context, // Use passed context
+                        context: context,
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2100),
                         initialDateRange: dateFilter,
@@ -407,6 +407,7 @@ class MyBookingsScreen extends ConsumerWidget {
       category: 'unknown',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      availableTickets: 0, // Added required availableTickets
     );
 
     final eventStream = ref.watch(approvedEventsStreamProvider);
