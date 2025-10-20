@@ -11,7 +11,7 @@ import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
-import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
+import 'package:sync_event/features/Map/presentation/provider/map_providers.dart';
 
 class EventDetailCard extends ConsumerWidget {
   final EventEntity event;

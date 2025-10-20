@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
-import 'package:sync_event/features/map/data/repositories/marker_repositories_impl.dart';
-import 'package:sync_event/features/map/domain/services/location_service.dart';
-import 'package:sync_event/features/map/domain/usecases/build_marker_usecase.dart';
-import 'package:sync_event/features/map/domain/usecases/search_event_usecase.dart';
-import 'package:sync_event/features/map/domain/repositories/marker_repository.dart';
+import 'package:sync_event/features/Map/data/repositories/marker_repositories_impl.dart';
+import 'package:sync_event/features/Map/domain/services/location_service.dart';
+import 'package:sync_event/features/Map/domain/usecases/build_marker_usecase.dart';
+import 'package:sync_event/features/Map/domain/usecases/search_event_usecase.dart';
+import 'package:sync_event/features/Map/domain/repositories/marker_repository.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:sync_event/features/map/presentation/state/marker_state_notifier.dart.dart';
+import 'package:sync_event/features/Map/presentation/state/marker_state_notifier.dart.dart';
 
 // Provider for GoogleMapController
 final mapControllerProvider = StateProvider<GoogleMapController?>((ref) => null);

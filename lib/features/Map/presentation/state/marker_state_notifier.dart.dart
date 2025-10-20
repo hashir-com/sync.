@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sync_event/features/map/data/cache/marker_cache.dart';
+import 'package:sync_event/features/Map/data/cache/marker_cache.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
-import 'package:sync_event/features/map/domain/usecases/build_marker_usecase.dart';
-import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
+import 'package:sync_event/features/Map/domain/usecases/build_marker_usecase.dart';
+import 'package:sync_event/features/Map/presentation/provider/map_providers.dart';
 
 class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
   final BuildMarkersUseCase buildMarkersUseCase;

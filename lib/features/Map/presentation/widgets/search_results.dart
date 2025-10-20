@@ -8,7 +8,7 @@ import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
-import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
+import 'package:sync_event/features/Map/presentation/provider/map_providers.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 
 class SearchResultsWidget extends ConsumerWidget {

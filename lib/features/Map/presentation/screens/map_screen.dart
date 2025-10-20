@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sync_event/features/map/domain/services/location_service.dart';
-import 'package:sync_event/features/map/presentation/widgets/event_card.dart';
-import 'package:sync_event/features/map/presentation/widgets/loading_indicator.dart';
-import 'package:sync_event/features/map/presentation/widgets/search_bar.dart';
-import 'package:sync_event/features/map/presentation/widgets/search_results.dart';
-import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
+import 'package:sync_event/features/Map/domain/services/location_service.dart';
+import 'package:sync_event/features/Map/presentation/widgets/event_card.dart';
+import 'package:sync_event/features/Map/presentation/widgets/loading_indicator.dart';
+import 'package:sync_event/features/Map/presentation/widgets/search_bar.dart';
+import 'package:sync_event/features/Map/presentation/widgets/search_results.dart';
+import 'package:sync_event/features/Map/presentation/provider/map_providers.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
