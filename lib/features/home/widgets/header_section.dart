@@ -242,12 +242,12 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                       // Drawer Icon
                       InkWell(
                         borderRadius: BorderRadius.circular(
-                          AppSizes.radiusRound.r,
+                          AppSizes.radiusRound,
                         ),
                         onTap: () => Scaffold.of(context).openDrawer(),
                         child: Container(
-                          width: AppSizes.iconXl.w,
-                          height: AppSizes.iconXl.w,
+                          width: AppSizes.iconXl,
+                          height: AppSizes.iconXl,
                           decoration: BoxDecoration(
                             color: AppColors.getSurface(isDark),
                             shape: BoxShape.circle,
@@ -262,12 +262,12 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                           child: Icon(
                             Icons.menu,
                             color: AppColors.getTextPrimary(isDark),
-                            size: AppSizes.iconMedium.sp,
+                            size: AppSizes.iconMedium,
                           ),
                         ),
                       ),
 
-                      SizedBox(width: AppSizes.spacingMedium.w),
+                      SizedBox(width: AppSizes.spacingMedium),
 
                       // Search Bar
                       Expanded(
@@ -275,7 +275,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                           decoration: BoxDecoration(
                             color: AppColors.getSurface(isDark),
                             borderRadius: BorderRadius.circular(
-                              AppSizes.radiusRound.r,
+                              AppSizes.radiusRound,
                             ),
                             boxShadow: [
                               BoxShadow(
@@ -304,7 +304,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                               prefixIcon: Icon(
                                 Icons.search,
                                 color: AppColors.getTextPrimary(isDark),
-                                size: AppSizes.iconMedium.sp,
+                                size: AppSizes.iconMedium,
                               ),
                               suffixIcon: hasQuery
                                   ? IconButton(
@@ -313,7 +313,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                                         color: AppColors.getTextSecondary(
                                           isDark,
                                         ),
-                                        size: AppSizes.iconMedium.sp,
+                                        size: AppSizes.iconMedium,
                                       ),
                                       onPressed: _clearSearch,
                                     )
@@ -327,8 +327,8 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                                 borderSide: BorderSide.none,
                               ),
                               contentPadding: EdgeInsets.symmetric(
-                                horizontal: AppSizes.paddingLarge.w,
-                                vertical: AppSizes.paddingLarge.h,
+                                horizontal: AppSizes.paddingLarge,
+                                vertical: AppSizes.paddingLarge,
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
@@ -353,12 +353,12 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                         ),
                       ),
 
-                      SizedBox(width: AppSizes.spacingMedium.w),
+                      SizedBox(width: AppSizes.spacingMedium),
 
                       // Filter Button
                       InkWell(
                         borderRadius: BorderRadius.circular(
-                          AppSizes.radiusRound.r,
+                          AppSizes.radiusRound,
                         ),
                         onTap: () {
                           showFilterBottomSheet(
@@ -369,8 +369,8 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                           );
                         },
                         child: Container(
-                          width: AppSizes.iconXl.w,
-                          height: AppSizes.iconXl.w,
+                          width: AppSizes.iconXl,
+                          height: AppSizes.iconXl,
                           decoration: BoxDecoration(
                             color: AppColors.getSurface(isDark),
                             shape: BoxShape.circle,
