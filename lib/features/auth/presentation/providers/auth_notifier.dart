@@ -28,7 +28,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._signInWithGoogleUseCase, this._signOutUseCase)
       : super(AuthState()) {
-    // ✅ Initialize with current Firebase user on app start
+    // Initialize with current Firebase user on app start
     _initializeWithCurrentUser();
   }
 
@@ -80,7 +80,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = AuthState();
   }
 
-  // ✅ NEW: Method to refresh auth state (useful after critical operations)
+  // NEW: Method to refresh auth state (useful after critical operations)
   void refreshAuthState() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
@@ -120,7 +120,7 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   ),
 );
 
-// ✅ NEW: Stream provider for real-time auth state
+// NEW: Stream provider for real-time auth state
 final authStateProvider = StreamProvider<User?>((ref) {
   return FirebaseAuth.instance.authStateChanges();
 });

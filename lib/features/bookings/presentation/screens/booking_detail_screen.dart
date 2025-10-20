@@ -106,7 +106,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
           ),
           onPressed: () {
             print('Navigating back. Can pop: ${context.canPop()}');
-            context.pop();
+            context.go('/home');
           },
         ),
         actions: [
@@ -805,67 +805,71 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen>
     }
 
     try {
-  print('Starting cancellation process...');
-  print('Booking ID: ${widget.booking.id}');
-  print('User ID: ${widget.booking.userId}');
-  print('Refund Type: $refundType');
-  print('Cancellation Reason: $cancellationReason');
+      print('Starting cancellation process...');
+      print('Booking ID: ${widget.booking.id}');
+      print('User ID: ${widget.booking.userId}');
+      print('Refund Type: $refundType');
+      print('Cancellation Reason: $cancellationReason');
 
-  // IMPORTANT: Use named parameters and include userId
-  await ref.read(bookingNotifierProvider.notifier).cancelBooking(
-    bookingId: widget.booking.id,
-    paymentId: widget.booking.paymentId,
-    eventId: widget.booking.eventId,
-    userId: widget.booking.userId,  // REQUIRED
-    refundType: refundType,
-    cancellationReason: cancellationReason!,
-  );
+      // IMPORTANT: Use named parameters and include userId
+      await ref
+          .read(bookingNotifierProvider.notifier)
+          .cancelBooking(
+            bookingId: widget.booking.id,
+            paymentId: widget.booking.paymentId,
+            eventId: widget.booking.eventId,
+            userId: widget.booking.userId, // REQUIRED
+            refundType: refundType,
+            cancellationReason: cancellationReason!,
+          );
 
-  // Send confirmation email
-  try {
-    await EmailService.sendCancellationNotice(
-      widget.booking.userId,
-      widget.booking.id,
-      widget.booking.totalAmount,
-    );
-  } catch (_) {}
+      // Send confirmation email
+      try {
+        await EmailService.sendCancellationNotice(
+          widget.booking.userId,
+          widget.booking.id,
+          widget.booking.totalAmount,
+        );
+      } catch (_) {}
 
-  if (context.mounted) {
-    final message = refundType == 'wallet'
-        ? '✓ Booking cancelled!\n₹${widget.booking.totalAmount.toStringAsFixed(0)} added to your wallet'
-        : '✓ Booking cancelled!\nRefund will be processed to your bank account within 5-7 business days';
+      if (context.mounted) {
+        final message = refundType == 'wallet'
+            ? '✓ Booking cancelled!\n₹${widget.booking.totalAmount.toStringAsFixed(0)} added to your wallet'
+            : '✓ Booking cancelled!\nRefund will be processed to your bank account within 5-7 business days';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: AppTextStyles.bodyMedium(isDark: true)
-              .copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppColors.getSuccess(isDark),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              message,
+              style: AppTextStyles.bodyMedium(
+                isDark: true,
+              ).copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getSuccess(isDark),
+            duration: const Duration(seconds: 4),
+          ),
+        );
 
-    Future.delayed(const Duration(seconds: 1), () {
-      if (context.mounted) context.pop();
-    });
-  }
-} catch (e) {
-  print('✗ Error cancelling booking: $e');
-  if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Error cancelling booking: $e',
-          style: AppTextStyles.bodyMedium(isDark: true)
-              .copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppColors.getError(isDark),
-      ),
-    );
-  }
-}
+        Future.delayed(const Duration(seconds: 1), () {
+          if (context.mounted) context.pop();
+        });
+      }
+    } catch (e) {
+      print('✗ Error cancelling booking: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error cancelling booking: $e',
+              style: AppTextStyles.bodyMedium(
+                isDark: true,
+              ).copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.getError(isDark),
+          ),
+        );
+      }
+    }
   }
 
   Future<String?> _showReasonPrompt(BuildContext context, bool isDark) async {

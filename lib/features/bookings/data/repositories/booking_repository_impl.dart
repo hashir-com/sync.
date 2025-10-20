@@ -156,7 +156,7 @@ class BookingRepositoryImpl implements BookingRepository {
             );
             print('✓ Refund added to wallet successfully');
           } catch (e) {
-            print('❌ BookingRepositoryImpl: Error adding refund to wallet - $e');
+            print(' BookingRepositoryImpl: Error adding refund to wallet - $e');
             // If wallet refund fails, don't proceed with booking status update
             return Left(ServerFailure(message: 'Failed to add refund to wallet: $e'));
           }

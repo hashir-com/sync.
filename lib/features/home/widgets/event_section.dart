@@ -1,16 +1,86 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
+import 'package:sync_event/features/home/widgets/filter_bottom_sheet.dart';
+
+// ============================================
+// Favorites Provider - Persistent Storage
+// ============================================
+final favoritesProvider = StateNotifierProvider<FavoritesNotifier, Set<String>>(
+  (ref) {
+    return FavoritesNotifier();
+  },
+);
+
+class FavoritesNotifier extends StateNotifier<Set<String>> {
+  FavoritesNotifier() : super({});
+
+  void toggleFavorite(String eventId) {
+    if (state.contains(eventId)) {
+      state = {...state}..remove(eventId);
+    } else {
+      state = {...state, eventId};
+    }
+  }
+
+  bool isFavorite(String eventId) => state.contains(eventId);
+
+  void addFavorite(String eventId) {
+    if (!state.contains(eventId)) {
+      state = {...state, eventId};
+    }
+  }
+
+  void removeFavorite(String eventId) {
+    state = {...state}..remove(eventId);
+  }
+}
+
+// ============================================
+// User Location Provider for City Name
+// ============================================
+final userCityProvider = FutureProvider<String>((ref) async {
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return 'Your City';
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever ||
+        permission == LocationPermission.denied) {
+      return 'Your City';
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.medium,
+    );
+
+    final placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (placemarks.isNotEmpty) {
+      return placemarks.first.locality ?? 'Your City';
+    }
+    return 'Your City';
+  } catch (e) {
+    return 'Your City';
+  }
+});
 
 // ============================================
 // Location State Provider
@@ -54,32 +124,32 @@ class LocationNotifier extends StateNotifier<LocationState> {
   }
 
   Future<void> _checkLocationPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      state = state.copyWith(
-        isServiceDisabled: true,
-        isDenied: false,
-        isLoading: false,
-      );
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      state = state.copyWith(
-        isDenied: true,
-        isServiceDisabled: false,
-        isLoading: false,
-      );
-      return;
-    }
-
     try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        state = state.copyWith(
+          isServiceDisabled: true,
+          isDenied: false,
+          isLoading: false,
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        state = state.copyWith(
+          isDenied: true,
+          isServiceDisabled: false,
+          isLoading: false,
+        );
+        return;
+      }
+
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
@@ -100,11 +170,71 @@ class LocationNotifier extends StateNotifier<LocationState> {
   }
 
   Future<void> openLocationSettings() async {
-    await Geolocator.openLocationSettings();
+    try {
+      await Geolocator.openLocationSettings();
+    } catch (e) {
+      // Handle error silently
+    }
   }
 
   Future<void> openAppSettings() async {
-    await Geolocator.openAppSettings();
+    try {
+      await Geolocator.openAppSettings();
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+}
+
+// ============================================
+// Page State Providers
+// ============================================
+final nearbyEventsPageProvider = StateProvider<double>((ref) => 0.0);
+final topCityEventsPageProvider = StateProvider<double>((ref) => 0.0);
+final sportsEventsPageProvider = StateProvider<double>((ref) => 0.0);
+final musicEventsPageProvider = StateProvider<double>((ref) => 0.0);
+final freeEventsPageProvider = StateProvider<double>((ref) => 0.0);
+final bannerPageProvider = StateProvider<int>((ref) => 0);
+
+// ============================================
+// SAFE SNACKBAR HELPER
+// ============================================
+void showFavoriteSnackbarSafe(
+  BuildContext context,
+  bool wasFavorite,
+  String title,
+) {
+  if (!context.mounted) return;
+
+  try {
+    final snackBar = SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            wasFavorite ? Icons.favorite_border : Icons.favorite,
+            color: Colors.white,
+            size: 20,
+          ),
+          SizedBox(width: AppSizes.spacingMedium),
+          Expanded(
+            child: Text(
+              wasFavorite ? 'Removed from favorites' : 'Added to favorites',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      duration: const Duration(milliseconds: 2000),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: wasFavorite ? Colors.grey[700] : Colors.red,
+      margin: EdgeInsets.all(AppSizes.spacingMedium),
+    );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
+  } catch (e) {
+    // Fail silently
   }
 }
 
@@ -118,66 +248,1442 @@ class EventSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(approvedEventsStreamProvider);
     final isDark = ThemeUtils.isDark(context);
+    final userCityAsync = ref.watch(userCityProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: AppSizes.spacingXxl),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: AppSizes.spacingXxl),
 
-        // ------- POPULAR EVENTS SECTION -------
-        _SectionHeader(title: 'Upcoming Popular events', isDark: isDark),
-
-        SizedBox(height: AppSizes.spacingLarge),
-
-        eventsAsync.when(
-          data: (events) {
-            if (events.isEmpty) {
-              return _EmptyState(
-                message: 'No events available',
-                icon: Icons.event_busy_rounded,
-                isDark: isDark,
-              );
-            }
-
-            return Column(
-              children: [
-                _EventHorizontalList(
-                  events: events.take(10).toList(),
-                  isDark: isDark,
-                ),
-                SizedBox(height: AppSizes.spacingXxxl),
-              ],
-            );
-          },
-          loading: () => _EventListShimmer(isDark: isDark),
-          error: (error, _) => _ErrorState(
-            message: 'Failed to load events',
-            onRetry: () => ref.refresh(approvedEventsStreamProvider),
+          // ------- 1. POPULAR EVENTS BANNER -------
+          _SectionHeader(
+            title: 'Upcoming Popular Events',
             isDark: isDark,
+            onViewAll: () {
+              try {
+                ref.read(eventFilterProvider.notifier).reset();
+                context.push('/events');
+              } catch (e) {
+                // Handle error
+              }
+            },
           ),
-        ),
 
-        // ------- NEARBY EVENTS SECTION -------
-        _SectionHeader(title: 'Popular Events Near You', isDark: isDark),
+          SizedBox(height: AppSizes.spacingLarge),
 
-        SizedBox(height: AppSizes.spacingLarge),
+          eventsAsync.when(
+            data: (events) {
+              if (events == null || events.isEmpty) {
+                return _EmptyState(
+                  message: 'No events available',
+                  icon: Icons.event_busy_rounded,
+                  isDark: isDark,
+                );
+              }
 
-        _NearbyEventsSection(eventsAsync: eventsAsync, isDark: isDark),
+              // SAFE SORTING WITH NULL CHECKS
+              final sortedEvents = List.from(events.where((e) => e != null))
+                ..sort((a, b) {
+                  try {
+                    return (a?.startTime ?? DateTime.now()).compareTo(
+                      b?.startTime ?? DateTime.now(),
+                    );
+                  } catch (e) {
+                    return 0;
+                  }
+                });
 
-        SizedBox(height: AppSizes.spacingXxxl),
-      ],
+              if (sortedEvents.isEmpty) {
+                return _EmptyState(
+                  message: 'No events available',
+                  icon: Icons.event_busy_rounded,
+                  isDark: isDark,
+                );
+              }
+
+              return _PopularEventsBanner(
+                events: sortedEvents.take(10).toList(),
+                isDark: isDark,
+                favoritesProvider: favoritesProvider,
+              );
+            },
+            loading: () => _BannerShimmer(isDark: isDark),
+            error: (error, _) => _ErrorState(
+              message: 'Failed to load events',
+              onRetry: () => ref.refresh(approvedEventsStreamProvider),
+              isDark: isDark,
+            ),
+          ),
+
+          SizedBox(height: AppSizes.spacingXxxl),
+
+          // ------- 2. NEARBY EVENTS SECTION -------
+          _SectionHeader(
+            title: 'Popular Events Near You',
+            isDark: isDark,
+            onViewAll: () {
+              try {
+                context.push('/events');
+              } catch (e) {
+                // Handle error
+              }
+            },
+          ),
+
+          SizedBox(height: AppSizes.spacingLarge),
+
+          _NearbyEventsSection(eventsAsync: eventsAsync, isDark: isDark),
+
+          SizedBox(height: AppSizes.spacingXl),
+
+          // ------- 3. SPORTS EVENTS SECTION -------
+          _SectionHeader(
+            title: 'Sports Events',
+            isDark: isDark,
+            onViewAll: () {
+              try {
+                ref.read(eventFilterProvider.notifier).updateCategories([
+                  'Sports',
+                ]);
+                context.push('/events');
+              } catch (e) {
+                // Handle error
+              }
+            },
+          ),
+
+          SizedBox(height: AppSizes.spacingLarge),
+
+          eventsAsync.when(
+            data: (events) {
+              final sportEvents = (events ?? [])
+                  .where(
+                    (event) =>
+                        event != null &&
+                        (event.category?.toLowerCase() == 'sports' ||
+                            event.category?.toLowerCase().contains('sport') ==
+                                true),
+                  )
+                  .take(10)
+                  .toList();
+
+              if (sportEvents.isEmpty) {
+                return _EmptyState(
+                  message: 'No sports events available',
+                  icon: Icons.sports_basketball_rounded,
+                  isDark: isDark,
+                );
+              }
+
+              return _SmallEventCardList(
+                events: sportEvents,
+                isDark: isDark,
+                favoritesProvider: favoritesProvider,
+              );
+            },
+            loading: () => _SmallCardShimmer(isDark: isDark),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+
+          SizedBox(height: AppSizes.spacingXl),
+
+          // ------- 4. MUSIC EVENTS SECTION -------
+          _SectionHeader(
+            title: 'Music Events',
+            isDark: isDark,
+            onViewAll: () {
+              try {
+                ref.read(eventFilterProvider.notifier).updateCategories([
+                  'Music',
+                ]);
+                context.push('/events');
+              } catch (e) {
+                // Handle error
+              }
+            },
+          ),
+
+          SizedBox(height: AppSizes.spacingLarge),
+
+          eventsAsync.when(
+            data: (events) {
+              final musicEvents = (events ?? [])
+                  .where(
+                    (event) =>
+                        event != null &&
+                        (event.category?.toLowerCase() == 'music' ||
+                            event.category?.toLowerCase().contains('music') ==
+                                true),
+                  )
+                  .take(10)
+                  .toList();
+
+              if (musicEvents.isEmpty) {
+                return _EmptyState(
+                  message: 'No music events available',
+                  icon: Icons.music_note_rounded,
+                  isDark: isDark,
+                );
+              }
+
+              return _SmallEventCardList(
+                events: musicEvents,
+                isDark: isDark,
+                favoritesProvider: favoritesProvider,
+              );
+            },
+            loading: () => _SmallCardShimmer(isDark: isDark),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+
+          SizedBox(height: AppSizes.spacingXl),
+
+          // ------- 5. FREE EVENTS SECTION -------
+          _SectionHeader(
+            title: 'Free Events',
+            isDark: isDark,
+            onViewAll: () {
+              try {
+                ref.read(eventFilterProvider.notifier).updatePriceRange(0, 0);
+                context.push('/events');
+              } catch (e) {
+                // Handle error
+              }
+            },
+          ),
+
+          SizedBox(height: AppSizes.spacingLarge),
+
+          eventsAsync.when(
+            data: (events) {
+              final freeEvents = (events ?? [])
+                  .where(
+                    (event) => event != null && (event.ticketPrice ?? 0) == 0,
+                  )
+                  .take(10)
+                  .toList();
+
+              if (freeEvents.isEmpty) {
+                return _EmptyState(
+                  message: 'No free events available',
+                  icon: Icons.local_offer_rounded,
+                  isDark: isDark,
+                );
+              }
+
+              return _SmallEventCardList(
+                events: freeEvents,
+                isDark: isDark,
+                favoritesProvider: favoritesProvider,
+              );
+            },
+            loading: () => _SmallCardShimmer(isDark: isDark),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+
+          SizedBox(height: AppSizes.spacingXl),
+
+          // ------- 6. TOP IN USER'S CITY SECTION -------
+          userCityAsync.when(
+            data: (userCity) {
+              return Column(
+                children: [
+                  _SectionHeader(
+                    title: 'Top in $userCity',
+                    isDark: isDark,
+                    onViewAll: () {
+                      try {
+                        ref
+                            .read(eventFilterProvider.notifier)
+                            .updateLocation(userCity);
+                        context.push('/events');
+                      } catch (e) {
+                        // Handle error
+                      }
+                    },
+                  ),
+                  SizedBox(height: AppSizes.spacingLarge),
+                  _TopCityEventsSection(
+                    eventsAsync: eventsAsync,
+                    isDark: isDark,
+                    cityName: userCity,
+                  ),
+                  SizedBox(height: AppSizes.spacingXxxl),
+                ],
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
     );
   }
 }
 
 // ============================================
-// Section Header Widget
+// Popular Events Banner with Auto-Scroll (ENHANCED)
+// ============================================
+class _PopularEventsBanner extends ConsumerStatefulWidget {
+  final List events;
+  final bool isDark;
+  final StateNotifierProvider<FavoritesNotifier, Set<String>> favoritesProvider;
+
+  const _PopularEventsBanner({
+    required this.events,
+    required this.isDark,
+    required this.favoritesProvider,
+  });
+
+  @override
+  ConsumerState<_PopularEventsBanner> createState() =>
+      _PopularEventsBannerState();
+}
+
+class _PopularEventsBannerState extends ConsumerState<_PopularEventsBanner> {
+  late PageController _pageController;
+  late Future<void> _autoScroll;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+    _autoScroll = _startAutoScroll();
+  }
+
+  Future<void> _startAutoScroll() async {
+    await Future.delayed(const Duration(seconds: 1));
+    while (mounted) {
+      await Future.delayed(const Duration(seconds: 5));
+      if (mounted && _pageController.hasClients) {
+        final nextPage = (_pageController.page?.toInt() ?? 0) + 1;
+        final finalPage = nextPage % widget.events.length;
+        try {
+          await _pageController.animateToPage(
+            finalPage,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
+          );
+        } catch (e) {
+          // Silently handle if page is disposed
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final favorites = ref.watch(widget.favoritesProvider);
+
+    if (widget.events.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 240,
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (_) {},
+        itemCount: widget.events.length,
+        itemBuilder: (context, index) {
+          final event = widget.events[index];
+          if (event == null) return const SizedBox.shrink();
+
+          final isFavorite = favorites.contains(event.id ?? '');
+
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSizes.spacingMedium,
+              vertical: AppSizes.spacingSmall,
+            ),
+            child: _BannerCard(
+              event: event,
+              isDark: widget.isDark,
+              isFavorite: isFavorite,
+              onFavoriteTap: () {
+                try {
+                  ref
+                      .read(widget.favoritesProvider.notifier)
+                      .toggleFavorite(event.id ?? '');
+                  showFavoriteSnackbarSafe(
+                    context,
+                    isFavorite,
+                    event.title ?? 'Event',
+                  );
+                } catch (e) {
+                  // Handle error
+                }
+              },
+              onTap: () {
+                try {
+                  context.push('/event-detail', extra: event);
+                } catch (e) {
+                  // Handle error
+                }
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ============================================
+// Banner Card Widget
+// ============================================
+class _BannerCard extends StatelessWidget {
+  final dynamic event;
+  final bool isDark;
+  final bool isFavorite;
+  final VoidCallback onFavoriteTap;
+  final VoidCallback onTap;
+
+  const _BannerCard({
+    required this.event,
+    required this.isDark,
+    required this.isFavorite,
+    required this.onFavoriteTap,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime startTime = event.startTime ?? DateTime.now();
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final formattedDate = dateFormat.format(startTime);
+    final attendeesCount = (event.attendees?.length ?? 0).clamp(0, 999);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
+              child: Container(
+                color: AppColors.getSurface(isDark),
+                child: event.imageUrl != null && event.imageUrl!.isNotEmpty
+                    ? Image.network(
+                        event.imageUrl!,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              Icons.event_rounded,
+                              size: AppSizes.iconXxl,
+                              color: AppColors.getTextSecondary(
+                                isDark,
+                              ).withOpacity(0.5),
+                            ),
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.event_rounded,
+                          size: AppSizes.iconXxl,
+                          color: AppColors.getTextSecondary(
+                            isDark,
+                          ).withOpacity(0.5),
+                        ),
+                      ),
+              ),
+            ),
+
+            // Gradient Overlay
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                  ),
+                ),
+              ),
+            ),
+
+            // Favorite Button
+            Positioned(
+              top: AppSizes.paddingMedium,
+              right: AppSizes.paddingMedium,
+              child: GestureDetector(
+                onTap: onFavoriteTap,
+                child: Container(
+                  padding: EdgeInsets.all(AppSizes.paddingSmall),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : Colors.white,
+                    size: AppSizes.iconMedium,
+                  ),
+                ),
+              ),
+            ),
+
+            // Content at Bottom
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: EdgeInsets.all(AppSizes.paddingLarge),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.title ?? 'Event',
+                      style: AppTextStyles.headingSmall(isDark: false).copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: AppSizes.spacingSmall),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          color: Colors.white70,
+                          size: AppSizes.iconSmall,
+                        ),
+                        SizedBox(width: AppSizes.spacingXs),
+                        Expanded(
+                          child: Text(
+                            formattedDate,
+                            style: AppTextStyles.bodySmall(
+                              isDark: false,
+                            ).copyWith(color: Colors.white70),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppSizes.spacingSmall),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.people_rounded,
+                          color: Colors.white70,
+                          size: AppSizes.iconSmall,
+                        ),
+                        SizedBox(width: AppSizes.spacingXs),
+                        Expanded(
+                          child: Text(
+                            '$attendeesCount going',
+                            style: AppTextStyles.bodySmall(
+                              isDark: false,
+                            ).copyWith(color: Colors.white70),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Small Event Card List with Smooth Scrolling
+// ============================================
+class _SmallEventCardList extends ConsumerWidget {
+  final List events;
+  final bool isDark;
+  final StateNotifierProvider<FavoritesNotifier, Set<String>> favoritesProvider;
+
+  const _SmallEventCardList({
+    required this.events,
+    required this.isDark,
+    required this.favoritesProvider,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
+
+    if (events.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 260,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.screenPaddingHorizontal,
+        ),
+        itemCount: events.length,
+        itemBuilder: (context, index) {
+          final event = events[index];
+          if (event == null) return const SizedBox(width: 10);
+
+          final isFavorite = favorites.contains(event.id ?? '');
+
+          return Padding(
+            padding: EdgeInsets.only(
+              right: index == events.length - 1 ? 0 : AppSizes.spacingMedium,
+            ),
+            child: _SmallEventCard(
+              event: event,
+              isDark: isDark,
+              isFavorite: isFavorite,
+              onFavoriteTap: () {
+                try {
+                  ref
+                      .read(favoritesProvider.notifier)
+                      .toggleFavorite(event.id ?? '');
+                  showFavoriteSnackbarSafe(
+                    context,
+                    isFavorite,
+                    event.title ?? 'Event',
+                  );
+                } catch (e) {
+                  // Handle error
+                }
+              },
+              onTap: () {
+                try {
+                  context.push('/event-detail', extra: event);
+                } catch (e) {
+                  // Handle error
+                }
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ============================================
+// Small Event Card (MORE ROUNDED)
+// ============================================
+class _SmallEventCard extends StatelessWidget {
+  final dynamic event;
+  final bool isDark;
+  final bool isFavorite;
+  final VoidCallback onFavoriteTap;
+  final VoidCallback onTap;
+
+  const _SmallEventCard({
+    required this.event,
+    required this.isDark,
+    required this.isFavorite,
+    required this.onFavoriteTap,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime startTime = event.startTime ?? DateTime.now();
+    final dateFormat = DateFormat('MMM d');
+    final formattedDate = dateFormat.format(startTime);
+    final attendeesCount = (event.attendees?.length ?? 0).clamp(0, 999);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 160,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Container
+            SizedBox(
+              height: 180,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: AppColors.getSurface(isDark),
+                      child:
+                          event.imageUrl != null && event.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              event.imageUrl!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Icon(
+                                    Icons.event_rounded,
+                                    color: AppColors.getTextSecondary(
+                                      isDark,
+                                    ).withOpacity(0.5),
+                                  ),
+                                );
+                              },
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.event_rounded,
+                                color: AppColors.getTextSecondary(
+                                  isDark,
+                                ).withOpacity(0.5),
+                              ),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    top: AppSizes.paddingXs,
+                    left: AppSizes.paddingXs,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingSmall,
+                        vertical: AppSizes.paddingXs / 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
+                      ),
+                      child: Text(
+                        formattedDate,
+                        style: AppTextStyles.labelSmall(
+                          isDark: false,
+                        ).copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: AppSizes.paddingXs,
+                    right: AppSizes.paddingXs,
+                    child: GestureDetector(
+                      onTap: onFavoriteTap,
+                      child: Container(
+                        padding: EdgeInsets.all(AppSizes.paddingXs),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.white,
+                          size: AppSizes.iconSmall,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSizes.spacingXs),
+            Text(
+              event.title ?? 'Event',
+              style: AppTextStyles.titleSmall(
+                isDark: isDark,
+              ).copyWith(fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSizes.spacingXs / 2),
+            Text(
+              event.location ?? 'Unknown',
+              style: AppTextStyles.bodySmall(isDark: isDark),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSizes.spacingXs),
+            Row(
+              children: [
+                Icon(
+                  Icons.people_rounded,
+                  size: 12,
+                  color: AppColors.getPrimary(isDark),
+                ),
+                SizedBox(width: AppSizes.spacingXs / 2),
+                Expanded(
+                  child: Text(
+                    '$attendeesCount going',
+                    style: AppTextStyles.labelSmall(
+                      isDark: isDark,
+                    ).copyWith(color: AppColors.getPrimary(isDark)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Nearby Events Section (FIXED)
+// ============================================
+class _NearbyEventsSection extends ConsumerWidget {
+  final AsyncValue eventsAsync;
+  final bool isDark;
+
+  const _NearbyEventsSection({required this.eventsAsync, required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locationState = ref.watch(locationStateProvider);
+    final favorites = ref.watch(favoritesProvider);
+
+    if (locationState.isServiceDisabled) {
+      return _LocationServiceDisabledState(
+        isDark: isDark,
+        onEnableLocation: () async {
+          try {
+            final notifier = ref.read(locationStateProvider.notifier);
+            await notifier.openLocationSettings();
+            await Future.delayed(const Duration(seconds: 1));
+            notifier.retry();
+          } catch (e) {
+            // Handle error
+          }
+        },
+      );
+    }
+
+    if (locationState.isDenied) {
+      return _LocationDeniedState(
+        isDark: isDark,
+        onRetry: () async {
+          try {
+            final notifier = ref.read(locationStateProvider.notifier);
+            await notifier.openAppSettings();
+            await Future.delayed(const Duration(seconds: 1));
+            notifier.retry();
+          } catch (e) {
+            // Handle error
+          }
+        },
+      );
+    }
+
+    if (locationState.isLoading || locationState.position == null) {
+      return _SmallCardShimmer(isDark: isDark);
+    }
+
+    return eventsAsync.when(
+      data: (events) {
+        final nearbyEvents = (events ?? []).where((e) => e != null).toList();
+
+        if (nearbyEvents.isEmpty) {
+          return _EmptyState(
+            message: 'No nearby events found',
+            icon: Icons.location_off_rounded,
+            isDark: isDark,
+          );
+        }
+
+        // SAFE SORTING
+        nearbyEvents.sort((a, b) {
+          try {
+            final distA = Geolocator.distanceBetween(
+              locationState.position!.latitude,
+              locationState.position!.longitude,
+              (a?.latitude ?? 0.0),
+              (a?.longitude ?? 0.0),
+            );
+            final distB = Geolocator.distanceBetween(
+              locationState.position!.latitude,
+              locationState.position!.longitude,
+              (b?.latitude ?? 0.0),
+              (b?.longitude ?? 0.0),
+            );
+            return distA.compareTo(distB);
+          } catch (e) {
+            return 0;
+          }
+        });
+
+        return SizedBox(
+          height: 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSizes.screenPaddingHorizontal,
+            ),
+            itemCount: nearbyEvents.length,
+            itemBuilder: (context, index) {
+              final event = nearbyEvents[index];
+              if (event == null) return const SizedBox(width: 10);
+
+              final isFavorite = favorites.contains(event.id ?? '');
+
+              try {
+                final distanceMeters = Geolocator.distanceBetween(
+                  locationState.position!.latitude,
+                  locationState.position!.longitude,
+                  event.latitude ?? 0.0,
+                  event.longitude ?? 0.0,
+                );
+                final distanceKm = (distanceMeters / 1000).toStringAsFixed(1);
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    right: index == nearbyEvents.length - 1
+                        ? 0
+                        : AppSizes.spacingMedium,
+                  ),
+                  child: _NearbySmallEventCard(
+                    event: event,
+                    isDark: isDark,
+                    distanceKm: distanceKm,
+                    isFavorite: isFavorite,
+                    onFavoriteTap: () {
+                      try {
+                        ref
+                            .read(favoritesProvider.notifier)
+                            .toggleFavorite(event.id ?? '');
+                        showFavoriteSnackbarSafe(
+                          context,
+                          isFavorite,
+                          event.title ?? 'Event',
+                        );
+                      } catch (e) {
+                        // Handle error
+                      }
+                    },
+                    onTap: () {
+                      try {
+                        context.push('/event-detail', extra: event);
+                      } catch (e) {
+                        // Handle error
+                      }
+                    },
+                  ),
+                );
+              } catch (e) {
+                return const SizedBox(width: 10);
+              }
+            },
+          ),
+        );
+      },
+      loading: () => _SmallCardShimmer(isDark: isDark),
+      error: (_, __) => _ErrorState(
+        message: 'Failed to load nearby events',
+        onRetry: () => ref.refresh(approvedEventsStreamProvider),
+        isDark: isDark,
+      ),
+    );
+  }
+}
+
+// ============================================
+// Nearby Small Event Card with Distance
+// ============================================
+class _NearbySmallEventCard extends StatelessWidget {
+  final dynamic event;
+  final bool isDark;
+  final String distanceKm;
+  final bool isFavorite;
+  final VoidCallback onFavoriteTap;
+  final VoidCallback onTap;
+
+  const _NearbySmallEventCard({
+    required this.event,
+    required this.isDark,
+    required this.distanceKm,
+    required this.isFavorite,
+    required this.onFavoriteTap,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime startTime = event.startTime ?? DateTime.now();
+    final dateFormat = DateFormat('MMM d');
+    final formattedDate = dateFormat.format(startTime);
+    final distance = double.tryParse(distanceKm) ?? 0;
+    final Color distanceColor = distance <= 40 ? Colors.green : Colors.orange;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 160,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 180,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: AppColors.getSurface(isDark),
+                      child:
+                          event.imageUrl != null && event.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              event.imageUrl!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Icon(
+                                    Icons.event_rounded,
+                                    color: AppColors.getTextSecondary(
+                                      isDark,
+                                    ).withOpacity(0.5),
+                                  ),
+                                );
+                              },
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.event_rounded,
+                                color: AppColors.getTextSecondary(
+                                  isDark,
+                                ).withOpacity(0.5),
+                              ),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    top: AppSizes.paddingXs,
+                    left: AppSizes.paddingXs,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingSmall,
+                        vertical: AppSizes.paddingXs / 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
+                      ),
+                      child: Text(
+                        formattedDate,
+                        style: AppTextStyles.labelSmall(
+                          isDark: false,
+                        ).copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: AppSizes.paddingXs,
+                    right: AppSizes.paddingXs,
+                    child: GestureDetector(
+                      onTap: onFavoriteTap,
+                      child: Container(
+                        padding: EdgeInsets.all(AppSizes.paddingXs),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.white,
+                          size: AppSizes.iconSmall,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSizes.spacingXs),
+            Text(
+              event.title ?? 'Event',
+              style: AppTextStyles.titleSmall(
+                isDark: isDark,
+              ).copyWith(fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSizes.spacingXs / 2),
+            Text(
+              event.location ?? 'Unknown',
+              style: AppTextStyles.bodySmall(isDark: isDark),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSizes.spacingXs),
+            Row(
+              children: [
+                Icon(Icons.location_on_rounded, size: 12, color: distanceColor),
+                SizedBox(width: AppSizes.spacingXs / 2),
+                Expanded(
+                  child: Text(
+                    '$distanceKm km away',
+                    style: AppTextStyles.labelSmall(
+                      isDark: isDark,
+                    ).copyWith(color: distanceColor),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Top City Events Section (FIXED)
+// ============================================
+class _TopCityEventsSection extends ConsumerWidget {
+  final AsyncValue eventsAsync;
+  final bool isDark;
+  final String cityName;
+
+  const _TopCityEventsSection({
+    required this.eventsAsync,
+    required this.isDark,
+    required this.cityName,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
+
+    return eventsAsync.when(
+      data: (events) {
+        final allEvents = events ?? [];
+        List<dynamic> cityEvents = allEvents
+            .where(
+              (event) =>
+                  event != null &&
+                  event.location?.toLowerCase().contains(
+                        cityName.toLowerCase(),
+                      ) ==
+                      true,
+            )
+            .toList();
+
+        if (cityEvents.isEmpty) {
+          return _EmptyState(
+            message: 'No events in $cityName',
+            icon: Icons.location_off_rounded,
+            isDark: isDark,
+          );
+        }
+
+        try {
+          cityEvents.sort(
+            (a, b) => (b?.attendees?.length ?? 0).compareTo(
+              a?.attendees?.length ?? 0,
+            ),
+          );
+        } catch (e) {
+          // Fallback if sort fails
+        }
+
+        final topEvents = cityEvents.take(10).toList();
+
+        return SizedBox(
+          height: 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSizes.screenPaddingHorizontal,
+            ),
+            itemCount: topEvents.length,
+            itemBuilder: (context, index) {
+              final event = topEvents[index];
+              if (event == null) return const SizedBox(width: 10);
+
+              final isFavorite = favorites.contains(event.id ?? '');
+              final attendeesCount = (event.attendees?.length ?? 0).clamp(
+                0,
+                999,
+              );
+
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: index == topEvents.length - 1
+                      ? 0
+                      : AppSizes.spacingMedium,
+                ),
+                child: _TopCitySmallEventCard(
+                  event: event,
+                  isDark: isDark,
+                  rating: (4.5 + (attendeesCount % 5) * 0.1).toStringAsFixed(1),
+                  isFavorite: isFavorite,
+                  onFavoriteTap: () {
+                    try {
+                      ref
+                          .read(favoritesProvider.notifier)
+                          .toggleFavorite(event.id ?? '');
+                      showFavoriteSnackbarSafe(
+                        context,
+                        isFavorite,
+                        event.title ?? 'Event',
+                      );
+                    } catch (e) {
+                      // Handle error
+                    }
+                  },
+                  onTap: () {
+                    try {
+                      context.push('/event-detail', extra: event);
+                    } catch (e) {
+                      // Handle error
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => _SmallCardShimmer(isDark: isDark),
+      error: (_, __) => _EmptyState(
+        message: 'Failed to load events',
+        icon: Icons.error_outline_rounded,
+        isDark: isDark,
+      ),
+    );
+  }
+}
+
+// ============================================
+// Top City Small Event Card with Rating
+// ============================================
+class _TopCitySmallEventCard extends StatelessWidget {
+  final dynamic event;
+  final bool isDark;
+  final String rating;
+  final bool isFavorite;
+  final VoidCallback onFavoriteTap;
+  final VoidCallback onTap;
+
+  const _TopCitySmallEventCard({
+    required this.event,
+    required this.isDark,
+    required this.rating,
+    required this.isFavorite,
+    required this.onFavoriteTap,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime startTime = event.startTime ?? DateTime.now();
+    final dateFormat = DateFormat('MMM d');
+    final formattedDate = dateFormat.format(startTime);
+    final attendeesCount = (event.attendees?.length ?? 0).clamp(0, 999);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 160,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 180,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: AppColors.getSurface(isDark),
+                      child:
+                          event.imageUrl != null && event.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              event.imageUrl!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Icon(
+                                    Icons.event_rounded,
+                                    color: AppColors.getTextSecondary(
+                                      isDark,
+                                    ).withOpacity(0.5),
+                                  ),
+                                );
+                              },
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.event_rounded,
+                                color: AppColors.getTextSecondary(
+                                  isDark,
+                                ).withOpacity(0.5),
+                              ),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    top: AppSizes.paddingXs,
+                    left: AppSizes.paddingXs,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingSmall,
+                        vertical: AppSizes.paddingXs / 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
+                      ),
+                      child: Text(
+                        formattedDate,
+                        style: AppTextStyles.labelSmall(
+                          isDark: false,
+                        ).copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: AppSizes.paddingXs,
+                    right: AppSizes.paddingXs,
+                    child: GestureDetector(
+                      onTap: onFavoriteTap,
+                      child: Container(
+                        padding: EdgeInsets.all(AppSizes.paddingXs),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.white,
+                          size: AppSizes.iconSmall,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: AppSizes.paddingXs,
+                    right: AppSizes.paddingXs,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingXs,
+                        vertical: AppSizes.paddingXs / 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.star_rounded,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            rating,
+                            style: AppTextStyles.labelSmall(isDark: false)
+                                .copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSizes.spacingXs),
+            Text(
+              event.title ?? 'Event',
+              style: AppTextStyles.titleSmall(
+                isDark: isDark,
+              ).copyWith(fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSizes.spacingXs / 2),
+            Text(
+              event.location ?? 'Unknown',
+              style: AppTextStyles.bodySmall(isDark: isDark),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSizes.spacingXs),
+            Row(
+              children: [
+                Icon(
+                  Icons.people_rounded,
+                  size: 12,
+                  color: AppColors.getPrimary(isDark),
+                ),
+                SizedBox(width: AppSizes.spacingXs / 2),
+                Expanded(
+                  child: Text(
+                    '$attendeesCount going',
+                    style: AppTextStyles.labelSmall(
+                      isDark: isDark,
+                    ).copyWith(color: AppColors.getPrimary(isDark)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Section Header
 // ============================================
 class _SectionHeader extends StatelessWidget {
   final String title;
   final bool isDark;
+  final VoidCallback onViewAll;
 
-  const _SectionHeader({required this.title, required this.isDark});
+  const _SectionHeader({
+    required this.title,
+    required this.isDark,
+    required this.onViewAll,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -187,599 +1693,24 @@ class _SectionHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
+          TextButton(
+            onPressed: onViewAll,
             child: Text(
               title,
               style: AppTextStyles.headingxSmall(isDark: isDark),
             ),
           ),
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: AppSizes.iconMedium,
-            color: AppColors.getTextPrimary(isDark),
+          SizedBox(width: 10.w),
+          InkWell(
+            onTap: onViewAll,
+            child: Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: AppSizes.iconSmall,
+              color: AppColors.getTextPrimary(isDark),
+            ),
           ),
         ],
       ),
-    );
-  }
-}
-
-// ============================================
-// Event Horizontal List with Smooth Transitions
-// ============================================
-class _EventHorizontalList extends StatefulWidget {
-  final List events;
-  final bool isDark;
-
-  const _EventHorizontalList({required this.events, required this.isDark});
-
-  @override
-  State<_EventHorizontalList> createState() => _EventHorizontalListState();
-}
-
-class _EventHorizontalListState extends State<_EventHorizontalList> {
-  late PageController _pageController;
-  double _currentPage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(viewportFraction: 0.45, initialPage: 0);
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page ?? 0;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth * 0.42;
-
-    return SizedBox(
-      height: cardWidth * 1.7,
-      child: PageView.builder(
-        controller: _pageController,
-        physics: const BouncingScrollPhysics(),
-        itemCount: widget.events.length,
-        itemBuilder: (context, index) {
-          // Calculate scale and opacity based on scroll position
-          double scale = 1.0;
-          double opacity = 1.0;
-
-          if (_pageController.hasClients) {
-            double diff = (index - _currentPage).abs();
-
-            // Scale: cards get smaller as they move away from center
-            scale = 1.0 - (diff * 0.15).clamp(0.0, 0.3);
-
-            // Opacity: cards fade as they move away
-            opacity = 1.0 - (diff * 0.3).clamp(0.0, 0.5);
-          }
-
-          return TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            tween: Tween<double>(begin: scale, end: scale),
-            builder: (context, scale, child) {
-              return Transform.scale(
-                scale: scale,
-                child: Opacity(
-                  opacity: opacity,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSizes.spacingSmall,
-                      vertical: AppSizes.spacingMedium,
-                    ),
-                    child: _AirbnbEventCard(
-                      event: widget.events[index],
-                      isDark: widget.isDark,
-                      onTap: () => context.push(
-                        '/event-detail',
-                        extra: widget.events[index],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ============================================
-// Airbnb-Style Event Card
-// ============================================
-class _AirbnbEventCard extends StatelessWidget {
-  final dynamic event;
-  final bool isDark;
-  final String? distanceKm;
-  final VoidCallback onTap;
-
-  const _AirbnbEventCard({
-    required this.event,
-    required this.isDark,
-    this.distanceKm,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dateFormat = DateFormat('MMM d');
-    final formattedDate = dateFormat.format(event.startTime);
-    final attendeesCount = event.attendees.length;
-
-    // Determine distance color and icon
-    Color distanceColor = Colors.orange;
-    IconData distanceIcon = Icons.location_on_rounded;
-
-    if (distanceKm != null) {
-      final distance = double.tryParse(distanceKm!) ?? 0;
-      if (distance <= 40) {
-        distanceColor = Colors.green;
-        distanceIcon = Icons.near_me_rounded;
-      } else {
-        distanceColor = Colors.orange;
-        distanceIcon = Icons.location_on_rounded;
-      }
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image with bookmark and date badge
-          Expanded(
-            child: Stack(
-              children: [
-                _EventImage(event: event, isDark: isDark),
-                Positioned(
-                  top: AppSizes.paddingSmall,
-                  right: AppSizes.paddingSmall,
-                  child: _HeartBookmark(isDark: isDark),
-                ),
-                Positioned(
-                  top: AppSizes.paddingSmall,
-                  left: AppSizes.paddingSmall,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSizes.paddingMedium,
-                      vertical: AppSizes.paddingXs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.radiusSemiRound,
-                      ),
-                    ),
-                    child: Text(
-                      formattedDate,
-                      style: AppTextStyles.labelSmall(
-                        isDark: false,
-                      ).copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: AppSizes.spacingSmall),
-
-          // Event title (bold and big)
-          Text(
-            event.title,
-            style: AppTextStyles.titleSmall(
-              isDark: isDark,
-            ).copyWith(fontWeight: FontWeight.w900),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          SizedBox(height: AppSizes.spacingXs / 2),
-
-          // Location
-          Text(
-            event.location,
-            style: AppTextStyles.bodyMedium(isDark: isDark),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          SizedBox(height: AppSizes.spacingXs),
-
-          // Distance (if nearby) or Attendees count
-          if (distanceKm != null)
-            Row(
-              children: [
-                Icon(
-                  distanceIcon,
-                  size: AppSizes.iconSmall,
-                  color: distanceColor,
-                ),
-                SizedBox(width: AppSizes.spacingXs / 2),
-                Text(
-                  '$distanceKm km away',
-                  style: AppTextStyles.bodySmall(
-                    isDark: isDark,
-                  ).copyWith(fontWeight: FontWeight.w600, color: distanceColor),
-                ),
-              ],
-            )
-          else
-            Row(
-              children: [
-                Icon(
-                  Icons.people_rounded,
-                  size: AppSizes.iconSmall,
-                  color: AppColors.getPrimary(isDark),
-                ),
-                SizedBox(width: AppSizes.spacingXs / 2),
-                Text(
-                  '$attendeesCount going',
-                  style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.getPrimary(isDark),
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================
-// Event Image Widget
-// ============================================
-class _EventImage extends StatelessWidget {
-  final dynamic event;
-  final bool isDark;
-
-  const _EventImage({required this.event, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.black.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: AppColors.getSurface(isDark),
-          child: event.imageUrl != null
-              ? Image.network(
-                  event.imageUrl!,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return _ImageShimmer(isDark: isDark);
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(
-                      child: Icon(
-                        Icons.event_rounded,
-                        size: AppSizes.iconXxl,
-                        color: AppColors.getTextSecondary(
-                          isDark,
-                        ).withOpacity(0.5),
-                      ),
-                    );
-                  },
-                )
-              : Center(
-                  child: Icon(
-                    Icons.event_rounded,
-                    size: AppSizes.iconXxl,
-                    color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-// Heart Bookmark Button
-// ============================================
-class _HeartBookmark extends StatefulWidget {
-  final bool isDark;
-
-  const _HeartBookmark({required this.isDark});
-
-  @override
-  State<_HeartBookmark> createState() => _HeartBookmarkState();
-}
-
-class _HeartBookmarkState extends State<_HeartBookmark> {
-  bool isBookmarked = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => setState(() => isBookmarked = !isBookmarked),
-      child: Container(
-        padding: EdgeInsets.all(AppSizes.paddingSmall),
-        child: Icon(
-          isBookmarked ? Icons.favorite : Icons.favorite_border,
-          size: AppSizes.iconMedium,
-          color: isBookmarked ? Colors.red : Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-// Nearby Events Section with Smooth Transitions
-// ============================================
-class _NearbyEventsSection extends ConsumerStatefulWidget {
-  final AsyncValue eventsAsync;
-  final bool isDark;
-
-  const _NearbyEventsSection({required this.eventsAsync, required this.isDark});
-
-  @override
-  ConsumerState<_NearbyEventsSection> createState() =>
-      _NearbyEventsSectionState();
-}
-
-class _NearbyEventsSectionState extends ConsumerState<_NearbyEventsSection> {
-  late PageController _pageController;
-  double _currentPage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(viewportFraction: 0.45, initialPage: 0);
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page ?? 0;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final locationState = ref.watch(locationStateProvider);
-
-    if (locationState.isServiceDisabled) {
-      return _LocationServiceDisabledState(
-        isDark: widget.isDark,
-        onEnableLocation: () async {
-          final notifier = ref.read(locationStateProvider.notifier);
-          await notifier.openLocationSettings();
-          await Future.delayed(const Duration(seconds: 1));
-          notifier.retry();
-        },
-      );
-    }
-
-    if (locationState.isDenied) {
-      return _LocationDeniedState(
-        isDark: widget.isDark,
-        onRetry: () async {
-          final notifier = ref.read(locationStateProvider.notifier);
-          await notifier.openAppSettings();
-          await Future.delayed(const Duration(seconds: 1));
-          notifier.retry();
-        },
-      );
-    }
-
-    if (locationState.isLoading || locationState.position == null) {
-      return _EventListShimmer(isDark: widget.isDark);
-    }
-
-    return widget.eventsAsync.when(
-      data: (events) {
-        final nearbyEvents = events.toList();
-
-        nearbyEvents.sort((a, b) {
-          double distA = Geolocator.distanceBetween(
-            locationState.position!.latitude,
-            locationState.position!.longitude,
-            a.latitude ?? 0.0,
-            a.longitude ?? 0.0,
-          );
-          double distB = Geolocator.distanceBetween(
-            locationState.position!.latitude,
-            locationState.position!.longitude,
-            b.latitude ?? 0.0,
-            b.longitude ?? 0.0,
-          );
-          return distA.compareTo(distB);
-        });
-
-        if (nearbyEvents.isEmpty) {
-          return _EmptyState(
-            message: 'No nearby events found',
-            icon: Icons.location_off_rounded,
-            isDark: widget.isDark,
-          );
-        }
-
-        final screenWidth = MediaQuery.of(context).size.width;
-        final cardWidth = screenWidth * 0.42;
-
-        return SizedBox(
-          height: cardWidth * 1.7,
-          child: PageView.builder(
-            controller: _pageController,
-            physics: const BouncingScrollPhysics(),
-            itemCount: nearbyEvents.length,
-            itemBuilder: (context, index) {
-              final event = nearbyEvents[index];
-              final distanceMeters = Geolocator.distanceBetween(
-                locationState.position!.latitude,
-                locationState.position!.longitude,
-                event.latitude ?? 0.0,
-                event.longitude ?? 0.0,
-              );
-              final distanceKm = (distanceMeters / 1000).toStringAsFixed(1);
-
-              // Calculate scale and opacity based on scroll position
-              double scale = 1.0;
-              double opacity = 1.0;
-
-              if (_pageController.hasClients) {
-                double diff = (index - _currentPage).abs();
-                scale = 1.0 - (diff * 0.15).clamp(0.0, 0.3);
-                opacity = 1.0 - (diff * 0.3).clamp(0.0, 0.5);
-              }
-
-              return TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                tween: Tween<double>(begin: scale, end: scale),
-                builder: (context, scale, child) {
-                  return Transform.scale(
-                    scale: scale,
-                    child: Opacity(
-                      opacity: opacity,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSizes.spacingSmall,
-                          vertical: AppSizes.spacingMedium,
-                        ),
-                        child: _AirbnbEventCard(
-                          event: event,
-                          isDark: widget.isDark,
-                          distanceKm: distanceKm,
-                          onTap: () =>
-                              context.push('/event-detail', extra: event),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        );
-      },
-      loading: () => _EventListShimmer(isDark: widget.isDark),
-      error: (error, _) => _ErrorState(
-        message: 'Failed to load nearby events',
-        onRetry: () => ref.refresh(approvedEventsStreamProvider),
-        isDark: widget.isDark,
-      ),
-    );
-  }
-}
-
-// ============================================
-// Event List Shimmer
-// ============================================
-class _EventListShimmer extends StatelessWidget {
-  final bool isDark;
-
-  const _EventListShimmer({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth * 0.42;
-
-    return SizedBox(
-      height: cardWidth * 1.65,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.screenPaddingHorizontal,
-        ),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: EdgeInsets.only(right: AppSizes.spacingMedium),
-            child: SizedBox(
-              width: cardWidth,
-              child: Shimmer.fromColors(
-                baseColor: AppColors.getShimmerBase(isDark),
-                highlightColor: AppColors.getShimmerHighlight(isDark),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.getSurface(isDark),
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMedium,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: AppSizes.spacingSmall),
-                    Container(
-                      width: double.infinity,
-                      height: AppSizes.fontLarge,
-                      color: AppColors.getSurface(isDark),
-                    ),
-                    SizedBox(height: AppSizes.spacingXs),
-                    Container(
-                      width: cardWidth * 0.7,
-                      height: AppSizes.fontMedium,
-                      color: AppColors.getSurface(isDark),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ============================================
-// Image Shimmer
-// ============================================
-class _ImageShimmer extends StatelessWidget {
-  final bool isDark;
-
-  const _ImageShimmer({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: AppColors.getShimmerBase(isDark),
-      highlightColor: AppColors.getShimmerHighlight(isDark),
-      child: Container(color: AppColors.getSurface(isDark)),
     );
   }
 }
@@ -834,7 +1765,7 @@ class _LocationServiceDisabledState extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onEnableLocation,
             icon: Icon(Icons.location_on_rounded, size: AppSizes.iconSmall),
-            label: Text('Turn On Location'),
+            label: const Text('Turn On Location'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.getPrimary(isDark),
               foregroundColor: Colors.white,
@@ -897,7 +1828,7 @@ class _LocationDeniedState extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: Icon(Icons.settings_rounded, size: AppSizes.iconSmall),
-            label: Text('Open Settings'),
+            label: const Text('Open Settings'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.getPrimary(isDark),
               foregroundColor: Colors.white,
@@ -908,6 +1839,94 @@ class _LocationDeniedState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Banner Shimmer
+// ============================================
+class _BannerShimmer extends StatelessWidget {
+  final bool isDark;
+
+  const _BannerShimmer({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 240,
+      child: Shimmer.fromColors(
+        baseColor: AppColors.getShimmerBase(isDark),
+        highlightColor: AppColors.getShimmerHighlight(isDark),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+          decoration: BoxDecoration(
+            color: AppColors.getSurface(isDark),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Small Card Shimmer
+// ============================================
+class _SmallCardShimmer extends StatelessWidget {
+  final bool isDark;
+
+  const _SmallCardShimmer({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 260,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.screenPaddingHorizontal,
+        ),
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(right: AppSizes.spacingMedium),
+            child: SizedBox(
+              width: 160,
+              child: Shimmer.fromColors(
+                baseColor: AppColors.getShimmerBase(isDark),
+                highlightColor: AppColors.getShimmerHighlight(isDark),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurface(isDark),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: AppSizes.spacingXs),
+                    Container(
+                      width: double.infinity,
+                      height: 12,
+                      color: AppColors.getSurface(isDark),
+                    ),
+                    SizedBox(height: AppSizes.spacingXs),
+                    Container(
+                      width: 100,
+                      height: 10,
+                      color: AppColors.getSurface(isDark),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -929,21 +1948,19 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingXxl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: AppSizes.iconXxl,
-              color: AppColors.getTextSecondary(isDark),
-            ),
-            SizedBox(height: AppSizes.spacingLarge),
-            Text(message, style: AppTextStyles.bodyMedium(isDark: isDark)),
-          ],
-        ),
+    return Padding(
+      padding: EdgeInsets.all(AppSizes.paddingXxl),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: AppSizes.iconXxl,
+            color: AppColors.getTextSecondary(isDark),
+          ),
+          SizedBox(height: AppSizes.spacingLarge),
+          Text(message, style: AppTextStyles.bodyMedium(isDark: isDark)),
+        ],
       ),
     );
   }
@@ -965,27 +1982,25 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingXxl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: AppSizes.iconXxl,
-              color: AppColors.getError(isDark),
-            ),
-            SizedBox(height: AppSizes.spacingLarge),
-            Text(
-              message,
-              style: AppTextStyles.bodyMedium(isDark: isDark),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: AppSizes.spacingLarge),
-            TextButton(onPressed: onRetry, child: Text('Try Again')),
-          ],
-        ),
+    return Padding(
+      padding: EdgeInsets.all(AppSizes.paddingXxl),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: AppSizes.iconXxl,
+            color: AppColors.getError(isDark),
+          ),
+          SizedBox(height: AppSizes.spacingLarge),
+          Text(
+            message,
+            style: AppTextStyles.bodyMedium(isDark: isDark),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: AppSizes.spacingLarge),
+          TextButton(onPressed: onRetry, child: const Text('Try Again')),
+        ],
       ),
     );
   }
