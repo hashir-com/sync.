@@ -29,22 +29,22 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     const Spacer(flex: 1),
                     const LoginForm(),
-                    const SizedBox(height: 20),
+                    SizedBox(height: AppSizes.spacingLarge),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Divider(
                             color: AppColors.splashText,
-                            thickness: 1,
+                            thickness: AppSizes.dividerThickness,
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
                           child: Text(
                             "OR",
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: AppSizes.fontMedium,
                               color: AppColors.splashText,
                               fontWeight: FontWeight.w500,
                             ),
@@ -53,7 +53,7 @@ class LoginScreen extends StatelessWidget {
                         Expanded(
                           child: Divider(
                             color: AppColors.splashText,
-                            thickness: 1,
+                            thickness: AppSizes.dividerThickness,
                           ),
                         ),
                       ],
@@ -61,9 +61,9 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     const SocialButtons(),
                     const Spacer(flex: 1),
-                    const SizedBox(height: 20),
+                    SizedBox(height: AppSizes.spacingLarge),
                     const Center(child: SignupText()),
-                    const SizedBox(height: 20),
+                    SizedBox(height: AppSizes.spacingLarge),
                   ],
                 ),
               ),

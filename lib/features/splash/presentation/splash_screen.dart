@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/features/splash/presentation/widgets/splash_logo.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -74,14 +76,14 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.splash,
       body: Stack(
         children: [
           AnimatedContainer(
             duration: const Duration(seconds: 0),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color.fromARGB(255, 0, 2, 129), Colors.black],
+                colors: [AppColors.splash, AppColors.backgroundDark],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

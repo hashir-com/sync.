@@ -70,7 +70,7 @@ class AppSizes {
   static double get inputBorderWidth => 1.0; // Border width remains static
   static double get inputBorderWidthFocused => 2.0;
 
-  // Typography Sizes
+  // Typography Sizes - Responsive
   static double get fontXs => 10.sp;
   static double get fontSmall => 12.sp;
   static double get fontMedium => 14.sp;
@@ -79,12 +79,12 @@ class AppSizes {
   static double get fontXxl => 20.sp;
   static double get fontXxxl => 24.sp;
 
-  // Display text sizes
+  // Display text sizes - Responsive
   static double get fontDisplay1 => 32.sp;
   static double get fontDisplay2 => 28.sp;
   static double get fontDisplay3 => 24.sp;
 
-  // Headline sizes
+  // Headline sizes - Responsive
   static double get fontHeadline1 => 22.sp;
   static double get fontHeadline2 => 20.sp;
   static double get fontHeadline3 => 18.sp;
