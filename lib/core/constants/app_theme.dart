@@ -3,9 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// ============================================
 // Theme Mode Provider
-// ============================================
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 
@@ -32,17 +31,14 @@ class ThemeNotifier extends StateNotifier<bool> {
   }
 }
 
-
-// ============================================
 // App Theme Configuration
-// ============================================
+
 class AppTheme {
   // Prevent instantiation
   AppTheme._();
 
-  // ============================================
   // Light Theme
-  // ============================================
+
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
@@ -81,9 +77,7 @@ class AppTheme {
       color: AppColors.cardLight,
       elevation: 2,
       shadowColor: AppColors.shadowLight,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
 
@@ -94,13 +88,8 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 2,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
     ),
 
@@ -109,10 +98,7 @@ class AppTheme {
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        textStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       ),
     ),
 
@@ -122,13 +108,8 @@ class AppTheme {
         foregroundColor: AppColors.primary,
         side: const BorderSide(color: AppColors.primary, width: 1.5),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       ),
     ),
 
@@ -158,14 +139,13 @@ class AppTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       labelStyle: const TextStyle(color: AppColors.textSecondaryLight),
-      hintStyle: TextStyle(color: AppColors.textSecondaryLight.withOpacity(0.6)),
+      hintStyle: TextStyle(
+        color: AppColors.textSecondaryLight.withOpacity(0.6),
+      ),
     ),
 
     // Icon Theme
-    iconTheme: const IconThemeData(
-      color: AppColors.textPrimaryLight,
-      size: 24,
-    ),
+    iconTheme: const IconThemeData(color: AppColors.textPrimaryLight, size: 24),
 
     // Divider Theme
     dividerTheme: const DividerThemeData(
@@ -287,9 +267,7 @@ class AppTheme {
       labelStyle: const TextStyle(color: AppColors.textPrimaryLight),
       secondaryLabelStyle: const TextStyle(color: Colors.white),
       side: const BorderSide(color: AppColors.borderLight),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     ),
 
@@ -297,9 +275,7 @@ class AppTheme {
     snackBarTheme: SnackBarThemeData(
       backgroundColor: AppColors.textPrimaryLight,
       contentTextStyle: const TextStyle(color: Colors.white),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       behavior: SnackBarBehavior.floating,
       elevation: 6,
     ),
@@ -308,9 +284,7 @@ class AppTheme {
     dialogTheme: DialogThemeData(
       backgroundColor: AppColors.cardLight,
       elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
 
     // Progress Indicator Theme
@@ -343,9 +317,7 @@ class AppTheme {
         return Colors.transparent;
       }),
       checkColor: WidgetStateProperty.all(Colors.white),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
 
     // Radio Theme
@@ -359,9 +331,8 @@ class AppTheme {
     ),
   );
 
-  // ============================================
   // Dark Theme
-  // ============================================
+
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
@@ -400,9 +371,7 @@ class AppTheme {
       color: AppColors.cardDark,
       elevation: 4,
       shadowColor: AppColors.shadowDark,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
 
@@ -413,13 +382,8 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 2,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
     ),
 
@@ -428,10 +392,7 @@ class AppTheme {
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primaryVariant,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        textStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       ),
     ),
 
@@ -441,13 +402,8 @@ class AppTheme {
         foregroundColor: AppColors.primaryVariant,
         side: const BorderSide(color: AppColors.primaryVariant, width: 1.5),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       ),
     ),
 
@@ -481,10 +437,7 @@ class AppTheme {
     ),
 
     // Icon Theme
-    iconTheme: const IconThemeData(
-      color: AppColors.textPrimaryDark,
-      size: 24,
-    ),
+    iconTheme: const IconThemeData(color: AppColors.textPrimaryDark, size: 24),
 
     // Divider Theme
     dividerTheme: const DividerThemeData(
@@ -606,9 +559,7 @@ class AppTheme {
       labelStyle: const TextStyle(color: AppColors.textPrimaryDark),
       secondaryLabelStyle: const TextStyle(color: Colors.white),
       side: const BorderSide(color: AppColors.borderDark),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     ),
 
@@ -616,9 +567,7 @@ class AppTheme {
     snackBarTheme: SnackBarThemeData(
       backgroundColor: AppColors.surfaceDark,
       contentTextStyle: const TextStyle(color: AppColors.textPrimaryDark),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       behavior: SnackBarBehavior.floating,
       elevation: 6,
     ),
@@ -627,9 +576,7 @@ class AppTheme {
     dialogTheme: DialogThemeData(
       backgroundColor: AppColors.cardDark,
       elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
 
     // Progress Indicator Theme
@@ -662,9 +609,7 @@ class AppTheme {
         return Colors.transparent;
       }),
       checkColor: WidgetStateProperty.all(Colors.white),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
 
     // Radio Theme

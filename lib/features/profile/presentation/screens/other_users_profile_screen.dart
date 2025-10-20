@@ -8,22 +8,17 @@ import 'package:sync_event/core/util/theme_util.dart';
 import 'package:intl/intl.dart';
 import 'package:sync_event/features/profile/presentation/providers/other_users_provider.dart';
 
-// ============================================
 // User Profile Screen
-// ============================================
 
 class UserProfileScreen extends ConsumerWidget {
   final dynamic user; // The user object passed from search
 
-  const UserProfileScreen({
-    super.key,
-    required this.user,
-  });
+  const UserProfileScreen({super.key, required this.user});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ThemeUtils.isDark(context);
-    
+
     // Get user's events (events they're hosting)
     final userEventsAsync = ref.watch(userHostedEventsProvider(user.id));
 
@@ -57,7 +52,7 @@ class UserProfileScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  
+
                   // Profile Content
                   SafeArea(
                     child: Column(
@@ -81,7 +76,9 @@ class UserProfileScreen extends ConsumerWidget {
                               ],
                               image: user.profileImageUrl != null
                                   ? DecorationImage(
-                                      image: NetworkImage(user.profileImageUrl!),
+                                      image: NetworkImage(
+                                        user.profileImageUrl!,
+                                      ),
                                       fit: BoxFit.cover,
                                     )
                                   : null,
@@ -95,28 +92,29 @@ class UserProfileScreen extends ConsumerWidget {
                                 : null,
                           ),
                         ),
-                        
+
                         SizedBox(height: AppSizes.spacingMedium),
-                        
+
                         // User Name
                         Text(
                           user.name,
-                          style: AppTextStyles.headingMedium(isDark: false).copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: AppTextStyles.headingMedium(isDark: false)
+                              .copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
-                        
+
                         SizedBox(height: AppSizes.spacingXs),
-                        
+
                         // User Email
                         Text(
                           user.email,
-                          style: AppTextStyles.bodyMedium(isDark: false).copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                          ),
+                          style: AppTextStyles.bodyMedium(
+                            isDark: false,
+                          ).copyWith(color: Colors.white.withOpacity(0.9)),
                         ),
-                        
+
                         SizedBox(height: AppSizes.spacingLarge),
                       ],
                     ),
@@ -131,7 +129,7 @@ class UserProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 SizedBox(height: AppSizes.spacingLarge),
-                
+
                 // Action Buttons
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingXl),
@@ -152,7 +150,9 @@ class UserProfileScreen extends ConsumerWidget {
                               vertical: AppSizes.paddingLarge,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusLarge,
+                              ),
                             ),
                             elevation: 0,
                           ),
@@ -172,7 +172,9 @@ class UserProfileScreen extends ConsumerWidget {
                             vertical: AppSizes.paddingLarge,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusLarge,
+                            ),
                             side: BorderSide(
                               color: AppColors.getBorder(isDark),
                             ),
@@ -184,18 +186,18 @@ class UserProfileScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                
+
                 SizedBox(height: AppSizes.spacingXl),
-                
+
                 // Stats Section
                 _StatsSection(user: user, isDark: isDark),
-                
+
                 SizedBox(height: AppSizes.spacingXl),
-                
+
                 // About Section
                 if (user.bio != null && user.bio!.isNotEmpty)
                   _AboutSection(user: user, isDark: isDark),
-                
+
                 // Events Hosted Section
                 Padding(
                   padding: EdgeInsets.all(AppSizes.paddingXl),
@@ -207,9 +209,9 @@ class UserProfileScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Events Hosted',
-                            style: AppTextStyles.titleLarge(isDark: isDark).copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTextStyles.titleLarge(
+                              isDark: isDark,
+                            ).copyWith(fontWeight: FontWeight.w700),
                           ),
                           Container(
                             padding: EdgeInsets.symmetric(
@@ -217,16 +219,21 @@ class UserProfileScreen extends ConsumerWidget {
                               vertical: AppSizes.paddingSmall,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.getPrimary(isDark).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusRound),
+                              color: AppColors.getPrimary(
+                                isDark,
+                              ).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusRound,
+                              ),
                             ),
                             child: userEventsAsync.when(
                               data: (events) => Text(
                                 '${events.length}',
-                                style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
-                                  color: AppColors.getPrimary(isDark),
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: AppTextStyles.labelMedium(isDark: isDark)
+                                    .copyWith(
+                                      color: AppColors.getPrimary(isDark),
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
                               loading: () => SizedBox(
                                 width: 16,
@@ -240,10 +247,11 @@ class UserProfileScreen extends ConsumerWidget {
                               ),
                               error: (_, __) => Text(
                                 '0',
-                                style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
-                                  color: AppColors.getPrimary(isDark),
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: AppTextStyles.labelMedium(isDark: isDark)
+                                    .copyWith(
+                                      color: AppColors.getPrimary(isDark),
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
                             ),
                           ),
@@ -323,18 +331,13 @@ class UserProfileScreen extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Stats Section Widget
-// ============================================
 
 class _StatsSection extends StatelessWidget {
   final dynamic user;
   final bool isDark;
 
-  const _StatsSection({
-    required this.user,
-    required this.isDark,
-  });
+  const _StatsSection({required this.user, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -363,22 +366,14 @@ class _StatsSection extends StatelessWidget {
             value: '${user.hostedEventsCount ?? 0}',
             isDark: isDark,
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: AppColors.getBorder(isDark),
-          ),
+          Container(width: 1, height: 40, color: AppColors.getBorder(isDark)),
           _StatItem(
             icon: Icons.people_rounded,
             label: 'Followers',
             value: '${user.followersCount ?? 0}',
             isDark: isDark,
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: AppColors.getBorder(isDark),
-          ),
+          Container(width: 1, height: 40, color: AppColors.getBorder(isDark)),
           _StatItem(
             icon: Icons.star_rounded,
             label: 'Rating',
@@ -408,42 +403,33 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(
-          icon,
-          color: AppColors.getPrimary(isDark),
-          size: 28,
-        ),
+        Icon(icon, color: AppColors.getPrimary(isDark), size: 28),
         SizedBox(height: AppSizes.spacingSmall),
         Text(
           value,
-          style: AppTextStyles.titleMedium(isDark: isDark).copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.titleMedium(
+            isDark: isDark,
+          ).copyWith(fontWeight: FontWeight.w700),
         ),
         SizedBox(height: AppSizes.spacingXs),
         Text(
           label,
-          style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-            color: AppColors.getTextSecondary(isDark),
-          ),
+          style: AppTextStyles.bodySmall(
+            isDark: isDark,
+          ).copyWith(color: AppColors.getTextSecondary(isDark)),
         ),
       ],
     );
   }
 }
 
-// ============================================
 // About Section Widget
-// ============================================
 
 class _AboutSection extends StatelessWidget {
   final dynamic user;
   final bool isDark;
 
-  const _AboutSection({
-    required this.user,
-    required this.isDark,
-  });
+  const _AboutSection({required this.user, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -476,18 +462,18 @@ class _AboutSection extends StatelessWidget {
               SizedBox(width: AppSizes.spacingSmall),
               Text(
                 'About',
-                style: AppTextStyles.titleMedium(isDark: isDark).copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.titleMedium(
+                  isDark: isDark,
+                ).copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
           SizedBox(height: AppSizes.spacingMedium),
           Text(
             user.bio ?? 'No bio available',
-            style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-              height: 1.5,
-            ),
+            style: AppTextStyles.bodyMedium(
+              isDark: isDark,
+            ).copyWith(height: 1.5),
           ),
           if (user.interests != null && user.interests!.isNotEmpty) ...[
             SizedBox(height: AppSizes.spacingLarge),
@@ -524,9 +510,7 @@ class _AboutSection extends StatelessWidget {
   }
 }
 
-// ============================================
 // User Event Card Widget
-// ============================================
 
 class _UserEventCard extends StatelessWidget {
   final dynamic event;
@@ -553,10 +537,7 @@ class _UserEventCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.getCard(isDark),
             borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-            border: Border.all(
-              color: AppColors.getBorder(isDark),
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.getBorder(isDark), width: 1),
           ),
           child: Row(
             children: [
@@ -587,9 +568,9 @@ class _UserEventCard extends StatelessWidget {
                     children: [
                       Text(
                         event.title,
-                        style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.bodyMedium(
+                          isDark: isDark,
+                        ).copyWith(fontWeight: FontWeight.w600),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -604,9 +585,10 @@ class _UserEventCard extends StatelessWidget {
                           SizedBox(width: 4),
                           Text(
                             dateFormat.format(event.startTime),
-                            style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-                              color: AppColors.getTextSecondary(isDark),
-                            ),
+                            style: AppTextStyles.bodySmall(isDark: isDark)
+                                .copyWith(
+                                  color: AppColors.getTextSecondary(isDark),
+                                ),
                           ),
                         ],
                       ),
@@ -621,10 +603,11 @@ class _UserEventCard extends StatelessWidget {
                           SizedBox(width: 4),
                           Text(
                             '${event.attendees.length} attendees',
-                            style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-                              color: AppColors.getPrimary(isDark),
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTextStyles.bodySmall(isDark: isDark)
+                                .copyWith(
+                                  color: AppColors.getPrimary(isDark),
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ],
                       ),
@@ -663,9 +646,7 @@ class _UserEventCard extends StatelessWidget {
   }
 }
 
-// ============================================
 // Empty Events State Widget
-// ============================================
 
 class _EmptyEventsState extends StatelessWidget {
   final bool isDark;
@@ -693,16 +674,16 @@ class _EmptyEventsState extends StatelessWidget {
           SizedBox(height: AppSizes.spacingLarge),
           Text(
             'No events hosted yet',
-            style: AppTextStyles.titleMedium(isDark: isDark).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.titleMedium(
+              isDark: isDark,
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
           SizedBox(height: AppSizes.spacingSmall),
           Text(
             'This user hasn\'t created any events',
-            style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-              color: AppColors.getTextSecondary(isDark),
-            ),
+            style: AppTextStyles.bodyMedium(
+              isDark: isDark,
+            ).copyWith(color: AppColors.getTextSecondary(isDark)),
             textAlign: TextAlign.center,
           ),
         ],
@@ -710,4 +691,3 @@ class _EmptyEventsState extends StatelessWidget {
     );
   }
 }
-

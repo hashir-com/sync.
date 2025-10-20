@@ -11,9 +11,8 @@ import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/widgets/event_section.dart';
 
-// ============================================
 // Favorites Page
-// ============================================
+
 class FavoritesPage extends ConsumerWidget {
   const FavoritesPage({super.key});
 
@@ -107,9 +106,8 @@ class FavoritesPage extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Favorite Event Card (Full Width)
-// ============================================
+
 class _FavoriteEventCard extends StatelessWidget {
   final EventEntity event;
   final bool isDark;
@@ -410,9 +408,8 @@ class _FavoriteEventCard extends StatelessWidget {
   }
 }
 
-// ============================================
 // Empty Favorites State
-// ============================================
+
 class _EmptyFavoritesState extends StatelessWidget {
   final bool isDark;
 
@@ -466,9 +463,8 @@ class _EmptyFavoritesState extends StatelessWidget {
   }
 }
 
-// ============================================
 // Favorites Shimmer Loader
-// ============================================
+
 class _FavoritesShimmer extends StatelessWidget {
   final bool isDark;
 
@@ -502,9 +498,8 @@ class _FavoritesShimmer extends StatelessWidget {
   }
 }
 
-// ============================================
 // Favorites Error State
-// ============================================
+
 class _FavoritesErrorState extends StatelessWidget {
   final bool isDark;
   final VoidCallback onRetry;
@@ -559,9 +554,8 @@ class _FavoritesErrorState extends StatelessWidget {
   }
 }
 
-// ============================================
 // Snackbar Helper
-// ============================================
+
 void _showRemoveSnackbar(BuildContext context, bool isDark) {
   if (!context.mounted) return;
 

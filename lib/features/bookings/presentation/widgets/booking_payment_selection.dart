@@ -11,7 +11,6 @@ import 'package:sync_event/features/auth/presentation/providers/auth_notifier.da
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_form_provider.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_provider.dart';
-import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/razorpay_payment_widget.dart';
 import 'package:sync_event/features/email/services/email_services.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';

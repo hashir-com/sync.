@@ -5,7 +5,6 @@ import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_form_provider.dart';
-import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 
 class BookingTicketSelectionCard extends ConsumerWidget {

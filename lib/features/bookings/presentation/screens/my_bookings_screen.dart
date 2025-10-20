@@ -733,7 +733,8 @@ class MyBookingsScreen extends ConsumerWidget {
     final reason = await _showCancellationReasonDialog(context, isDark);
     if (reason == null) return;
 
-    final refundType = await _showRefundMethodDialog(context);
+    //  Pass isDark here
+    final refundType = await _showRefundMethodDialog(context, isDark);
     if (refundType == null) return;
 
     await _processCancellation(
@@ -778,10 +779,15 @@ class MyBookingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<String?> _showRefundMethodDialog(BuildContext context) async {
+  Future<String?> _showRefundMethodDialog(
+    BuildContext context,
+    bool isDark, //  Add isDark parameter
+  ) async {
     return showModalBottomSheet<String>(
       context: context,
-      builder: (context) => RefundMethodDialog(),
+      isScrollControlled: true, //  Add this
+      backgroundColor: Colors.transparent, //  Add this
+      builder: (context) => RefundMethodDialog(isDark: isDark), //  Pass isDark
     );
   }
 

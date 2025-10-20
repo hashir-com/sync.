@@ -6,22 +6,23 @@ class AppSizes {
   // Prevent instantiation
   AppSizes._();
 
-  // ============================================
   // Responsive Breakpoints
-  // ============================================
+
   static const double mobileBreakpoint = 600;
   static const double tabletBreakpoint = 900;
   static const double desktopBreakpoint = 1200;
   static const double largeDesktopBreakpoint = 1600;
 
-  // ============================================
   // Responsive Spacing & Padding
-  // ============================================
+
   static double getSpacing(BuildContext context, {double baseSpacing = 16}) {
     return ResponsiveUtil.getSpacing(context, baseSpacing: baseSpacing);
   }
 
-  static double getHeightSpacing(BuildContext context, {double baseSpacing = 16}) {
+  static double getHeightSpacing(
+    BuildContext context, {
+    double baseSpacing = 16,
+  }) {
     return ResponsiveUtil.getHeightSpacing(context, baseSpacing: baseSpacing);
   }
 
@@ -41,9 +42,8 @@ class AppSizes {
     return ResponsiveUtil.getResponsiveScreenPadding(context);
   }
 
-  // ============================================
   // Legacy Spacing (for backward compatibility)
-  // ============================================
+
   static double get spacingXs => 4.w;
   static double get spacingSmall => 8.w;
   static double get spacingMedium => 12.w;
@@ -61,10 +61,12 @@ class AppSizes {
   static double get paddingXxl => 24.w;
   static double get paddingXxxl => 32.w;
 
-  // ============================================
   // Responsive Border Radius
-  // ============================================
-  static double getBorderRadius(BuildContext context, {double baseRadius = 12}) {
+
+  static double getBorderRadius(
+    BuildContext context, {
+    double baseRadius = 12,
+  }) {
     return ResponsiveUtil.getBorderRadius(context, baseRadius: baseRadius);
   }
 
@@ -79,9 +81,8 @@ class AppSizes {
   static double get radiusSemiRound => 70.r;
   static double get radiusRound => 100.r;
 
-  // ============================================
   // Responsive Button Sizes
-  // ============================================
+
   static double getButtonHeight(BuildContext context) {
     return ResponsiveUtil.getButtonHeight(context);
   }
@@ -113,9 +114,8 @@ class AppSizes {
   static double get buttonPaddingHorizontal => 24.w;
   static double get buttonPaddingVertical => 12.h;
 
-  // ============================================
   // Responsive Icon Sizes
-  // ============================================
+
   static double getIconSize(BuildContext context, {double baseSize = 24}) {
     return ResponsiveUtil.getIconSize(context, baseSize: baseSize);
   }
@@ -128,9 +128,8 @@ class AppSizes {
   static double get iconXl => 40.sp;
   static double get iconXxl => 48.sp;
 
-  // ============================================
   // Responsive Avatar Sizes
-  // ============================================
+
   static double getAvatarSize(BuildContext context, {double baseSize = 40}) {
     return ResponsiveUtil.getAvatarSize(context, baseSize: baseSize);
   }
@@ -142,9 +141,8 @@ class AppSizes {
   static double get avatarXl => 64.r;
   static double get avatarXxl => 80.r;
 
-  // ============================================
   // Responsive Card & Container
-  // ============================================
+
   static double getCardWidth(BuildContext context) {
     return ResponsiveUtil.getCardWidth(context);
   }
@@ -165,9 +163,8 @@ class AppSizes {
   static double get cardMarginVertical => 8.h;
   static double get cardPadding => 16.w;
 
-  // ============================================
   // Responsive Input Fields
-  // ============================================
+
   static double getInputHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 48.h;
@@ -205,9 +202,8 @@ class AppSizes {
   static double get inputBorderWidth => 1.0;
   static double get inputBorderWidthFocused => 2.0;
 
-  // ============================================
   // Responsive Typography Sizes
-  // ============================================
+
   static double getFontSize(BuildContext context, {double baseSize = 14}) {
     final multiplier = ResponsiveUtil.getFontSizeMultiplier(context);
     return (baseSize * multiplier).sp;
@@ -231,14 +227,14 @@ class AppSizes {
   static double get fontHeadline2 => 20.sp;
   static double get fontHeadline3 => 18.sp;
 
-  // ============================================
   // Responsive Layout Properties
-  // ============================================
+
   static int getGridCrossAxisCount(BuildContext context) {
     return ResponsiveUtil.getGridCrossAxisCount(context);
   }
 
-  static int getColumnCount(BuildContext context, {
+  static int getColumnCount(
+    BuildContext context, {
     int mobileColumns = 1,
     int tabletColumns = 2,
     int desktopColumns = 3,
@@ -251,10 +247,11 @@ class AppSizes {
     );
   }
 
-  static double getAspectRatio(BuildContext context, {
-    double mobileRatio = 16/9,
-    double tabletRatio = 16/10,
-    double desktopRatio = 16/9,
+  static double getAspectRatio(
+    BuildContext context, {
+    double mobileRatio = 16 / 9,
+    double tabletRatio = 16 / 10,
+    double desktopRatio = 16 / 9,
   }) {
     return ResponsiveUtil.getAspectRatio(
       context,
@@ -264,9 +261,8 @@ class AppSizes {
     );
   }
 
-  // ============================================
   // Responsive Dialog & Modal
-  // ============================================
+
   static double getDialogWidth(BuildContext context) {
     return ResponsiveUtil.getDialogWidth(context);
   }
@@ -286,9 +282,8 @@ class AppSizes {
   static double get dialogPadding => 24.w;
   static double get dialogMaxWidth => 400.w;
 
-  // ============================================
   // Responsive App Bar
-  // ============================================
+
   static double getAppBarHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 56.h;
@@ -303,9 +298,8 @@ class AppSizes {
   static double get appBarHeight => 56.h;
   static double get appBarElevation => 0.0;
 
-  // ============================================
   // Responsive Bottom Navigation
-  // ============================================
+
   static double getBottomNavHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 60.h;
@@ -325,9 +319,8 @@ class AppSizes {
   static double get bottomNavElevation => 8.0;
   static double get bottomNavIconSize => 24.sp;
 
-  // ============================================
   // Responsive Floating Action Button
-  // ============================================
+
   static double getFabSize(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 56.r;
@@ -347,9 +340,8 @@ class AppSizes {
   static double get fabElevation => 4.0;
   static double get fabIconSize => 24.sp;
 
-  // ============================================
   // Responsive List Items
-  // ============================================
+
   static double getListTileHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 56.h;
@@ -375,10 +367,10 @@ class AppSizes {
   static double get listTileVerticalPadding => 12.h;
   static double get listTileHorizontalPadding => 16.w;
 
-  // ============================================
   // Responsive Image Sizes
-  // ============================================
-  static double getImageSize(BuildContext context, {
+
+  static double getImageSize(
+    BuildContext context, {
     double mobileSize = 80,
     double tabletSize = 120,
     double desktopSize = 160,
@@ -398,9 +390,8 @@ class AppSizes {
   static double get imageLarge => 200.w;
   static double get imageXl => 300.w;
 
-  // ============================================
   // Responsive Screen Padding
-  // ============================================
+
   static EdgeInsets getScreenPadding(BuildContext context) {
     return ResponsiveUtil.getResponsiveScreenPadding(context);
   }
@@ -411,9 +402,8 @@ class AppSizes {
   static double get screenPaddingTop => 20.h;
   static double get screenPaddingBottom => 20.h;
 
-  // ============================================
   // Responsive Chip
-  // ============================================
+
   static double getChipHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 32.h;
@@ -439,10 +429,12 @@ class AppSizes {
   static double get chipPaddingHorizontal => 12.w;
   static double get chipPaddingVertical => 8.h;
 
-  // ============================================
   // Responsive Dot Indicator
-  // ============================================
-  static double getDotIndicatorWidth(BuildContext context, {bool isActive = true}) {
+
+  static double getDotIndicatorWidth(
+    BuildContext context, {
+    bool isActive = true,
+  }) {
     final baseWidth = isActive ? 14 : 8;
     if (ResponsiveUtil.isMobile(context)) {
       return baseWidth.w;
@@ -469,9 +461,8 @@ class AppSizes {
   static double get dotIndicatorHeight => 8.h;
   static double get dotIndicatorSpacing => 6.w;
 
-  // ============================================
   // Responsive Snackbar
-  // ============================================
+
   static double getSnackbarPadding(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 16.w;
@@ -486,9 +477,8 @@ class AppSizes {
   static double get snackbarElevation => 6.0;
   static double get snackbarPadding => 16.w;
 
-  // ============================================
   // Responsive Divider & Border
-  // ============================================
+
   static double getDividerThickness(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
       return 1.0;
@@ -505,9 +495,8 @@ class AppSizes {
   static double get borderWidthMedium => 1.5;
   static double get borderWidthThick => 2.0;
 
-  // ============================================
   // Responsive Letter Spacing
-  // ============================================
+
   static double get letterSpacingTight => -0.5;
   static double get letterSpacingNormal => 0.0;
   static double get letterSpacingWide => 0.15;

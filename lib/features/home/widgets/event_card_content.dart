@@ -82,9 +82,8 @@ class EventCardContent extends StatelessWidget {
   }
 }
 
-// ============================================
 // Attendee Avatar Stack Widget
-// ============================================
+
 class _AttendeeAvatarStack extends StatelessWidget {
   final bool isDark;
   final List<String>? avatarUrls;
@@ -125,9 +124,8 @@ class _AttendeeAvatarStack extends StatelessWidget {
   }
 }
 
-// ============================================
 // Individual Avatar Circle
-// ============================================
+
 class _AvatarCircle extends StatelessWidget {
   final Color color;
   final bool isDark;
@@ -171,9 +169,8 @@ class _AvatarCircle extends StatelessWidget {
   }
 }
 
-// ============================================
 // Gradient Avatar Placeholder
-// ============================================
+
 class _GradientAvatar extends StatelessWidget {
   final Color color;
 

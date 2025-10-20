@@ -13,9 +13,8 @@ import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/widgets/filter_bottom_sheet.dart';
 
-// ============================================
 // Favorites Provider - Persistent Storage
-// ============================================
+
 final favoritesProvider = StateNotifierProvider<FavoritesNotifier, Set<String>>(
   (ref) {
     return FavoritesNotifier();
@@ -46,9 +45,8 @@ class FavoritesNotifier extends StateNotifier<Set<String>> {
   }
 }
 
-// ============================================
 // User Location Provider for City Name
-// ============================================
+
 final userCityProvider = FutureProvider<String>((ref) async {
   try {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -82,9 +80,8 @@ final userCityProvider = FutureProvider<String>((ref) async {
   }
 });
 
-// ============================================
 // Location State Provider
-// ============================================
+
 final locationStateProvider =
     StateNotifierProvider<LocationNotifier, LocationState>((ref) {
       return LocationNotifier();
@@ -186,9 +183,8 @@ class LocationNotifier extends StateNotifier<LocationState> {
   }
 }
 
-// ============================================
 // Page State Providers
-// ============================================
+
 final nearbyEventsPageProvider = StateProvider<double>((ref) => 0.0);
 final topCityEventsPageProvider = StateProvider<double>((ref) => 0.0);
 final sportsEventsPageProvider = StateProvider<double>((ref) => 0.0);
@@ -196,9 +192,8 @@ final musicEventsPageProvider = StateProvider<double>((ref) => 0.0);
 final freeEventsPageProvider = StateProvider<double>((ref) => 0.0);
 final bannerPageProvider = StateProvider<int>((ref) => 0);
 
-// ============================================
 // SAFE SNACKBAR HELPER
-// ============================================
+
 void showFavoriteSnackbarSafe(
   BuildContext context,
   bool wasFavorite,
@@ -238,9 +233,8 @@ void showFavoriteSnackbarSafe(
   }
 }
 
-// ============================================
 // Main Event Section Widget
-// ============================================
+
 class EventSection extends ConsumerWidget {
   const EventSection({super.key});
 
@@ -523,9 +517,8 @@ class EventSection extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Popular Events Banner with Auto-Scroll (ENHANCED)
-// ============================================
+
 class _PopularEventsBanner extends ConsumerStatefulWidget {
   final List events;
   final bool isDark;
@@ -637,9 +630,8 @@ class _PopularEventsBannerState extends ConsumerState<_PopularEventsBanner> {
   }
 }
 
-// ============================================
 // Banner Card Widget
-// ============================================
+
 class _BannerCard extends StatelessWidget {
   final dynamic event;
   final bool isDark;
@@ -815,9 +807,8 @@ class _BannerCard extends StatelessWidget {
   }
 }
 
-// ============================================
 // Small Event Card List with Smooth Scrolling
-// ============================================
+
 class _SmallEventCardList extends ConsumerWidget {
   final List events;
   final bool isDark;
@@ -889,9 +880,8 @@ class _SmallEventCardList extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Small Event Card (MORE ROUNDED)
-// ============================================
+
 class _SmallEventCard extends StatelessWidget {
   final dynamic event;
   final bool isDark;
@@ -1046,9 +1036,8 @@ class _SmallEventCard extends StatelessWidget {
   }
 }
 
-// ============================================
 // Nearby Events Section (FIXED)
-// ============================================
+
 class _NearbyEventsSection extends ConsumerWidget {
   final AsyncValue eventsAsync;
   final bool isDark;
@@ -1204,9 +1193,8 @@ class _NearbyEventsSection extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Nearby Small Event Card with Distance
-// ============================================
+
 class _NearbySmallEventCard extends StatelessWidget {
   final dynamic event;
   final bool isDark;
@@ -1359,9 +1347,8 @@ class _NearbySmallEventCard extends StatelessWidget {
   }
 }
 
-// ============================================
 // Top City Events Section (FIXED)
-// ============================================
+
 class _TopCityEventsSection extends ConsumerWidget {
   final AsyncValue eventsAsync;
   final bool isDark;
@@ -1478,9 +1465,8 @@ class _TopCityEventsSection extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Top City Small Event Card with Rating
-// ============================================
+
 class _TopCitySmallEventCard extends StatelessWidget {
   final dynamic event;
   final bool isDark;
@@ -1671,9 +1657,8 @@ class _TopCitySmallEventCard extends StatelessWidget {
   }
 }
 
-// ============================================
 // Section Header
-// ============================================
+
 class _SectionHeader extends StatelessWidget {
   final String title;
   final bool isDark;
@@ -1715,9 +1700,8 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ============================================
 // Location Service Disabled State
-// ============================================
+
 class _LocationServiceDisabledState extends StatelessWidget {
   final bool isDark;
   final VoidCallback onEnableLocation;
@@ -1781,9 +1765,8 @@ class _LocationServiceDisabledState extends StatelessWidget {
   }
 }
 
-// ============================================
 // Location Denied State
-// ============================================
+
 class _LocationDeniedState extends StatelessWidget {
   final bool isDark;
   final VoidCallback onRetry;
@@ -1844,9 +1827,8 @@ class _LocationDeniedState extends StatelessWidget {
   }
 }
 
-// ============================================
 // Banner Shimmer
-// ============================================
+
 class _BannerShimmer extends StatelessWidget {
   final bool isDark;
 
@@ -1871,9 +1853,8 @@ class _BannerShimmer extends StatelessWidget {
   }
 }
 
-// ============================================
 // Small Card Shimmer
-// ============================================
+
 class _SmallCardShimmer extends StatelessWidget {
   final bool isDark;
 
@@ -1932,9 +1913,8 @@ class _SmallCardShimmer extends StatelessWidget {
   }
 }
 
-// ============================================
 // Empty State Widget
-// ============================================
+
 class _EmptyState extends StatelessWidget {
   final String message;
   final IconData icon;
@@ -1966,9 +1946,8 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ============================================
 // Error State Widget
-// ============================================
+
 class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;

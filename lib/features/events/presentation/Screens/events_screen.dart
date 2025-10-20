@@ -10,9 +10,8 @@ import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/widgets/filter_bottom_sheet.dart';
 
-// ============================================
 // Filtered Events Provider
-// ============================================
+
 final filteredEventsProvider = Provider<List<dynamic>>((ref) {
   final eventsAsync = ref.watch(approvedEventsStreamProvider);
   final filter = ref.watch(eventFilterProvider);
@@ -24,34 +23,40 @@ final filteredEventsProvider = Provider<List<dynamic>>((ref) {
       // Filter by categories
       if (filter.selectedCategories.isNotEmpty) {
         filtered = filtered
-            .where((event) =>
-                filter.selectedCategories.contains(event.category))
+            .where(
+              (event) => filter.selectedCategories.contains(event.category),
+            )
             .toList();
       }
 
       // Filter by location
       if (filter.selectedLocation != null) {
         filtered = filtered
-            .where((event) =>
-                event.location
-                    .toLowerCase()
-                    .contains(filter.selectedLocation!.toLowerCase()))
+            .where(
+              (event) => event.location.toLowerCase().contains(
+                filter.selectedLocation!.toLowerCase(),
+              ),
+            )
             .toList();
       }
 
       // Filter by price range
       filtered = filtered
-          .where((event) =>
-              event.ticketPrice! >= filter.priceRange.min &&
-              event.ticketPrice! <= filter.priceRange.max)
+          .where(
+            (event) =>
+                event.ticketPrice! >= filter.priceRange.min &&
+                event.ticketPrice! <= filter.priceRange.max,
+          )
           .toList();
 
       // Filter by date range
       if (filter.dateRange != null) {
         filtered = filtered
-            .where((event) =>
-                event.startTime.isAfter(filter.dateRange!.start) &&
-                event.startTime.isBefore(filter.dateRange!.end))
+            .where(
+              (event) =>
+                  event.startTime.isAfter(filter.dateRange!.start) &&
+                  event.startTime.isBefore(filter.dateRange!.end),
+            )
             .toList();
       }
 
@@ -62,9 +67,8 @@ final filteredEventsProvider = Provider<List<dynamic>>((ref) {
   );
 });
 
-// ============================================
 // Events Screen with Filter Support
-// ============================================
+
 class EventsScreen extends ConsumerWidget {
   const EventsScreen({super.key});
 
@@ -80,9 +84,9 @@ class EventsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           'Discover Events',
-          style: AppTextStyles.titleLarge(isDark: isDark).copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.titleLarge(
+            isDark: isDark,
+          ).copyWith(fontWeight: FontWeight.w700),
         ),
         centerTitle: false,
         elevation: 0,
@@ -203,9 +207,8 @@ class EventsScreen extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Events List View
-// ============================================
+
 class _EventsListView extends ConsumerWidget {
   final List<dynamic> events;
   final String currentUserId;
@@ -244,8 +247,9 @@ class _EventsListView extends ConsumerWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.getPrimary(isDark)
-                                  .withOpacity(0.1),
+                              color: AppColors.getPrimary(
+                                isDark,
+                              ).withOpacity(0.1),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -282,8 +286,9 @@ class _EventsListView extends ConsumerWidget {
                         filter.hasActiveFilters
                             ? 'No events match your filters'
                             : 'No events available yet',
-                        style: AppTextStyles.titleMedium(isDark: isDark)
-                            .copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.titleMedium(
+                          isDark: isDark,
+                        ).copyWith(fontWeight: FontWeight.w700),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: AppSizes.spacingSmall),
@@ -291,10 +296,9 @@ class _EventsListView extends ConsumerWidget {
                         filter.hasActiveFilters
                             ? 'Try adjusting your filter criteria'
                             : 'Check back soon for new events',
-                        style: AppTextStyles.bodyMedium(isDark: isDark)
-                            .copyWith(
-                          color: AppColors.getTextSecondary(isDark),
-                        ),
+                        style: AppTextStyles.bodyMedium(
+                          isDark: isDark,
+                        ).copyWith(color: AppColors.getTextSecondary(isDark)),
                         textAlign: TextAlign.center,
                       ),
                       if (filter.hasActiveFilters) ...[
@@ -313,8 +317,9 @@ class _EventsListView extends ConsumerWidget {
                               vertical: AppSizes.paddingMedium,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppSizes.radiusLarge),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusLarge,
+                              ),
                             ),
                           ),
                         ),
@@ -330,9 +335,7 @@ class _EventsListView extends ConsumerWidget {
     }
 
     return CustomScrollView(
-      physics: BouncingScrollPhysics(
-        parent: AlwaysScrollableScrollPhysics(),
-      ),
+      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
@@ -342,42 +345,35 @@ class _EventsListView extends ConsumerWidget {
             AppSizes.paddingMedium,
           ),
           sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final event = events[index];
-                final isAttending = event.attendees.contains(currentUserId);
-                final isFull = event.attendees.length >= event.maxAttendees;
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final event = events[index];
+              final isAttending = event.attendees.contains(currentUserId);
+              final isFull = event.attendees.length >= event.maxAttendees;
 
-                return TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: Duration(milliseconds: 400 + (index * 100)),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, 30 * (1 - value)),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _EventCard(
-                    event: event,
-                    isAttending: isAttending,
-                    isFull: isFull,
-                    isDark: isDark,
-                    onTap: () => context.push('/event-detail', extra: event),
-                    onJoin: () => _joinEvent(
-                      context,
-                      ref,
-                      event.id,
-                      currentUserId,
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: Duration(milliseconds: 400 + (index * 100)),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 30 * (1 - value)),
+                      child: child,
                     ),
-                  ),
-                );
-              },
-              childCount: events.length,
-            ),
+                  );
+                },
+                child: _EventCard(
+                  event: event,
+                  isAttending: isAttending,
+                  isFull: isFull,
+                  isDark: isDark,
+                  onTap: () => context.push('/event-detail', extra: event),
+                  onJoin: () =>
+                      _joinEvent(context, ref, event.id, currentUserId),
+                ),
+              );
+            }, childCount: events.length),
           ),
         ),
       ],
@@ -438,9 +434,8 @@ class _EventsListView extends ConsumerWidget {
   }
 }
 
-// ============================================
 // Event Card Widget
-// ============================================
+
 class _EventCard extends StatelessWidget {
   final dynamic event;
   final bool isAttending;
@@ -539,8 +534,9 @@ class _EventCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.95),
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusRound),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusRound,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
@@ -553,10 +549,10 @@ class _EventCard extends StatelessWidget {
                           event.category ?? 'Event',
                           style: AppTextStyles.labelSmall(isDark: false)
                               .copyWith(
-                            color: AppColors.getPrimary(false),
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
+                                color: AppColors.getPrimary(false),
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
                         ),
                       ),
                     ),
@@ -574,14 +570,16 @@ class _EventCard extends StatelessWidget {
                             color: isAttending
                                 ? AppColors.success
                                 : AppColors.getError(isDark),
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusRound),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusRound,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: (isAttending
-                                        ? AppColors.success
-                                        : AppColors.getError(isDark))
-                                    .withOpacity(0.4),
+                                color:
+                                    (isAttending
+                                            ? AppColors.success
+                                            : AppColors.getError(isDark))
+                                        .withOpacity(0.4),
                                 blurRadius: 8,
                                 offset: Offset(0, 2),
                               ),
@@ -600,12 +598,11 @@ class _EventCard extends StatelessWidget {
                               SizedBox(width: 4),
                               Text(
                                 isAttending ? 'Joined' : 'Full',
-                                style:
-                                    AppTextStyles.labelSmall(isDark: false)
-                                        .copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: AppTextStyles.labelSmall(isDark: false)
+                                    .copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
                             ],
                           ),
@@ -623,11 +620,9 @@ class _EventCard extends StatelessWidget {
                       // Title
                       Text(
                         event.title,
-                        style: AppTextStyles.titleLarge(isDark: isDark)
-                            .copyWith(
-                          fontWeight: FontWeight.w700,
-                          height: 1.2,
-                        ),
+                        style: AppTextStyles.titleLarge(
+                          isDark: isDark,
+                        ).copyWith(fontWeight: FontWeight.w700, height: 1.2),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -639,8 +634,9 @@ class _EventCard extends StatelessWidget {
                         padding: EdgeInsets.all(AppSizes.paddingMedium),
                         decoration: BoxDecoration(
                           color: AppColors.getPrimary(isDark).withOpacity(0.08),
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusMedium),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusMedium,
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -648,8 +644,9 @@ class _EventCard extends StatelessWidget {
                               padding: EdgeInsets.all(AppSizes.paddingSmall),
                               decoration: BoxDecoration(
                                 color: AppColors.getPrimary(isDark),
-                                borderRadius:
-                                    BorderRadius.circular(AppSizes.radiusSmall),
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusSmall,
+                                ),
                               ),
                               child: Icon(
                                 Icons.calendar_today_rounded,
@@ -665,19 +662,19 @@ class _EventCard extends StatelessWidget {
                                   Text(
                                     formattedDate,
                                     style: AppTextStyles.bodyMedium(
-                                            isDark: isDark)
-                                        .copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                      isDark: isDark,
+                                    ).copyWith(fontWeight: FontWeight.w600),
                                   ),
                                   Text(
                                     formattedTime,
                                     style:
-                                        AppTextStyles.bodySmall(isDark: isDark)
-                                            .copyWith(
-                                      color:
-                                          AppColors.getTextSecondary(isDark),
-                                    ),
+                                        AppTextStyles.bodySmall(
+                                          isDark: isDark,
+                                        ).copyWith(
+                                          color: AppColors.getTextSecondary(
+                                            isDark,
+                                          ),
+                                        ),
                                   ),
                                 ],
                               ),
@@ -695,8 +692,9 @@ class _EventCard extends StatelessWidget {
                             padding: EdgeInsets.all(AppSizes.paddingSmall),
                             decoration: BoxDecoration(
                               color: AppColors.getSurface(isDark),
-                              borderRadius:
-                                  BorderRadius.circular(AppSizes.radiusSmall),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusSmall,
+                              ),
                             ),
                             child: Icon(
                               Icons.location_on_rounded,
@@ -708,11 +706,10 @@ class _EventCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               event.location,
-                              style:
-                                  AppTextStyles.bodyMedium(isDark: isDark)
-                                      .copyWith(
-                                color: AppColors.getTextSecondary(isDark),
-                              ),
+                              style: AppTextStyles.bodyMedium(isDark: isDark)
+                                  .copyWith(
+                                    color: AppColors.getTextSecondary(isDark),
+                                  ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -734,16 +731,20 @@ class _EventCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: isFull
                                   ? AppColors.getError(isDark).withOpacity(0.1)
-                                  : AppColors.getPrimary(isDark)
-                                      .withOpacity(0.1),
-                              borderRadius:
-                                  BorderRadius.circular(AppSizes.radiusRound),
+                                  : AppColors.getPrimary(
+                                      isDark,
+                                    ).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusRound,
+                              ),
                               border: Border.all(
                                 color: isFull
-                                    ? AppColors.getError(isDark)
-                                        .withOpacity(0.3)
-                                    : AppColors.getPrimary(isDark)
-                                        .withOpacity(0.3),
+                                    ? AppColors.getError(
+                                        isDark,
+                                      ).withOpacity(0.3)
+                                    : AppColors.getPrimary(
+                                        isDark,
+                                      ).withOpacity(0.3),
                                 width: 1,
                               ),
                             ),
@@ -763,11 +764,11 @@ class _EventCard extends StatelessWidget {
                                       : '${event.attendees.length}/${event.maxAttendees}',
                                   style: AppTextStyles.bodySmall(isDark: isDark)
                                       .copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: isFull
-                                        ? AppColors.getError(isDark)
-                                        : AppColors.getPrimary(isDark),
-                                  ),
+                                        fontWeight: FontWeight.w700,
+                                        color: isFull
+                                            ? AppColors.getError(isDark)
+                                            : AppColors.getPrimary(isDark),
+                                      ),
                                 ),
                               ],
                             ),
@@ -780,15 +781,17 @@ class _EventCard extends StatelessWidget {
                                   : AppColors.getPrimary(isDark),
                               foregroundColor: Colors.white,
                               disabledBackgroundColor:
-                                  AppColors.getTextSecondary(isDark)
-                                      .withOpacity(0.3),
+                                  AppColors.getTextSecondary(
+                                    isDark,
+                                  ).withOpacity(0.3),
                               padding: EdgeInsets.symmetric(
                                 horizontal: AppSizes.paddingXl,
                                 vertical: AppSizes.paddingMedium,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                    AppSizes.radiusRound),
+                                  AppSizes.radiusRound,
+                                ),
                               ),
                               elevation: 0,
                             ),
@@ -796,8 +799,8 @@ class _EventCard extends StatelessWidget {
                               isAttending
                                   ? 'Joined'
                                   : isFull
-                                      ? 'Full'
-                                      : 'Join Event',
+                                  ? 'Full'
+                                  : 'Join Event',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.5,
