@@ -12,28 +12,28 @@ class AppTextStyles {
   // Headings
   // =======================
   static TextStyle headingLarge({required bool isDark}) => TextStyle(
-    fontSize: 32,
+    fontSize: AppSizes.fontDisplay1,
     fontWeight: FontWeight.bold,
     color: AppColors.getTextPrimary(isDark),
-    letterSpacing: -0.5,
+    letterSpacing: AppSizes.letterSpacingTight,
   );
 
   static TextStyle mediumHeading({required bool isDark}) => TextStyle(
-    fontSize: 20,
+    fontSize: AppSizes.fontXxl,
     fontWeight: FontWeight.bold,
     color: AppColors.getTextPrimary(isDark),
-    letterSpacing: 0,
+    letterSpacing: AppSizes.letterSpacingNormal,
   );
 
   static TextStyle headingMedium({required bool isDark}) => TextStyle(
-    fontSize: 28,
+    fontSize: AppSizes.fontDisplay2,
     fontWeight: FontWeight.bold,
     color: AppColors.getTextPrimary(isDark),
-    letterSpacing: -0.5,
+    letterSpacing: AppSizes.letterSpacingTight,
   );
 
   static TextStyle headingSmall({required bool isDark}) => TextStyle(
-    fontSize: 24,
+    fontSize: AppSizes.fontXxxl,
     fontWeight: FontWeight.bold,
     color: AppColors.getTextPrimary(isDark),
   );
@@ -51,19 +51,19 @@ class AppTextStyles {
   // Subheadings / Titles
   // =======================
   static TextStyle titleLarge({required bool isDark}) => TextStyle(
-    fontSize: 22,
+    fontSize: AppSizes.fontHeadline1,
     fontWeight: FontWeight.w600,
     color: AppColors.getTextPrimary(isDark),
   );
 
   static TextStyle titleMedium({required bool isDark}) => TextStyle(
-    fontSize: 18,
+    fontSize: AppSizes.fontHeadline3,
     fontWeight: FontWeight.w500,
     color: AppColors.getTextPrimary(isDark),
   );
 
   static TextStyle titleSmall({required bool isDark}) => TextStyle(
-    fontSize: 16,
+    fontSize: AppSizes.fontLarge,
     fontWeight: FontWeight.w500,
     color: AppColors.getTextPrimary(isDark),
   );
@@ -72,41 +72,41 @@ class AppTextStyles {
   // Body Text
   // =======================
   static TextStyle bodyLarge({required bool isDark}) => TextStyle(
-    fontSize: 16,
+    fontSize: AppSizes.fontLarge,
     fontWeight: FontWeight.normal,
     color: AppColors.getTextPrimary(isDark),
-    letterSpacing: 0.15,
+    letterSpacing: AppSizes.letterSpacingWide,
   );
 
   static TextStyle bodyMedium({required bool isDark}) => TextStyle(
-    fontSize: 14,
+    fontSize: AppSizes.fontMedium,
     fontWeight: FontWeight.normal,
     color: AppColors.getTextSecondary(isDark),
-    letterSpacing: 0.25,
+    letterSpacing: AppSizes.letterSpacingExtraWide,
   );
 
   static TextStyle bodySmall({required bool isDark}) => TextStyle(
-    fontSize: 12,
+    fontSize: AppSizes.fontSmall,
     fontWeight: FontWeight.normal,
     color: AppColors.getTextSecondary(isDark),
-    letterSpacing: 0.4,
+    letterSpacing: AppSizes.letterSpacingLabel,
   );
 
   // =======================
   // Buttons
   // =======================
   static TextStyle button({required bool isDark}) => TextStyle(
-    fontSize: 16,
+    fontSize: AppSizes.fontLarge,
     fontWeight: FontWeight.w600,
     color: AppColors.getBackground(isDark),
-    letterSpacing: 0.8,
+    letterSpacing: AppSizes.letterSpacingLabel,
   );
 
   // =======================
   // Captions / Hints
   // =======================
   static TextStyle caption({required bool isDark}) => TextStyle(
-    fontSize: 13,
+    fontSize: AppSizes.fontSmall + 1.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.getTextSecondary(isDark),
   );
@@ -115,24 +115,24 @@ class AppTextStyles {
   // Labels
   // =======================
   static TextStyle labelLarge({required bool isDark}) => TextStyle(
-    fontSize: 14,
+    fontSize: AppSizes.fontMedium,
     fontWeight: FontWeight.w500,
     color: AppColors.getTextPrimary(isDark),
-    letterSpacing: 0.1,
+    letterSpacing: AppSizes.letterSpacingWide,
   );
 
   static TextStyle labelMedium({required bool isDark}) => TextStyle(
-    fontSize: 12,
+    fontSize: AppSizes.fontSmall,
     fontWeight: FontWeight.w500,
     color: AppColors.getTextSecondary(isDark),
-    letterSpacing: 0.5,
+    letterSpacing: AppSizes.letterSpacingLabel,
   );
 
   static TextStyle labelSmall({required bool isDark}) => TextStyle(
-    fontSize: 11,
+    fontSize: AppSizes.fontXs + 1.sp,
     fontWeight: FontWeight.w500,
     color: AppColors.getTextSecondary(isDark),
-    letterSpacing: 0.5,
+    letterSpacing: AppSizes.letterSpacingLabel,
   );
 }
 

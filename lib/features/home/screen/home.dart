@@ -70,9 +70,9 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     const EventSection(),
-                    SizedBox(height: AppSizes.spacingXl.h),
+                    SizedBox(height: AppSizes.spacingXl),
                     const InviteBanner(),
-                    SizedBox(height: AppSizes.spacingXl.h),
+                    SizedBox(height: AppSizes.spacingXl),
                   ],
                 ),
               ),

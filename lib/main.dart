@@ -23,6 +23,8 @@ class MyApp extends ConsumerWidget {
 
     return ScreenUtilInit(
       designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
       builder: (context, child) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'Sync Event',
