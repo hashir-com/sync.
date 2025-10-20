@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/screen/drawer.dart';
 import 'package:sync_event/features/home/widgets/event_section.dart';
@@ -35,9 +36,11 @@ class HomeScreen extends ConsumerWidget {
           duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.success,
-          margin: EdgeInsets.all(AppSizes.paddingLarge),
+          margin: AppSizes.getResponsivePadding(context),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            borderRadius: BorderRadius.circular(
+              AppSizes.getBorderRadius(context, baseRadius: 8),
+            ),
           ),
         ),
       );
@@ -51,34 +54,50 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(isDark),
-      body: RefreshIndicator(
-        onRefresh: () => _handleRefresh(ref, context),
-        color: AppColors.getPrimary(isDark),
-        backgroundColor: AppColors.getCard(isDark),
-        child: Column(
-          children: [
-            const HeaderSection(),
-            // CategorySection(
-            //   selectedCategory: selectedCategory,
-            //   onCategoryTap: (index) {
-            //     ref.read(selectedCategoryProvider.notifier).state = index;
-            //   },
-            // ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    const EventSection(),
-                    SizedBox(height: AppSizes.spacingXl),
-                    const InviteBanner(),
-                    SizedBox(height: AppSizes.spacingXl),
-                  ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return RefreshIndicator(
+            onRefresh: () => _handleRefresh(ref, context),
+            color: AppColors.getPrimary(isDark),
+            backgroundColor: AppColors.getCard(isDark),
+            child: Column(
+              children: [
+                const HeaderSection(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - 
+                                  AppSizes.getAppBarHeight(context) - 
+                                  MediaQuery.of(context).padding.top,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          children: [
+                            const EventSection(),
+                            SizedBox(
+                              height: AppSizes.getHeightSpacing(context, baseSpacing: 20),
+                            ),
+                            const InviteBanner(),
+                            SizedBox(
+                              height: AppSizes.getHeightSpacing(context, baseSpacing: 20),
+                            ),
+                            // Add bottom padding for better UX
+                            SizedBox(
+                              height: ResponsiveUtil.getBottomPadding(context) + 
+                                     AppSizes.getHeightSpacing(context, baseSpacing: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
       drawer: const CustomDrawer(),
     );
