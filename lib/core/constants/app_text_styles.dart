@@ -20,7 +20,7 @@ class AppTextStyles {
   );
 
   static TextStyle mediumHeading({required bool isDark}) => TextStyle(
-    fontSize: AppSizes.fontXxl,
+    fontSize: AppSizes.fontXl,
     fontWeight: FontWeight.bold,
     color: AppColors.getTextPrimary(isDark),
     letterSpacing: AppSizes.letterSpacingNormal,
