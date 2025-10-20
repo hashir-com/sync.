@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart';
+import 'package:http/http.dart' as ref;
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -11,6 +13,7 @@ import 'package:sync_event/features/auth/presentation/providers/auth_notifier.da
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_provider.dart';
 import 'package:sync_event/features/bookings/presentation/utils/booking_utils.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/my_bookings_dialogs.dart';
 import 'package:sync_event/features/email/services/email_services.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
@@ -105,10 +108,19 @@ class MyBookingsScreen extends ConsumerWidget {
     bool isDark,
   ) {
     final bookingsAsync = ref.watch(userBookingsProvider(userId));
+    final filterState = ref.watch(
+      bookingsFilterProvider,
+    ); // Riverpod filter state
 
     return bookingsAsync.when(
-      data: (bookings) =>
-          _buildBookingsList(context, ref, bookings, isDark, userId),
+      data: (bookings) => _buildBookingsList(
+        context,
+        ref,
+        bookings,
+        filterState,
+        userId,
+        isDark,
+      ),
       loading: () => const Center(child: CircularProgressIndicator.adaptive()),
       error: (error, stack) =>
           _buildErrorUI(context, isDark, 'Error loading bookings', error),
@@ -119,135 +131,151 @@ class MyBookingsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     List<BookingEntity> bookings,
-    bool isDark,
+    BookingsFilterState filterState,
     String userId,
+    bool isDark,
   ) {
-    // Local state for search and filters
-    final searchController = TextEditingController();
-    String statusFilter = 'all';
-    DateTimeRange? dateFilter;
-
-    List<BookingEntity> applyFilters() {
-      final query = searchController.text.toLowerCase();
-      return bookings.where((b) {
-        final matchesStatus = statusFilter == 'all' || b.status == statusFilter;
-        final matchesDate =
-            dateFilter == null ||
-            (b.startTime.isAfter(
-                  dateFilter!.start.subtract(const Duration(days: 1)),
-                ) &&
-                b.startTime.isBefore(
-                  dateFilter!.end.add(const Duration(days: 1)),
-                ));
-        final matchesSearch =
-            b.id.toLowerCase().contains(query) ||
-            b.ticketType.toLowerCase().contains(query) ||
-            b.paymentId.toLowerCase().contains(query);
-        return matchesStatus && matchesDate && matchesSearch;
-      }).toList();
-    }
+    final filteredBookings = _applyFilters(bookings, filterState);
 
     if (bookings.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSizes.paddingMedium.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.event_busy,
-                size: AppSizes.iconXxl.sp,
-                color: AppColors.getTextSecondary(isDark),
-              ),
-              SizedBox(height: AppSizes.spacingMedium.h),
-              Text(
-                'No Bookings Yet',
-                style: AppTextStyles.headingSmall(isDark: isDark),
-              ),
-              SizedBox(height: AppSizes.spacingSmall.h),
-              Text(
-                'Book your first event now!',
-                style: AppTextStyles.bodyMedium(isDark: isDark),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: AppSizes.spacingLarge.h),
-              ElevatedButton(
-                onPressed: () => context.go('/home'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.getPrimary(isDark),
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSizes.paddingLarge.w,
-                    vertical: AppSizes.paddingMedium.h,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppSizes.radiusMedium.r,
-                    ),
-                  ),
-                  elevation: 2,
-                  textStyle: AppTextStyles.labelMedium(isDark: isDark),
-                ),
-                child: const Text('Browse Events'),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildEmptyState(context, isDark);
     }
 
-    return StatefulBuilder(
-      builder: (context, setState) {
-        final filtered = applyFilters();
-        return ListView(
-          padding: EdgeInsets.all(AppSizes.paddingMedium.w),
-          children: [
-            _buildFilterCard(
-              context: context,
-              searchController: searchController,
-              statusFilter: statusFilter,
-              dateFilter: dateFilter,
-              isDark: isDark,
-              onSearchChanged: () => setState(() {}),
-              onStatusChanged: (value) =>
-                  setState(() => statusFilter = value ?? 'all'),
-              onDateChanged: (picked) => setState(() => dateFilter = picked),
-              onClearDate: () => setState(() => dateFilter = null),
-            ),
-            SizedBox(height: AppSizes.spacingMedium.h),
-            if (filtered.isEmpty)
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSizes.paddingMedium.w),
-                  child: Text(
-                    'No bookings match your filters',
-                    style: AppTextStyles.bodyMedium(isDark: isDark),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
-            else
-              ...filtered.map(
-                (booking) =>
-                    _buildBookingCard(context, ref, booking, isDark, userId),
-              ),
-          ],
-        );
-      },
+    return ListView(
+      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      children: [
+        _buildFilterCard(context, ref, filterState, userId, isDark),
+        SizedBox(height: AppSizes.spacingMedium.h),
+        if (filteredBookings.isEmpty)
+          _buildNoResultsUI(isDark, filterState, ref)
+        else
+          ...filteredBookings.map(
+            (booking) =>
+                _buildBookingCard(context, ref, booking, isDark, userId),
+          ),
+      ],
     );
   }
 
-  Widget _buildFilterCard({
-    required BuildContext context,
-    required TextEditingController searchController,
-    required String statusFilter,
-    required DateTimeRange? dateFilter,
-    required bool isDark,
-    required VoidCallback onSearchChanged,
-    required ValueChanged<String?> onStatusChanged,
-    required ValueChanged<DateTimeRange?> onDateChanged,
-    required VoidCallback onClearDate,
-  }) {
+  List<BookingEntity> _applyFilters(
+    List<BookingEntity> bookings,
+    BookingsFilterState filterState,
+  ) {
+    final query = filterState.searchQuery.toLowerCase();
+    return bookings.where((b) {
+      final matchesStatus =
+          filterState.statusFilter == 'all' ||
+          b.status == filterState.statusFilter;
+      final matchesDate =
+          filterState.dateFilter == null ||
+          (b.startTime.isAfter(
+                filterState.dateFilter!.start.subtract(const Duration(days: 1)),
+              ) &&
+              b.startTime.isBefore(
+                filterState.dateFilter!.end.add(const Duration(days: 1)),
+              ));
+      final matchesSearch =
+          b.id.toLowerCase().contains(query) ||
+          b.ticketType.toLowerCase().contains(query) ||
+          b.paymentId.toLowerCase().contains(query);
+      return matchesStatus && matchesDate && matchesSearch;
+    }).toList();
+  }
+
+  Widget _buildEmptyState(BuildContext context, bool isDark) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy,
+              size: AppSizes.iconXxl.sp,
+              color: AppColors.getTextSecondary(isDark),
+            ),
+            SizedBox(height: AppSizes.spacingMedium.h),
+            Text(
+              'No Bookings Yet',
+              style: AppTextStyles.headingSmall(isDark: isDark),
+            ),
+            SizedBox(height: AppSizes.spacingSmall.h),
+            Text(
+              'Book your first event now!',
+              style: AppTextStyles.bodyMedium(isDark: isDark),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: AppSizes.spacingLarge.h),
+            ElevatedButton(
+              onPressed: () => context.go('/home'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.getPrimary(isDark),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingLarge.w,
+                  vertical: AppSizes.paddingMedium.h,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+                ),
+                elevation: 2,
+                textStyle: AppTextStyles.labelMedium(isDark: isDark),
+              ),
+              child: const Text('Browse Events'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoResultsUI(
+    bool isDark,
+    BookingsFilterState filterState,
+    WidgetRef ref,
+  ) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        child: Column(
+          children: [
+            Icon(
+              Icons.search_off,
+              size: AppSizes.iconLarge.sp,
+              color: AppColors.getTextSecondary(isDark),
+            ),
+            SizedBox(height: AppSizes.spacingSmall.h),
+            Text(
+              'No bookings match your filters',
+              style: AppTextStyles.bodyMedium(isDark: isDark),
+              textAlign: TextAlign.center,
+            ),
+            if (filterState.hasActiveFilters) ...[
+              SizedBox(height: AppSizes.spacingSmall.h),
+              TextButton(
+                onPressed: () =>
+                    ref.read(bookingsFilterProvider.notifier).clearFilters(),
+                child: Text(
+                  'Clear Filters',
+                  style: AppTextStyles.bodySmall(
+                    isDark: isDark,
+                  ).copyWith(color: AppColors.getPrimary(isDark)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterCard(
+    BuildContext context,
+    WidgetRef ref,
+    BookingsFilterState filterState,
+    String userId,
+    bool isDark,
+  ) {
     return Card(
       color: AppColors.getCard(isDark),
       elevation: AppSizes.cardElevationLow,
@@ -259,13 +287,33 @@ class MyBookingsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Filter Bookings',
-              style: AppTextStyles.titleMedium(isDark: isDark),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Filter Bookings',
+                  style: AppTextStyles.titleMedium(isDark: isDark),
+                ),
+                if (filterState.hasActiveFilters)
+                  TextButton(
+                    onPressed: () => ref
+                        .read(bookingsFilterProvider.notifier)
+                        .clearFilters(),
+                    child: Text(
+                      'Clear All',
+                      style: AppTextStyles.bodySmall(
+                        isDark: isDark,
+                      ).copyWith(color: AppColors.getPrimary(isDark)),
+                    ),
+                  ),
+              ],
             ),
             SizedBox(height: AppSizes.spacingSmall.h),
+            // Search - Riverpod managed
             TextField(
-              controller: searchController,
+              onChanged: (value) => ref
+                  .read(bookingsFilterProvider.notifier)
+                  .setSearchQuery(value),
               decoration: InputDecoration(
                 prefixIcon: Icon(
                   Icons.search,
@@ -278,18 +326,25 @@ class MyBookingsScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
                   borderSide: BorderSide(color: AppColors.getBorder(isDark)),
                 ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                  borderSide: BorderSide(
+                    color: AppColors.getPrimary(isDark),
+                    width: 2,
+                  ),
+                ),
                 filled: true,
                 fillColor: AppColors.getSurface(isDark).withOpacity(0.5),
               ),
               style: AppTextStyles.bodyMedium(isDark: isDark),
-              onChanged: (_) => onSearchChanged(),
             ),
             SizedBox(height: AppSizes.spacingMedium.h),
             Row(
               children: [
+                // Status Filter - Riverpod managed
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: statusFilter,
+                    value: filterState.statusFilter,
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('All')),
                       DropdownMenuItem(
@@ -305,13 +360,24 @@ class MyBookingsScreen extends ConsumerWidget {
                         child: Text('Refunded'),
                       ),
                     ],
-                    onChanged: onStatusChanged,
+                    onChanged: (value) => ref
+                        .read(bookingsFilterProvider.notifier)
+                        .setStatusFilter(value ?? 'all'),
                     decoration: InputDecoration(
                       labelText: 'Status',
                       labelStyle: AppTextStyles.bodySmall(isDark: isDark),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(
                           AppSizes.radiusSmall.r,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall.r,
+                        ),
+                        borderSide: BorderSide(
+                          color: AppColors.getPrimary(isDark),
+                          width: 2,
                         ),
                       ),
                       filled: true,
@@ -321,40 +387,27 @@ class MyBookingsScreen extends ConsumerWidget {
                   ),
                 ),
                 SizedBox(width: AppSizes.spacingMedium.w),
+                // Date Filter - Riverpod managed
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showDateRangePicker(
-                        context: context,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                        initialDateRange: dateFilter,
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.fromSeed(
-                                seedColor: AppColors.getPrimary(isDark),
-                                brightness: isDark
-                                    ? Brightness.dark
-                                    : Brightness.light,
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      onDateChanged(picked);
-                    },
+                    onPressed: () => _showDateRangePicker(
+                      context,
+                      ref,
+                      userId,
+                      filterState.dateFilter,
+                      isDark,
+                    ),
                     icon: Icon(
                       Icons.date_range,
                       size: AppSizes.iconSmall.sp,
                       color: AppColors.getTextSecondary(isDark),
                     ),
                     label: Text(
-                      dateFilter == null
+                      filterState.dateFilter == null
                           ? 'Filter by Date'
-                          : '${DateFormat('MMM d').format(dateFilter.start)} - ${DateFormat('MMM d').format(dateFilter.end)}',
+                          : '${DateFormat('MMM d').format(filterState.dateFilter!.start)} - ${DateFormat('MMM d').format(filterState.dateFilter!.end)}',
                       style: AppTextStyles.bodySmall(isDark: isDark),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.getBorder(isDark)),
@@ -370,10 +423,12 @@ class MyBookingsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (dateFilter != null)
+                if (filterState.dateFilter != null)
                   IconButton(
                     tooltip: 'Clear date filter',
-                    onPressed: onClearDate,
+                    onPressed: () => ref
+                        .read(bookingsFilterProvider.notifier)
+                        .clearDateFilter(),
                     icon: Icon(
                       Icons.clear,
                       size: AppSizes.iconSmall.sp,
@@ -386,6 +441,33 @@ class MyBookingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showDateRangePicker(
+    BuildContext context,
+    WidgetRef ref,
+    String userId,
+    DateTimeRange? currentRange,
+    bool isDark,
+  ) async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDateRange: currentRange,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.getPrimary(isDark),
+            brightness: isDark ? Brightness.dark : Brightness.light,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      ref.read(bookingsFilterProvider.notifier).setDateFilter(picked);
+    }
   }
 
   Widget _buildBookingCard(
@@ -408,7 +490,7 @@ class MyBookingsScreen extends ConsumerWidget {
       category: 'unknown',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
-      availableTickets: 0, // Added required availableTickets
+      availableTickets: 0,
     );
 
     final eventStream = ref.watch(approvedEventsStreamProvider);
@@ -416,16 +498,15 @@ class MyBookingsScreen extends ConsumerWidget {
     return eventStream.when(
       data: (events) {
         EventEntity event = placeholderEvent;
-
         try {
           if (events.isNotEmpty) {
-            final foundEvent = events.firstWhere(
+            event = events.firstWhere(
               (e) => e.id == booking.eventId,
+              orElse: () => placeholderEvent,
             );
-            event = foundEvent;
           }
         } catch (e) {
-          print('Event not found for booking ${booking.id}: $e');
+          debugPrint('Event not found for booking ${booking.id}: $e');
         }
 
         return Card(
@@ -585,373 +666,13 @@ class MyBookingsScreen extends ConsumerWidget {
                   ],
                   if (booking.status == 'confirmed') ...[
                     SizedBox(height: AppSizes.spacingMedium.h),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        // In my_bookings_screen.dart - ONLY the cancel button section that needs fixing
-                        onPressed: () async {
-                          final eligible =
-                              BookingUtils.isEligibleForCancellation(
-                                booking.startTime,
-                              );
-                          if (!eligible) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Cannot cancel within 48 hours of event start.',
-                                    style: AppTextStyles.bodyMedium(
-                                      isDark: true,
-                                    ).copyWith(color: Colors.white),
-                                  ),
-                                  backgroundColor: AppColors.getError(isDark),
-                                  duration: const Duration(seconds: 3),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppSizes.radiusSmall.r,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                            return;
-                          }
-
-                          // Step 1: Show cancellation reason dialog
-                          String? cancellationReason;
-                          String? selectedReason;
-                          final otherReasonController = TextEditingController();
-
-                          if (context.mounted) {
-                            cancellationReason = await showModalBottomSheet<String>(
-                              context: context,
-                              isScrollControlled: true,
-                              builder: (context) {
-                                return StatefulBuilder(
-                                  builder: (context, setModalState) {
-                                    return SafeArea(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(
-                                          AppSizes.paddingMedium.w,
-                                        ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Why are you cancelling?',
-                                              style: AppTextStyles.headingSmall(
-                                                isDark: isDark,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: AppSizes.spacingMedium.h,
-                                            ),
-                                            ...[
-                                              'Ordered by mistake',
-                                              'Can\'t attend the event',
-                                              'Event rescheduled',
-                                              'Found a better alternative',
-                                              'Other',
-                                            ].map(
-                                              (reason) => RadioListTile<String>(
-                                                value: reason,
-                                                groupValue: selectedReason,
-                                                onChanged: (value) {
-                                                  setModalState(() {
-                                                    selectedReason = value;
-                                                  });
-                                                },
-                                                title: Text(reason),
-                                              ),
-                                            ),
-                                            if (selectedReason == 'Other')
-                                              Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal:
-                                                      AppSizes.paddingMedium.w,
-                                                ),
-                                                child: TextField(
-                                                  controller:
-                                                      otherReasonController,
-                                                  decoration: InputDecoration(
-                                                    labelText: 'Please specify',
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            AppSizes
-                                                                .radiusMedium
-                                                                .r,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  maxLines: 2,
-                                                ),
-                                              ),
-                                            SizedBox(
-                                              height: AppSizes.spacingLarge.h,
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(context),
-                                                  child: Text(
-                                                    'Cancel',
-                                                    style:
-                                                        AppTextStyles.bodyMedium(
-                                                          isDark: isDark,
-                                                        ),
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width:
-                                                      AppSizes.spacingMedium.w,
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: () {
-                                                    if (selectedReason ==
-                                                        null) {
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: const Text(
-                                                            'Please select a reason.',
-                                                          ),
-                                                          backgroundColor:
-                                                              AppColors.getError(
-                                                                isDark,
-                                                              ),
-                                                        ),
-                                                      );
-                                                      return;
-                                                    }
-                                                    if (selectedReason ==
-                                                            'Other' &&
-                                                        otherReasonController
-                                                            .text
-                                                            .isEmpty) {
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: const Text(
-                                                            'Please enter a reason.',
-                                                          ),
-                                                          backgroundColor:
-                                                              AppColors.getError(
-                                                                isDark,
-                                                              ),
-                                                        ),
-                                                      );
-                                                      return;
-                                                    }
-                                                    Navigator.pop(
-                                                      context,
-                                                      selectedReason == 'Other'
-                                                          ? otherReasonController
-                                                                .text
-                                                          : selectedReason,
-                                                    );
-                                                  },
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        AppColors.getPrimary(
-                                                          isDark,
-                                                        ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            AppSizes
-                                                                .radiusLarge
-                                                                .r,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    'Next',
-                                                    style:
-                                                        AppTextStyles.bodyMedium(
-                                                          isDark: isDark,
-                                                        ).copyWith(
-                                                          color: Colors.white,
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(
-                                              height: MediaQuery.of(
-                                                context,
-                                              ).viewInsets.bottom,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          }
-
-                          if (cancellationReason == null) return;
-
-                          // Step 2: Show refund method selection
-                          String? refundType;
-                          if (context.mounted) {
-                            refundType = await showModalBottomSheet<String>(
-                              context: context,
-                              builder: (context) {
-                                return SafeArea(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(
-                                      AppSizes.paddingMedium.w,
-                                    ),
-                                    child: Wrap(
-                                      children: [
-                                        ListTile(
-                                          leading: const Icon(
-                                            Icons
-                                                .account_balance_wallet_outlined,
-                                          ),
-                                          title: const Text(
-                                            'Refund to Wallet (Instant)',
-                                          ),
-                                          subtitle: const Text(
-                                            'Amount credited immediately',
-                                          ),
-                                          onTap: () =>
-                                              Navigator.pop(context, 'wallet'),
-                                        ),
-                                        Divider(indent: 50.w, endIndent: 20.w),
-                                        ListTile(
-                                          leading: const Icon(
-                                            Icons.account_balance_outlined,
-                                          ),
-                                          title: const Text(
-                                            'Refund to Bank (5-7 days)',
-                                          ),
-                                          subtitle: const Text('Via Razorpay'),
-                                          onTap: () =>
-                                              Navigator.pop(context, 'bank'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-
-                          if (refundType == null) return;
-
-                          // Step 3: Process cancellation with refund
-                          try {
-                            print('Starting cancellation process...');
-                            print('Booking ID: ${booking.id}');
-                            print('User ID: $userId');
-                            print('Refund Type: $refundType');
-                            print('Cancellation Reason: $cancellationReason');
-
-                            // Cancel the booking
-                            await ref
-                                .read(bookingNotifierProvider.notifier)
-                                .cancelBooking(
-                                  bookingId: booking.id,
-                                  paymentId: booking.paymentId,
-                                  eventId: booking.eventId,
-                                  userId: userId,
-                                  refundType: refundType,
-                                  cancellationReason: cancellationReason,
-                                );
-
-                            // Send detailed cancellation email
-                            await EmailService.sendDetailedCancellationEmail(
-                              userId: userId,
-                              bookingId: booking.id,
-                              eventTitle: event
-                                  .title, // Use event title from the event object
-                              refundAmount: booking.totalAmount,
-                              refundType: refundType,
-                              cancellationReason: cancellationReason,
-                            );
-
-                            // Invalidate providers to refresh UI
-                            ref.invalidate(userBookingsProvider(userId));
-                            ref.invalidate(walletNotifierProvider);
-
-                            if (context.mounted) {
-                              final message = refundType == 'wallet'
-                                  ? '✓ Booking cancelled!\n₹${booking.totalAmount.toStringAsFixed(0)} added to your wallet'
-                                  : '✓ Booking cancelled!\nRefund will be processed to your bank account in 5-7 business days';
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    message,
-                                    style: AppTextStyles.bodyMedium(
-                                      isDark: true,
-                                    ).copyWith(color: Colors.white),
-                                  ),
-                                  backgroundColor: AppColors.getSuccess(isDark),
-                                  duration: const Duration(seconds: 4),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppSizes.radiusSmall.r,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            print('✗ Error cancelling booking: $e');
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Error cancelling booking: $e',
-                                    style: AppTextStyles.bodyMedium(
-                                      isDark: true,
-                                    ).copyWith(color: Colors.white),
-                                  ),
-                                  backgroundColor: AppColors.getError(isDark),
-                                  duration: const Duration(seconds: 3),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppSizes.radiusSmall.r,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColors.getError(isDark)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusMedium.r,
-                            ),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: AppSizes.paddingMedium.h,
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel Booking',
-                          style: AppTextStyles.labelMedium(
-                            isDark: isDark,
-                          ).copyWith(color: AppColors.getError(isDark)),
-                        ),
-                      ),
+                    _buildCancelButton(
+                      context,
+                      booking,
+                      event,
+                      userId,
+                      isDark,
+                      ref,
                     ),
                   ],
                 ],
@@ -960,30 +681,194 @@ class MyBookingsScreen extends ConsumerWidget {
           ),
         );
       },
-      loading: () => Card(
-        color: AppColors.getCard(isDark),
-        elevation: AppSizes.cardElevationLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+      loading: () => _buildLoadingCard(isDark),
+      error: (error, stack) => _buildErrorCard(isDark),
+    );
+  }
+
+  Widget _buildCancelButton(
+    BuildContext context,
+    BookingEntity booking,
+    EventEntity event,
+    String userId,
+    bool isDark,
+    WidgetRef ref,
+  ) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: () =>
+            _showCancellationFlow(context, booking, event, userId, isDark, ref),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: AppColors.getError(isDark)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          ),
+          padding: EdgeInsets.symmetric(vertical: AppSizes.paddingMedium.h),
         ),
-        child: Padding(
-          padding: EdgeInsets.all(AppSizes.paddingMedium.w),
-          child: const Center(child: CircularProgressIndicator.adaptive()),
+        child: Text(
+          'Cancel Booking',
+          style: AppTextStyles.labelMedium(
+            isDark: isDark,
+          ).copyWith(color: AppColors.getError(isDark)),
         ),
       ),
-      error: (error, stack) => Card(
-        color: AppColors.getCard(isDark),
-        elevation: AppSizes.cardElevationLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+    );
+  }
+
+  Future<void> _showCancellationFlow(
+    BuildContext context,
+    BookingEntity booking,
+    EventEntity event,
+    String userId,
+    bool isDark,
+    WidgetRef ref,
+  ) async {
+    final eligible = BookingUtils.isEligibleForCancellation(booking.startTime);
+    if (!eligible) {
+      _showIneligibleSnackBar(context, isDark);
+      return;
+    }
+
+    final reason = await _showCancellationReasonDialog(context, isDark);
+    if (reason == null) return;
+
+    final refundType = await _showRefundMethodDialog(context);
+    if (refundType == null) return;
+
+    await _processCancellation(
+      context,
+      booking,
+      event,
+      userId,
+      refundType,
+      reason,
+      ref,
+    );
+  }
+
+  void _showIneligibleSnackBar(BuildContext context, bool isDark) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Cannot cancel within 48 hours of event start.',
+          style: AppTextStyles.bodyMedium(
+            isDark: true,
+          ).copyWith(color: Colors.white),
         ),
-        child: Padding(
-          padding: EdgeInsets.all(AppSizes.paddingMedium.w),
-          child: Text(
-            'Error loading event details',
-            style: AppTextStyles.bodyMedium(isDark: isDark),
-            textAlign: TextAlign.center,
-          ),
+        backgroundColor: AppColors.getError(isDark),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _showCancellationReasonDialog(
+    BuildContext context,
+    bool isDark,
+  ) async {
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => CancellationReasonDialog(isDark: isDark),
+    );
+  }
+
+  Future<String?> _showRefundMethodDialog(BuildContext context) async {
+    return showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => RefundMethodDialog(),
+    );
+  }
+
+  Future<void> _processCancellation(
+    BuildContext context,
+    BookingEntity booking,
+    EventEntity event,
+    String userId,
+    String refundType,
+    String reason,
+    WidgetRef ref,
+  ) async {
+    try {
+      await ref
+          .read(bookingNotifierProvider.notifier)
+          .cancelBooking(
+            bookingId: booking.id,
+            paymentId: booking.paymentId,
+            eventId: booking.eventId,
+            userId: userId,
+            refundType: refundType,
+            cancellationReason: reason,
+          );
+
+      await EmailService.sendDetailedCancellationEmail(
+        userId: userId,
+        bookingId: booking.id,
+        eventTitle: event.title,
+        refundAmount: booking.totalAmount,
+        refundType: refundType,
+        cancellationReason: reason,
+      );
+
+      ref.invalidate(userBookingsProvider(userId));
+      ref.invalidate(walletNotifierProvider);
+
+      if (context.mounted) {
+        _showSuccessSnackBar(context, booking.totalAmount, refundType);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        _showErrorSnackBar(context, e.toString());
+      }
+    }
+  }
+
+  void _showSuccessSnackBar(
+    BuildContext context,
+    double amount,
+    String refundType,
+  ) {
+    final message = refundType == 'wallet'
+        ? '✓ Booking cancelled!\n₹${amount.toStringAsFixed(0)} added to your wallet'
+        : '✓ Booking cancelled!\nRefund will be processed to your bank account in 5-7 business days';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: AppTextStyles.bodyMedium(
+            isDark: true,
+          ).copyWith(color: Colors.white),
+        ),
+        backgroundColor: AppColors.getSuccess(ThemeUtils.isDark(context)),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(BuildContext context, String error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Error cancelling booking: $error',
+          style: AppTextStyles.bodyMedium(
+            isDark: true,
+          ).copyWith(color: Colors.white),
+        ),
+        backgroundColor: AppColors.getError(ThemeUtils.isDark(context)),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
         ),
       ),
     );
@@ -1051,6 +936,38 @@ class MyBookingsScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLoadingCard(bool isDark) {
+    return Card(
+      color: AppColors.getCard(isDark),
+      elevation: AppSizes.cardElevationLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        child: const Center(child: CircularProgressIndicator.adaptive()),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(bool isDark) {
+    return Card(
+      color: AppColors.getCard(isDark),
+      elevation: AppSizes.cardElevationLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        child: Text(
+          'Error loading event details',
+          style: AppTextStyles.bodyMedium(isDark: isDark),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 

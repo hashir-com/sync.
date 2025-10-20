@@ -103,7 +103,7 @@ class EmailService {
 
       final userEmail = await _getUserEmail(userId);
       if (userEmail == null) {
-        print('❌ User email not found for userId: $userId');
+        print(' User email not found for userId: $userId');
         return;
       }
 
@@ -153,7 +153,7 @@ Sync Event Team
       await send(message, smtp);
       print('✓ Detailed cancellation email sent to $userEmail');
     } catch (e) {
-      print('❌ Error sending cancellation email: $e');
+      print(' Error sending cancellation email: $e');
       // Don't rethrow - cancellation should succeed even if email fails
     }
   }

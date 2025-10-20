@@ -74,8 +74,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
         elevation: 0,
       ),
       body: walletState.when(
-        data: (wallet) =>
-            _buildWalletUI(context, isDark, wallet, userName),
+        data: (wallet) => _buildWalletUI(context, isDark, wallet, userName),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Text(
@@ -126,8 +125,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                 },
               ),
             ),
-            SizedBox(height: 32.h),
-            _buildQuickActions(isDark),
+            // SizedBox(height: 32.h),
+            // _buildQuickActions(isDark),
             SizedBox(height: 32.h),
             _buildRecentTransactions(isDark, wallet.transactionHistory),
           ],
@@ -277,6 +276,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
 
   Widget _buildCardBack(String balance, bool isDark) {
     return Container(
+      width: 320.w,
       height: 220.h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.r),
@@ -313,6 +313,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
             right: 0,
             child: Container(
               height: 40.h,
+
               decoration: BoxDecoration(
                 color: isDark
                     ? const Color(0xFF2A2A2E)
@@ -326,26 +327,30 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'AVAILABLE BALANCE',
-                  style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
+                Center(
+                  child: Text(
+                    'AVAILABLE BALANCE',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
                   ),
                 ),
                 SizedBox(height: 36.h),
-                Text(
-                  '₹$balance',
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                    fontSize: 42.sp,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
+                Center(
+                  child: Text(
+                    '₹$balance',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 42.sp,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
                   ),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: 22.h),
                 Text(
                   'Tap to return to front',
                   style: TextStyle(
@@ -362,75 +367,75 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
     );
   }
 
-  Widget _buildQuickActions(bool isDark) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildActionItem(
-            isDark: isDark,
-            icon: Icons.add_circle_outline,
-            label: 'Add Money',
-          ),
-          _buildActionItem(
-            isDark: isDark,
-            icon: Icons.send_outlined,
-            label: 'Send',
-          ),
-          _buildActionItem(
-            isDark: isDark,
-            icon: Icons.history,
-            label: 'History',
-          ),
-          _buildActionItem(
-            isDark: isDark,
-            icon: Icons.more_horiz,
-            label: 'More',
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildQuickActions(bool isDark) {
+  //   return Container(
+  //     padding: EdgeInsets.all(20.w),
+  //     decoration: BoxDecoration(
+  //       color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+  //       borderRadius: BorderRadius.circular(16.r),
+  //       border: Border.all(
+  //         color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+  //       ),
+  //     ),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceAround,
+  //       children: [
+  //         _buildActionItem(
+  //           isDark: isDark,
+  //           icon: Icons.add_circle_outline,
+  //           label: 'Add Money',
+  //         ),
+  //         _buildActionItem(
+  //           isDark: isDark,
+  //           icon: Icons.send_outlined,
+  //           label: 'Send',
+  //         ),
+  //         _buildActionItem(
+  //           isDark: isDark,
+  //           icon: Icons.history,
+  //           label: 'History',
+  //         ),
+  //         _buildActionItem(
+  //           isDark: isDark,
+  //           icon: Icons.more_horiz,
+  //           label: 'More',
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  Widget _buildActionItem({
-    required bool isDark,
-    required IconData icon,
-    required String label,
-  }) {
-    return GestureDetector(
-      onTap: () {},
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.getPrimary(isDark).withAlpha(76),
-            ),
-            child: Icon(icon, color: AppColors.getPrimary(isDark), size: 20.sp),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            label,
-            style: TextStyle(
-              color: isDark ? Colors.grey[300] : Colors.grey[700],
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildActionItem({
+  //   required bool isDark,
+  //   required IconData icon,
+  //   required String label,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: () {},
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Container(
+  //           padding: EdgeInsets.all(12.w),
+  //           decoration: BoxDecoration(
+  //             shape: BoxShape.circle,
+  //             color: AppColors.getPrimary(isDark).withAlpha(76),
+  //           ),
+  //           child: Icon(icon, color: AppColors.getPrimary(isDark), size: 20.sp),
+  //         ),
+  //         SizedBox(height: 8.h),
+  //         Text(
+  //           label,
+  //           style: TextStyle(
+  //             color: isDark ? Colors.grey[300] : Colors.grey[700],
+  //             fontSize: 12.sp,
+  //             fontWeight: FontWeight.w500,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildRecentTransactions(
     bool isDark,

@@ -1,7 +1,3 @@
-// ============================================
-// PART 1: Fixed Search Providers and Models
-// ============================================
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -38,13 +34,13 @@ enum SearchResultType { event, user }
 // Search Query Provider
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-// FIXED: Combined Search Results Provider - Simple and stable
+//Combined Search Results Provider - Simple and stable
 final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
   final query = ref.watch(searchQueryProvider).toLowerCase().trim();
-  print('🔍 SEARCH QUERY: "$query"');
+  print(' SEARCH QUERY: "$query"');
 
   if (query.isEmpty || query.length < 2) {
-    print('❌ Query too short or empty, returning empty data');
+    print(' Query too short or empty, returning empty data');
     return const AsyncValue.data([]);
   }
 
@@ -52,32 +48,32 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
   final usersAsync = ref.watch(allUsersProvider);
 
   print(
-    '📊 Events state: ${eventsAsync.runtimeType}, Users state: ${usersAsync.runtimeType}',
+    'Events state: ${eventsAsync.runtimeType}, Users state: ${usersAsync.runtimeType}',
   );
 
   // If events is loading, show loading
   if (eventsAsync.isLoading) {
-    print('⏳ Events provider is loading');
+    print(' Events provider is loading');
     return const AsyncValue.loading();
   }
 
   // If events has error, show error
   if (eventsAsync.hasError) {
     final error = eventsAsync.error;
-    print('❌ Events provider error: $error');
+    print(' Events provider error: $error');
     return AsyncValue.error(error!, StackTrace.current);
   }
 
   // If users is still loading, wait for it
   if (usersAsync.isLoading) {
-    print('⏳ Users provider is loading, waiting...');
+    print('Users provider is loading, waiting...');
     return const AsyncValue.loading();
   }
 
   // If users has error, continue with events only
   if (usersAsync.hasError) {
     print(
-      '⚠️ Users provider error (will search events only): ${usersAsync.error}',
+      'Users provider error (will search events only): ${usersAsync.error}',
     );
     // Continue with events only, ignore user search error
   }
@@ -87,7 +83,7 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
     data: (events) {
       return usersAsync.when(
         data: (users) {
-          print('✅ Processing: ${events.length} events, ${users.length} users');
+          print(' Processing: ${events.length} events, ${users.length} users');
 
           final eventResults = <SearchResult>[];
           final userResults = <SearchResult>[];
@@ -104,21 +100,20 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
                 location.contains(query);
 
             if (matches) {
-              print('✅ Event match: ${event.title}');
+              print(' Event match: ${event.title}');
             }
 
             return matches;
           }).toList();
 
-          print('📅 Matching events: ${matchingEvents.length}');
+          print('Matching events: ${matchingEvents.length}');
 
           eventResults.addAll(
             matchingEvents.map(
               (event) => SearchResult(
-                id: event.id ?? '',
-                title: event.title ?? 'Untitled Event',
-                subtitle:
-                    '${event.category ?? "Event"} • ${event.location ?? "Location"}',
+                id: event.id,
+                title: event.title,
+                subtitle: '${event.category} • ${event.location}',
                 imageUrl: event.imageUrl,
                 type: SearchResultType.event,
                 data: event,
@@ -128,26 +123,26 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
 
           // Search Users
           final matchingUsers = users.where((user) {
-            final name = user.name?.toLowerCase() ?? '';
-            final email = user.email?.toLowerCase() ?? '';
+            final name = user.name.toLowerCase();
+            final email = user.email.toLowerCase();
 
             final matches = name.contains(query) || email.contains(query);
 
             if (matches) {
-              print('✅ User match: ${user.name}');
+              print(' User match: ${user.name}');
             }
 
             return matches;
           }).toList();
 
-          print('👥 Matching users: ${matchingUsers.length}');
+          print('Matching users: ${matchingUsers.length}');
 
           userResults.addAll(
             matchingUsers.map(
               (user) => SearchResult(
-                id: user.id ?? '',
-                title: user.name ?? 'Unknown User',
-                subtitle: user.email ?? 'No email',
+                id: user.id,
+                title: user.name,
+                subtitle: user.email,
                 imageUrl: user.profileImageUrl,
                 type: SearchResultType.user,
                 data: user,
@@ -156,7 +151,7 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
           );
 
           final totalResults = [...eventResults, ...userResults];
-          print('🎯 Total results: ${totalResults.length}');
+          print('Total results: ${totalResults.length}');
           return AsyncValue.data(totalResults);
         },
         loading: () => const AsyncValue.loading(),
@@ -168,9 +163,7 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
   );
 });
 
-// ============================================
-// PART 2: Updated Header Section with Search
-// ============================================
+// Updated Header Section with Search
 
 class HeaderSection extends ConsumerStatefulWidget {
   const HeaderSection({super.key});
@@ -187,25 +180,25 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
   @override
   void initState() {
     super.initState();
-    print('🏗️ HeaderSection initState');
+    print(' HeaderSection initState');
     _searchFocusNode.addListener(() {
       setState(() {
         _showSearchResults = _searchFocusNode.hasFocus;
-        print('🔍 Search focus changed: $_showSearchResults');
+        print(' Search focus changed: $_showSearchResults');
       });
     });
   }
 
   @override
   void dispose() {
-    print('🗑️ HeaderSection dispose');
+    print(' HeaderSection dispose');
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
   }
 
   void _clearSearch() {
-    print('🧹 Clearing search');
+    print('Clearing search');
     _searchController.clear();
     ref.read(searchQueryProvider.notifier).state = '';
     _searchFocusNode.unfocus();
@@ -218,7 +211,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
     final hasQuery = ref.watch(searchQueryProvider).isNotEmpty;
 
     print(
-      '🎨 Building HeaderSection - hasQuery: $hasQuery, showResults: $_showSearchResults',
+      'Building HeaderSection - hasQuery: $hasQuery, showResults: $_showSearchResults',
     );
 
     return Container(
@@ -296,7 +289,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                             controller: _searchController,
                             focusNode: _searchFocusNode,
                             onChanged: (value) {
-                              print('⌨️ Search input changed: "$value"');
+                              print('Search input changed: "$value"');
                               ref.read(searchQueryProvider.notifier).state =
                                   value;
                             },
@@ -423,38 +416,37 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                     ],
                   ),
 
-                  if (!_showSearchResults) ...[
-                    SizedBox(height: AppSizes.spacingXxl.h),
+                  // if (!_showSearchResults) ...[
+                  //   SizedBox(height: AppSizes.spacingXxl.h),
 
-                    // Categories Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildCategoryItem(
-                          context: context,
-                          isDark: isDark,
-                          icon: '🔔',
-                          label: 'Notification',
-                          isSelected: true,
-                        ),
-                        _buildCategoryItem(
-                          context: context,
-                          isDark: isDark,
-                          icon: '🎯',
-                          label: 'Filter',
-                          hasNewBadge: true,
-                        ),
-                        _buildCategoryItem(
-                          context: context,
-                          isDark: isDark,
-                          icon: '⭐',
-                          label: 'Popular',
-                          hasNewBadge: true,
-                        ),
-                      ],
-                    ),
-                  ],
-
+                  //   // Categories Row
+                  //   // Row(
+                  //   //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  //   //   children: [
+                  //   //     _buildCategoryItem(
+                  //   //       context: context,
+                  //   //       isDark: isDark,
+                  //   //       icon: '🔔',
+                  //   //       label: 'Notification',
+                  //   //       isSelected: true,
+                  //   //     ),
+                  //   //     _buildCategoryItem(
+                  //   //       context: context,
+                  //   //       isDark: isDark,
+                  //   //       icon: '🎯',
+                  //   //       label: 'Filter',
+                  //   //       hasNewBadge: true,
+                  //   //     ),
+                  //   //     _buildCategoryItem(
+                  //   //       context: context,
+                  //   //       isDark: isDark,
+                  //   //       icon: '⭐',
+                  //   //       label: 'Popular',
+                  //   //       hasNewBadge: true,
+                  //   //     ),
+                  //   //   ],
+                  //   // ),
+                  // ],
                   SizedBox(height: AppSizes.spacingMedium.h),
                 ],
               ),
@@ -464,13 +456,11 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
             if (_showSearchResults && hasQuery)
               searchResultsAsync.when(
                 data: (results) {
-                  print('✅ DATA received: ${results.length} results');
+                  print(' DATA received: ${results.length} results');
                   return SearchResultsDropdown(
                     results: results,
                     onResultTap: (result) {
-                      print(
-                        '👆 Result tapped: ${result.title} (${result.type})',
-                      );
+                      print('Result tapped: ${result.title} (${result.type})');
                       _clearSearch();
                       if (result.type == SearchResultType.event) {
                         context.push('/event-detail', extra: result.data);
@@ -495,7 +485,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                   );
                 },
                 error: (error, stack) {
-                  print('❌ ERROR state: $error');
+                  print(' ERROR state: $error');
                   return Container(
                     padding: EdgeInsets.all(AppSizes.paddingXl),
                     child: Column(
@@ -597,9 +587,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
   }
 }
 
-// ============================================
 // PART 3: Search Results Dropdown
-// ============================================
 
 class SearchResultsDropdown extends StatelessWidget {
   final List<SearchResult> results;
@@ -615,10 +603,10 @@ class SearchResultsDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('🎨 Building SearchResultsDropdown with ${results.length} results');
+    print('Building SearchResultsDropdown with ${results.length} results');
 
     if (results.isEmpty) {
-      print('📭 No results to display');
+      print('No results to display');
       return Container(
         padding: EdgeInsets.all(AppSizes.paddingXl),
         child: Column(
@@ -647,57 +635,66 @@ class SearchResultsDropdown extends StatelessWidget {
         .where((r) => r.type == SearchResultType.user)
         .toList();
 
-    print('📊 Events: ${events.length}, Users: ${users.length}');
+    print('Events: ${events.length}, Users: ${users.length}');
+
+    // Calculate available height accounting for keyboard
+    final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final availableHeight = screenHeight - keyboardHeight;
+    final maxDropdownHeight =
+        availableHeight * 0.4; // Use 40% of available height
 
     return Container(
-      constraints: BoxConstraints(maxHeight: 450),
+      constraints: BoxConstraints(maxHeight: maxDropdownHeight),
       decoration: BoxDecoration(
         color: AppColors.getCard(isDark),
         border: Border(
           top: BorderSide(color: AppColors.getBorder(isDark), width: 1),
         ),
       ),
-      child: ListView(
-        shrinkWrap: true,
+      child: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: AppSizes.paddingSmall),
-        children: [
-          if (events.isNotEmpty) ...[
-            _SectionHeader(
-              title: 'Events',
-              count: events.length,
-              icon: Icons.event_rounded,
-              isDark: isDark,
-            ),
-            ...events.map(
-              (result) => _SearchResultTile(
-                result: result,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (events.isNotEmpty) ...[
+              _SectionHeader(
+                title: 'Events',
+                count: events.length,
+                icon: Icons.event_rounded,
                 isDark: isDark,
-                onTap: () => onResultTap(result),
               ),
-            ),
-            if (users.isNotEmpty)
-              Divider(
-                height: 20,
-                thickness: 1,
-                color: AppColors.getBorder(isDark),
+              ...events.map(
+                (result) => _SearchResultTile(
+                  result: result,
+                  isDark: isDark,
+                  onTap: () => onResultTap(result),
+                ),
               ),
-          ],
-          if (users.isNotEmpty) ...[
-            _SectionHeader(
-              title: 'Users',
-              count: users.length,
-              icon: Icons.people_rounded,
-              isDark: isDark,
-            ),
-            ...users.map(
-              (result) => _SearchResultTile(
-                result: result,
+              if (users.isNotEmpty)
+                Divider(
+                  height: 20,
+                  thickness: 1,
+                  color: AppColors.getBorder(isDark),
+                ),
+            ],
+            if (users.isNotEmpty) ...[
+              _SectionHeader(
+                title: 'Users',
+                count: users.length,
+                icon: Icons.people_rounded,
                 isDark: isDark,
-                onTap: () => onResultTap(result),
               ),
-            ),
+              ...users.map(
+                (result) => _SearchResultTile(
+                  result: result,
+                  isDark: isDark,
+                  onTap: () => onResultTap(result),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -779,7 +776,7 @@ class _SearchResultTile extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingXl,
+          horizontal: AppSizes.paddingXxl,
           vertical: AppSizes.paddingMedium,
         ),
         child: Row(
