@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/auth/presentation/widgets/login_form.dart';
 import 'package:sync_event/features/auth/presentation/widgets/signup_text.dart';
 import 'package:sync_event/features/auth/presentation/widgets/social_buttons.dart';
