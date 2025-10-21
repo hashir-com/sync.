@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class EventEntity extends Equatable {
   final String id;
@@ -149,4 +150,17 @@ class EventEntity extends Equatable {
       'availableTickets': availableTickets,
     };
   }
+
+  // Helper for formatted date
+  String get formattedDate => DateFormat('d MMMM, yyyy').format(startTime);
+
+  // Helper for formatted day and time
+  String get formattedDayTime => DateFormat('EEEE, h:mm a').format(startTime);
+
+  // Helper for formatted duration
+  String get formattedDuration => '${DateFormat('h:mm a').format(startTime)} - ${DateFormat('h:mm a').format(endTime)}';
+
+  // Helper for location subtitle
+  String get locationSubtitle => location.contains(',') ? location.split(',').skip(1).join(',').trim() : 'Event location';
+
 }

@@ -12,7 +12,6 @@ import 'package:sync_event/features/bookings/presentation/screens/booking_detail
 import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_details_loader.dart';
-import 'package:sync_event/features/bookings/presentation/screens/cancellation_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/edit_event/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
@@ -76,14 +75,7 @@ final GoRouter appRouter = GoRouter(
         },
       ),
     ),
-    // Dedicated cancellation route
-    GoRoute(
-      path: '/bookings/:bookingId/cancel',
-      builder: (context, state) {
-        final bookingId = state.pathParameters['bookingId']!;
-        return CancellationScreen(bookingId: bookingId);
-      },
-    ),
+    
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
     GoRoute(path: '/root', builder: (context, state) => const RootShell()),
@@ -239,7 +231,8 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(
   path: '/favorites',
-  builder: (context, state) => const FavoritesPage(),
+  name: 'favorites',
+  builder: (context, state) => const FavoritesScreen(),
 ),
   ],
 );

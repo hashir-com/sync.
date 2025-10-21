@@ -8,8 +8,8 @@ import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/events/data/models/category_model.dart';
 
-import '../providers/category_providers.dart';
-import '../providers/event_providers.dart';
+import '../../providers/category_providers.dart';
+import '../../providers/event_providers.dart';
 
 class DescriptionDialog {
   static void show(BuildContext context, WidgetRef ref) {

@@ -22,7 +22,7 @@ class EventFilter {
     this.dateRange,
     PriceRange? priceRange,
     this.selectedDatePreset,
-  }) : priceRange = priceRange ?? PriceRange(min: 0, max: 1000);
+  }) : priceRange = priceRange ?? PriceRange(min: 0, max: 100000);
 
   EventFilter copyWith({
     List<String>? selectedCategories,
@@ -52,7 +52,7 @@ class EventFilter {
       selectedLocation != null ||
       dateRange != null ||
       selectedDatePreset != null ||
-      (priceRange.min > 0 || priceRange.max < 1000);
+      (priceRange.min > 0 || priceRange.max < 100000);
 }
 
 class DateRange {
@@ -743,7 +743,7 @@ class _PriceRangeFilter extends ConsumerWidget {
         RangeSlider(
           values: RangeValues(filter.priceRange.min, filter.priceRange.max),
           min: 0,
-          max: 1000,
+          max: 100000,
           divisions: 20,
           activeColor: AppColors.getPrimary(isDark),
           inactiveColor: AppColors.getBorder(isDark),

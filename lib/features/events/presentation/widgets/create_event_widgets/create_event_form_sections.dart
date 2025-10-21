@@ -12,7 +12,7 @@ import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 
-import '../providers/event_providers.dart';
+import '../../providers/event_providers.dart';
 import 'create_event_option_tile.dart';
 
 class TitleField extends ConsumerWidget {

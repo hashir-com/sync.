@@ -33,6 +33,17 @@ class ResponsiveUtil {
     return MediaQuery.of(context).size.width >= largeDesktopBreakpoint;
   }
 
+  /// Get responsive AppBar height
+  static double getAppBarHeight(BuildContext context) {
+    if (isMobile(context)) {
+      return 56.h; // Standard mobile AppBar height
+    } else if (isTablet(context)) {
+      return 64.h; // Slightly larger for tablets
+    } else {
+      return 72.h; // Larger for desktop
+    }
+  }
+
   /// Get responsive padding based on screen size
   static EdgeInsets getResponsivePadding(BuildContext context) {
     if (isMobile(context)) {

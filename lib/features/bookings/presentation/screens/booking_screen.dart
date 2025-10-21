@@ -9,12 +9,12 @@ import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_provider.dart';
 import 'package:sync_event/features/bookings/presentation/states/booking_screen_state.dart';
-import 'package:sync_event/features/bookings/presentation/widgets/booking_event_detail_card.dart';
-import 'package:sync_event/features/bookings/presentation/widgets/booking_event_image.dart';
-import 'package:sync_event/features/bookings/presentation/widgets/booking_payment_selection.dart';
-import 'package:sync_event/features/bookings/presentation/widgets/booking_price_summary_card.dart';
-import 'package:sync_event/features/bookings/presentation/widgets/booking_ticket_selection_card.dart';
-import 'package:sync_event/features/bookings/presentation/widgets/booking_widget.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_event_detail_card.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_event_image.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_payment_selection.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_price_summary_card.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_ticket_selection_card.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_widget.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 
