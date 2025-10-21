@@ -75,12 +75,123 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
       ),
       body: walletState.when(
         data: (wallet) => _buildWalletUI(context, isDark, wallet, userName),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => _buildSkeletonLoader(context, isDark),
         error: (error, stack) => Center(
           child: Text(
             'Error: $error',
             style: AppTextStyles.bodyMedium(isDark: isDark),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLoader(BuildContext context, bool isDark) {
+    final skeletonColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final skeletonTextColor = isDark ? Colors.grey[700]! : Colors.grey[400]!;
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 40.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Skeleton for Card
+            Container(
+              height: 220.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24.r),
+                color: skeletonColor,
+              ),
+            ),
+            SizedBox(height: 32.h),
+            // Skeleton for Recent Transactions Header
+            Row(
+              children: [
+                Container(
+                  width: 120.w,
+                  height: 16.h,
+                  decoration: BoxDecoration(
+                    color: skeletonColor,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            // Skeleton for Transactions Container
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: skeletonColor,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Column(
+                children: List.generate(
+                  3,
+                  (index) => Padding(
+                    padding: EdgeInsets.only(bottom: index < 2 ? 12.h : 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32.w,
+                                height: 32.h,
+                                decoration: BoxDecoration(
+                                  color: skeletonTextColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      height: 12.h,
+                                      decoration: BoxDecoration(
+                                        color: skeletonTextColor,
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Container(
+                                      width: 80.w,
+                                      height: 10.h,
+                                      decoration: BoxDecoration(
+                                        color: skeletonTextColor,
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 60.w,
+                          height: 12.h,
+                          decoration: BoxDecoration(
+                            color: skeletonTextColor,
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
