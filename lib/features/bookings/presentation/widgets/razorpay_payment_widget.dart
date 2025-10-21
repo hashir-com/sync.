@@ -16,10 +16,10 @@ class RazorpayPaymentWidget extends ConsumerStatefulWidget {
   final void Function(String paymentId) onSuccess;
 
   const RazorpayPaymentWidget({
-    Key? key,
+    super.key,
     required this.amount,
     required this.onSuccess,
-  }) : super(key: key);
+  });
 
   @override
   _RazorpayPaymentWidgetState createState() => _RazorpayPaymentWidgetState();
@@ -56,10 +56,12 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
         'contact': authState.user?.phoneNumber ?? '',
         'email': authState.user?.email ?? '',
       },
-      'external': {'wallets': ['paytm']},
+      'external': {
+        'wallets': ['paytm'],
+      },
       'theme': {
         'color':
-            '#${AppColors.getPrimary(isDark).value.toRadixString(16).padLeft(8, '0').substring(2)}'
+            '#${AppColors.getPrimary(isDark).value.toRadixString(16).padLeft(8, '0').substring(2)}',
       },
     };
 
@@ -71,28 +73,30 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
       SnackBar(
         content: Text(
           'Payment Successful!',
-          style: AppTextStyles.bodyMedium(isDark: true)
-              .copyWith(color: Colors.white),
+          style: AppTextStyles.bodyMedium(
+            isDark: true,
+          ).copyWith(color: Colors.white),
         ),
         backgroundColor: AppColors.getSuccess(ref.watch(themeProvider)),
       ),
     );
 
     if (response.paymentId != null) {
-  widget.onSuccess(response.paymentId!);
-} else {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Payment completed, but payment ID is missing.',
-        style: AppTextStyles.bodyMedium(isDark: true)
-            .copyWith(color: Colors.white),
-      ),
-      backgroundColor: AppColors.getError(ref.watch(themeProvider)),
-    ),
-  );
-}
-// pass paymentId
+      widget.onSuccess(response.paymentId!);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Payment completed, but payment ID is missing.',
+            style: AppTextStyles.bodyMedium(
+              isDark: true,
+            ).copyWith(color: Colors.white),
+          ),
+          backgroundColor: AppColors.getError(ref.watch(themeProvider)),
+        ),
+      );
+    }
+    // pass paymentId
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
@@ -100,8 +104,9 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
       SnackBar(
         content: Text(
           'Payment Failed: ${response.message}',
-          style: AppTextStyles.bodyMedium(isDark: true)
-              .copyWith(color: Colors.white),
+          style: AppTextStyles.bodyMedium(
+            isDark: true,
+          ).copyWith(color: Colors.white),
         ),
         backgroundColor: AppColors.getError(ref.watch(themeProvider)),
       ),
@@ -124,12 +129,14 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
           vertical: AppSizes.buttonPaddingVertical,
         ),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r)),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        ),
       ),
       child: Text(
         'Pay ₹${widget.amount.toStringAsFixed(2)}',
-        style: AppTextStyles.button(isDark: isDark)
-            .copyWith(color: Colors.white),
+        style: AppTextStyles.button(
+          isDark: isDark,
+        ).copyWith(color: Colors.white),
       ),
     );
   }

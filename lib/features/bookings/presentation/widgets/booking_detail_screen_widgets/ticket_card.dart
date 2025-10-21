@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_detail_screen_widgets/ticket_back.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_detail_screen_widgets/ticket_front.dart';

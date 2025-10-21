@@ -1,3 +1,6 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,9 +10,7 @@ import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/events/presentation/widgets/event_screen_widgets/events_list_view.dart';
-import 'package:sync_event/features/home/widgets/filter_bottom_sheet.dart';
-import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
-import 'package:go_router/go_router.dart';
+import 'package:sync_event/features/home/presentation/screen/filter_bottom_sheet.dart';
 
 class EventsScreen extends ConsumerWidget {
   const EventsScreen({super.key});
@@ -66,7 +67,9 @@ class EventsScreen extends ConsumerWidget {
                         showFilterBottomSheet(
                           context,
                           onApplyFilters: () {
-                            print("Filters applied on events screen");
+                            if (kDebugMode) {
+                              print("Filters applied on events screen");
+                            }
                           },
                         );
                       },

@@ -32,7 +32,7 @@ class BookingsListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ThemeUtils.isDark(context);
+    ThemeUtils.isDark(context);
     final bookingsAsync = ref.watch(userBookingsProvider(userId));
     final filterState = ref.watch(bookingsFilterProvider);
 

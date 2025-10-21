@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
-import 'package:sync_event/features/home/screen/drawer.dart';
-import 'package:sync_event/features/home/widgets/event_section.dart';
-import 'package:sync_event/features/home/widgets/header_section.dart';
-import 'package:sync_event/features/home/widgets/invite_banner.dart';
+import 'package:sync_event/features/home/presentation/screen/drawer.dart';
+import 'package:sync_event/features/home/presentation/widgets/event_section.dart';
+import 'package:sync_event/features/home/presentation/widgets/header_section.dart';
+import 'package:sync_event/features/home/presentation/widgets/invite_banner.dart';
 
 // Selected Category Provider
 

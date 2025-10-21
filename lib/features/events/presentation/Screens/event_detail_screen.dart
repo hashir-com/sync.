@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:sync_event/core/constants/app_sizes.dart';
-import 'package:sync_event/core/constants/app_text_styles.dart';
-import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';

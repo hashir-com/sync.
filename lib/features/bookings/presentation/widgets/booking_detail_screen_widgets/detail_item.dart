@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
-import 'package:sync_event/core/util/theme_util.dart';
 
 // Widget for individual detail items in detail cards
 class DetailItem extends StatelessWidget {

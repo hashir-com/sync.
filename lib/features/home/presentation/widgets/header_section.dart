@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,7 +9,7 @@ import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
-import 'package:sync_event/features/home/widgets/filter_bottom_sheet.dart';
+import 'package:sync_event/features/home/presentation/screen/filter_bottom_sheet.dart';
 import 'package:sync_event/features/profile/presentation/providers/other_users_provider.dart';
 
 // Search Result Model
@@ -90,9 +92,9 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
 
           // Search Events
           final matchingEvents = events.where((event) {
-            final title = event.title?.toLowerCase() ?? '';
-            final category = event.category?.toLowerCase() ?? '';
-            final location = event.location?.toLowerCase() ?? '';
+            final title = event.title.toLowerCase();
+            final category = event.category.toLowerCase();
+            final location = event.location.toLowerCase();
 
             final matches =
                 title.contains(query) ||
@@ -521,70 +523,6 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
     );
   }
 
-  Widget _buildCategoryItem({
-    required BuildContext context,
-    required bool isDark,
-    required String icon,
-    required String label,
-    bool isSelected = false,
-    bool hasNewBadge = false,
-  }) {
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Text(icon, style: TextStyle(fontSize: AppSizes.iconLarge.sp)),
-            if (hasNewBadge)
-              Positioned(
-                top: -AppSizes.spacingXs.h,
-                right: -AppSizes.paddingXxl.w,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSizes.paddingSmall.w,
-                    vertical: AppSizes.paddingXs.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.getPrimary(isDark),
-                    borderRadius: BorderRadius.circular(
-                      AppSizes.radiusMedium.r,
-                    ),
-                  ),
-                  child: Text(
-                    'NEW',
-                    style: AppTextStyles.labelSmall(isDark: isDark).copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        SizedBox(height: AppSizes.spacingSmall.h),
-        Text(
-          label,
-          style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-            color: isSelected
-                ? AppColors.getTextPrimary(isDark)
-                : AppColors.getTextSecondary(isDark),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-        if (isSelected)
-          Container(
-            margin: EdgeInsets.only(top: AppSizes.spacingXs.h),
-            height: AppSizes.borderWidthMedium.h,
-            width: AppSizes.radiusRound.w,
-            decoration: BoxDecoration(
-              color: AppColors.getPrimary(isDark),
-              borderRadius: BorderRadius.circular(AppSizes.radiusXs.r),
-            ),
-          ),
-      ],
-    );
-  }
 }
 
 // PART 3: Search Results Dropdown

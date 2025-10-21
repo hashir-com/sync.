@@ -1,14 +1,14 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
-import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sync_event/features/events/presentation/widgets/event_screen_widgets/event_page_card.dart';
-import 'package:sync_event/features/home/widgets/filter_bottom_sheet.dart';
+import 'package:sync_event/features/home/presentation/screen/filter_bottom_sheet.dart';
 
 class EventsListView extends ConsumerWidget {
   final List<dynamic> events;

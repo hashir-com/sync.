@@ -1,16 +1,15 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/favorites/providers/favorites_provider.dart';
 import 'package:sync_event/features/favorites/widgets/favorite_event_card_widget.dart';
-import 'package:sync_event/features/home/widgets/event_section.dart'
-    hide favoritesProvider;
 
 class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({super.key});
@@ -119,75 +118,7 @@ class FavoritesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(BuildContext context, bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            size: AppSizes.iconXxl * 2,
-            color: AppColors.getError(isDark),
-          ),
-          SizedBox(height: AppSizes.spacingLarge.h),
-          Text(
-            'Error loading favorites',
-            style: AppTextStyles.headingSmall(isDark: isDark),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _showClearConfirmation(
-    BuildContext context,
-    WidgetRef ref,
-    bool isDark,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.getCard(isDark),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXl.r),
-        ),
-        title: Text(
-          'Clear All Favorites?',
-          style: AppTextStyles.titleLarge(isDark: isDark),
-        ),
-        content: Text(
-          'This will remove all events from your favorites list.',
-          style: AppTextStyles.bodyMedium(isDark: isDark),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.getTextSecondary(isDark)),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              ref.read(favoritesProvider.notifier).clearAllFavorites();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('All favorites cleared'),
-                  backgroundColor: AppColors.getSuccess(isDark),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.getError(isDark),
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Clear All'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showFavoriteSnackbar(
     BuildContext context,

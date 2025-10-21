@@ -20,7 +20,7 @@ import 'package:sync_event/features/events/presentation/Screens/location_picker_
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/Screens/my_events.dart';
 import 'package:sync_event/features/favorites/screens/favorite_screen.dart';
-import 'package:sync_event/features/home/screen/home.dart';
+import 'package:sync_event/features/home/presentation/screen/home.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sync_event/features/profile/presentation/screens/chat_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';

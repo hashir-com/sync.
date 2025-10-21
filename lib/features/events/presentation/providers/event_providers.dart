@@ -9,7 +9,7 @@ import 'package:sync_event/features/events/domain/usecases/join_event_usecase.da
 import 'package:sync_event/features/events/domain/usecases/update_event_usecase.dart';
 import 'package:sync_event/features/events/presentation/state/create_event_notifier.dart';
 import 'package:sync_event/features/events/presentation/state/location_picker_notifier.dart';
-import 'package:sync_event/features/home/widgets/filter_bottom_sheet.dart';
+import 'package:sync_event/features/home/presentation/screen/filter_bottom_sheet.dart';
 
 // Use case providers
 final createEventUseCaseProvider = Provider<CreateEventUseCase>(

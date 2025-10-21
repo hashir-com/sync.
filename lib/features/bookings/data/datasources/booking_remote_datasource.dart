@@ -1,3 +1,5 @@
+// ignore_for_file: dead_code
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sync_event/core/error/exceptions.dart';
@@ -50,11 +52,11 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         'totalAmount': booking.totalAmount,
         'paymentId': booking.paymentId,
         'seatNumbers': booking.seatNumbers,
-        'status': booking.status ?? 'confirmed',
+        'status': booking.status,
         'bookingDate': Timestamp.fromDate(booking.bookingDate),
         'startTime': Timestamp.fromDate(booking.startTime),
         'endTime': Timestamp.fromDate(booking.endTime),
-        'userEmail': booking.userEmail ?? auth.currentUser?.email ?? '',
+        'userEmail': booking.userEmail,
       };
 
       print('BookingRemoteDataSource: Saving booking with id=${booking.id}, userId=$userId, map=$bookingMap');
