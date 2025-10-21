@@ -1,245 +1,163 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sync_event/core/constants/app_colors.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
+import 'package:sync_event/features/events/presentation/widgets/event_screen_widgets/events_list_view.dart';
+import 'package:sync_event/features/home/presentation/screen/filter_bottom_sheet.dart';
 
 class EventsScreen extends ConsumerWidget {
   const EventsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final eventsAsync = ref.watch(approvedEventsStreamProvider);
+    final filteredEvents = ref.watch(filteredEventsProvider);
+    final filter = ref.watch(eventFilterProvider);
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final isDark = ThemeUtils.isDark(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Events'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              // Manual refresh if needed
-              ref.invalidate(approvedEventsStreamProvider);
-            },
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: AppColors.getBackground(isDark),
+        appBar: AppBar(
+          title: Text(
+            'Discover Events',
+            style: AppTextStyles.titleLarge(
+              isDark: isDark,
+            ).copyWith(fontWeight: FontWeight.w700),
           ),
-        ],
-      ),
-      body: eventsAsync.when(
-        data: (events) {
-          if (events.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+          centerTitle: false,
+          elevation: 0,
+          backgroundColor: AppColors.getBackground(isDark),
+          actions: [
+            // Filter button with badge
+            // Filter button with badge
+            Padding(
+              padding: EdgeInsets.only(right: AppSizes.paddingXs),
+              child: Stack(
                 children: [
-                  Icon(Icons.event_busy, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No events available yet',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  Container(
+                    margin: EdgeInsets.all(AppSizes.paddingXs),
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurface(isDark),
+                      borderRadius: BorderRadius.circular(
+                        50,
+                      ), // <-- fully rounded
+                      border: Border.all(
+                        color: filter.hasActiveFilters
+                            ? AppColors.getPrimary(isDark).withOpacity(0.3)
+                            : Colors.transparent,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.tune_rounded,
+                        color: filter.hasActiveFilters
+                            ? AppColors.getPrimary(isDark)
+                            : AppColors.getTextSecondary(isDark),
+                      ),
+                      onPressed: () {
+                        showFilterBottomSheet(
+                          context,
+                          onApplyFilters: () {
+                            if (kDebugMode) {
+                              print("Filters applied on events screen");
+                            }
+                          },
+                        );
+                      },
+                    ),
                   ),
+                  if (filter.hasActiveFilters)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        padding: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppColors.getError(isDark),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.getError(
+                                isDark,
+                              ).withOpacity(0.3),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '${_getActiveFilterCount(filter)}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(approvedEventsStreamProvider);
-            },
-            child: ListView.builder(
-              itemCount: events.length,
-              padding: const EdgeInsets.all(8),
-              itemBuilder: (context, index) {
-                final event = events[index];
-                final isAttending = event.attendees.contains(currentUserId);
-                final isFull = event.attendees.length >= event.maxAttendees;
-
-                return InkWell(
-                  onTap: () => context.push('/event-detail', extra: event),
-                  child: Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (event.imageUrl != null)
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                            child: Image.network(
-                              event.imageUrl!,
-                              height: 180,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 180,
-                                  color: Colors.grey[300],
-                                  child: const Icon(
-                                    Icons.image_not_supported,
-                                    size: 48,
-                                    color: Colors.grey,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ListTile(
-                          title: Text(
-                            event.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              '${event.category} • ${event.location}',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8,
-                          ),
-                          child: Text(
-                            event.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Colors.grey[800]),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.people,
-                                    size: 20,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    event.maxAttendees == 0
-                                        ? 'Open'
-                                        : '${event.attendees.length}/${event.maxAttendees}',
-
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: isFull
-                                          ? Colors.red
-                                          : Colors.grey[700],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              ElevatedButton(
-                                onPressed: isAttending || isFull
-                                    ? null
-                                    : () => _joinEvent(
-                                        context,
-                                        ref,
-                                        event.id,
-                                        currentUserId,
-                                      ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isAttending
-                                      ? Colors.green
-                                      : null,
-                                ),
-                                child: Text(
-                                  isAttending
-                                      ? 'Joined'
-                                      : isFull
-                                      ? 'Full'
-                                      : 'Join',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
             ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading events',
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+
+            // Reset filters button
+            if (filter.hasActiveFilters)
+              Padding(
+                padding: EdgeInsets.only(right: AppSizes.paddingSmall),
+                child: Container(
+                  margin: EdgeInsets.all(AppSizes.paddingXs),
+                  decoration: BoxDecoration(
+                    color: AppColors.getError(isDark).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(
+                      50,
+                    ), // <-- fully rounded
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: AppColors.getError(isDark),
+                    ),
+                    onPressed: () {
+                      ref.read(eventFilterProvider.notifier).reset();
+                    },
+                    tooltip: 'Clear filters',
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  ref.invalidate(approvedEventsStreamProvider);
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(approvedEventsStreamProvider);
+          },
+          color: AppColors.getPrimary(isDark),
+          child: EventsListView(
+            events: filteredEvents,
+            currentUserId: currentUserId,
+            filter: filter,
+            isDark: isDark,
           ),
         ),
       ),
     );
   }
 
-  Future<void> _joinEvent(
-    BuildContext context,
-    WidgetRef ref,
-    String eventId,
-    String userId,
-  ) async {
-    try {
-      await ref.read(joinEventUseCaseProvider).call(eventId, userId);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully joined the event!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-      // No need to manually refresh - the stream will update automatically
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to join: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+  int _getActiveFilterCount(EventFilter filter) {
+    int count = 0;
+    if (filter.selectedCategories.isNotEmpty) count++;
+    if (filter.selectedLocation != null) count++;
+    if (filter.dateRange != null) count++;
+    if (filter.priceRange.min > 0 || filter.priceRange.max < double.infinity) {
+      count++;
     }
+    return count;
   }
 }

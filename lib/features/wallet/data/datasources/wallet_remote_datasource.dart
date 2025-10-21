@@ -84,7 +84,7 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
           });
           print('   ✓ Wallet created successfully');
         } catch (e) {
-          print('   ❌ Error creating wallet: $e');
+          print(' Error creating wallet: $e');
           rethrow;
         }
       } else {
@@ -130,13 +130,13 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
         print('   New balance: ₹$newBalance');
         print('   Total transactions: ${updatedTransactions.length}');
       } catch (e) {
-        print('   ❌ Error updating wallet: $e');
+        print(' Error updating wallet: $e');
         rethrow;
       }
 
       print('✓ Refund added to wallet successfully: $userId, Amount: ₹$amount');
     } catch (e) {
-      print('❌ Error adding refund to wallet: $e');
+      print('Error adding refund to wallet: $e');
       throw Exception('Failed to add refund to wallet: $e');
     }
   }

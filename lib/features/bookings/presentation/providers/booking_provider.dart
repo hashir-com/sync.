@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/di/injection_container.dart' as di;
-import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';
@@ -25,6 +25,111 @@ final bookingNotifierProvider =
     ref,
   );
 });
+
+// Add to your providers file (booking_providers.dart)
+final bookingsFilterProvider = StateNotifierProvider<BookingsFilterNotifier, BookingsFilterState>((ref) {
+  return BookingsFilterNotifier();
+});
+
+class BookingsFilterState {
+  final String searchQuery;
+  final String statusFilter;
+  final DateTimeRange? dateFilter;
+  
+  const BookingsFilterState({
+    this.searchQuery = '',
+    this.statusFilter = 'all',
+    this.dateFilter,
+  });
+  
+  BookingsFilterState copyWith({
+    String? searchQuery,
+    String? statusFilter,
+    DateTimeRange? dateFilter,
+  }) {
+    return BookingsFilterState(
+      searchQuery: searchQuery ?? this.searchQuery,
+      statusFilter: statusFilter ?? this.statusFilter,
+      dateFilter: dateFilter ?? this.dateFilter,
+    );
+  }
+  
+  bool get hasActiveFilters => searchQuery.isNotEmpty || statusFilter != 'all' || dateFilter != null;
+}
+
+class BookingsFilterNotifier extends StateNotifier<BookingsFilterState> {
+  BookingsFilterNotifier() : super(const BookingsFilterState());
+  
+  void setSearchQuery(String query) {
+    state = state.copyWith(searchQuery: query);
+  }
+  
+  void setStatusFilter(String filter) {
+    state = state.copyWith(statusFilter: filter);
+  }
+  
+  void setDateFilter(DateTimeRange? range) {
+    state = state.copyWith(dateFilter: range);
+  }
+  
+  void clearFilters() {
+    state = const BookingsFilterState();
+  }
+  
+  void clearDateFilter() {
+    state = state.copyWith(dateFilter: null);
+  }
+}
+
+// Add this to your providers file (booking_providers.dart or similar)
+final cancellationProvider = StateNotifierProvider<CancellationNotifier, CancellationState>((ref) {
+  return CancellationNotifier();
+});
+
+class CancellationState {
+  final String? reason;
+  final String? refundType;
+  final String notes;
+  
+  const CancellationState({
+    this.reason,
+    this.refundType,
+    this.notes = '',
+  });
+  
+  CancellationState copyWith({
+    String? reason,
+    String? refundType,
+    String? notes,
+  }) {
+    return CancellationState(
+      reason: reason ?? this.reason,
+      refundType: refundType ?? this.refundType,
+      notes: notes ?? this.notes,
+    );
+  }
+}
+
+
+class CancellationNotifier extends StateNotifier<CancellationState> {
+  CancellationNotifier() : super(const CancellationState());
+  
+  void setReason(String? reason) {
+    state = state.copyWith(reason: reason);
+  }
+  
+  void setRefundType(String? refundType) {
+    state = state.copyWith(refundType: refundType);
+  }
+  
+  void setNotes(String notes) {
+    state = state.copyWith(notes: notes);
+  }
+  
+  void clear() {
+    state = const CancellationState();
+  }
+}
 
 class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
   final BookTicketUseCase bookTicketUseCase;

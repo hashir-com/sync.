@@ -22,7 +22,7 @@ import 'package:sync_event/features/auth/domain/usecases/verify_phone_number_use
 
 // Bookings
 import 'package:sync_event/features/bookings/data/datasources/booking_remote_datasource.dart' as booking_datasource;
-import 'package:sync_event/features/bookings/data/repositories/booking_repository_impl.dart' hide BookingRemoteDataSource, BookingRemoteDataSourceImpl;
+import 'package:sync_event/features/bookings/data/repositories/booking_repository_impl.dart';
 import 'package:sync_event/features/bookings/domain/repositories/booking_repositories.dart';
 import 'package:sync_event/features/bookings/domain/usecases/book_tickets_usecase.dart';
 import 'package:sync_event/features/bookings/domain/usecases/cancel_booking_usecase.dart';

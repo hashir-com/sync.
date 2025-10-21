@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -10,9 +10,9 @@ import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import '../providers/event_providers.dart';
-import '../widgets/create_event_app_bar.dart';
-import '../widgets/create_event_form_sections.dart';
-import '../widgets/create_event_dialogs.dart';
+import '../widgets/create_event_widgets/create_event_app_bar.dart';
+import '../widgets/create_event_widgets/create_event_form_sections.dart';
+import '../widgets/create_event_widgets/create_event_dialogs.dart';
 
 class CreateEventScreen extends ConsumerWidget {
   CreateEventScreen({super.key});

@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sync_event/features/Map/presentation/screens/map_screen.dart';
 import 'package:sync_event/features/Rootnavbar/root_tab_notifier.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
-import 'package:sync_event/features/home/screen/home.dart';
+import 'package:sync_event/features/home/presentation/screen/home.dart';
 import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart'; // Adjust import path
 
 class RootShell extends ConsumerWidget {
