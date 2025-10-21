@@ -48,7 +48,8 @@ class TopCitySmallEventCard extends StatelessWidget {
                       width: double.infinity,
                       height: double.infinity,
                       color: AppColors.getSurface(isDark),
-                      child: event.imageUrl != null && event.imageUrl!.isNotEmpty
+                      child:
+                          event.imageUrl != null && event.imageUrl!.isNotEmpty
                           ? Image.network(
                               event.imageUrl!,
                               width: double.infinity,
@@ -58,7 +59,9 @@ class TopCitySmallEventCard extends StatelessWidget {
                                 return Center(
                                   child: Icon(
                                     Icons.event_rounded,
-                                    color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+                                    color: AppColors.getTextSecondary(
+                                      isDark,
+                                    ).withOpacity(0.5),
                                   ),
                                 );
                               },
@@ -66,7 +69,9 @@ class TopCitySmallEventCard extends StatelessWidget {
                           : Center(
                               child: Icon(
                                 Icons.event_rounded,
-                                color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+                                color: AppColors.getTextSecondary(
+                                  isDark,
+                                ).withOpacity(0.5),
                               ),
                             ),
                     ),
@@ -81,11 +86,15 @@ class TopCitySmallEventCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
                       ),
                       child: Text(
                         formattedDate,
-                        style: AppTextStyles.labelSmall(isDark: false).copyWith(fontWeight: FontWeight.w600),
+                        style: AppTextStyles.labelSmall(
+                          isDark: false,
+                        ).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -118,7 +127,9 @@ class TopCitySmallEventCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.getWarning(isDark),
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusRound,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -131,10 +142,11 @@ class TopCitySmallEventCard extends StatelessWidget {
                           SizedBox(width: 2),
                           Text(
                             rating,
-                            style: AppTextStyles.labelSmall(isDark: false).copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTextStyles.labelSmall(isDark: false)
+                                .copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ],
                       ),
@@ -146,7 +158,9 @@ class TopCitySmallEventCard extends StatelessWidget {
             SizedBox(height: AppSizes.spacingXs),
             Text(
               event.title ?? 'Event',
-              style: AppTextStyles.titleSmall(isDark: isDark).copyWith(fontWeight: FontWeight.w700),
+              style: AppTextStyles.titleSmall(
+                isDark: isDark,
+              ).copyWith(fontWeight: FontWeight.w700),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -169,7 +183,9 @@ class TopCitySmallEventCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '$attendeesCount going',
-                    style: AppTextStyles.labelSmall(isDark: isDark).copyWith(color: AppColors.getPrimary(isDark)),
+                    style: AppTextStyles.labelSmall(
+                      isDark: isDark,
+                    ).copyWith(color: AppColors.getPrimary(isDark)),
                   ),
                 ),
               ],

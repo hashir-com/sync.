@@ -121,9 +121,11 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
   Widget build(BuildContext context) {
     final isDark = ThemeUtils.isDark(context);
     return ElevatedButton(
-      onPressed: _openCheckout,
+      onPressed: widget.amount > 0 ? _openCheckout : null, // disable if free
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.getPrimary(isDark),
+        backgroundColor: widget.amount > 0
+            ? AppColors.getPrimary(isDark)
+            : Colors.grey, // grey out if disabled
         padding: EdgeInsets.symmetric(
           horizontal: AppSizes.buttonPaddingHorizontal,
           vertical: AppSizes.buttonPaddingVertical,
@@ -133,7 +135,9 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
         ),
       ),
       child: Text(
-        'Pay ₹${widget.amount.toStringAsFixed(2)}',
+        widget.amount > 0
+            ? 'Pay ₹${widget.amount.toStringAsFixed(2)}'
+            : 'Free Event', // show Free Event if amount is 0
         style: AppTextStyles.button(
           isDark: isDark,
         ).copyWith(color: Colors.white),

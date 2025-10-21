@@ -9,6 +9,7 @@ import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
 import 'package:sync_event/features/wallet/presentation/provider/wallet_provider.dart';
 import 'dart:math' as math;
 
+
 class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
 

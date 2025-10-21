@@ -30,7 +30,9 @@ class NearbySmallEventCard extends StatelessWidget {
     final dateFormat = DateFormat('MMM d');
     final formattedDate = dateFormat.format(startTime);
     final distance = double.tryParse(distanceKm) ?? 0;
-    final Color distanceColor = distance <= 40 ? AppColors.getSuccess(isDark) : AppColors.getWarning(isDark);
+    final Color distanceColor = distance <= 40
+        ? AppColors.getSuccess(isDark)
+        : AppColors.getWarning(isDark);
 
     return GestureDetector(
       onTap: onTap,
@@ -49,7 +51,8 @@ class NearbySmallEventCard extends StatelessWidget {
                       width: double.infinity,
                       height: double.infinity,
                       color: AppColors.getSurface(isDark),
-                      child: event.imageUrl != null && event.imageUrl!.isNotEmpty
+                      child:
+                          event.imageUrl != null && event.imageUrl!.isNotEmpty
                           ? Image.network(
                               event.imageUrl!,
                               width: double.infinity,
@@ -59,7 +62,9 @@ class NearbySmallEventCard extends StatelessWidget {
                                 return Center(
                                   child: Icon(
                                     Icons.event_rounded,
-                                    color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+                                    color: AppColors.getTextSecondary(
+                                      isDark,
+                                    ).withOpacity(0.5),
                                   ),
                                 );
                               },
@@ -67,7 +72,9 @@ class NearbySmallEventCard extends StatelessWidget {
                           : Center(
                               child: Icon(
                                 Icons.event_rounded,
-                                color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+                                color: AppColors.getTextSecondary(
+                                  isDark,
+                                ).withOpacity(0.5),
                               ),
                             ),
                     ),
@@ -82,11 +89,15 @@ class NearbySmallEventCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
                       ),
                       child: Text(
                         formattedDate,
-                        style: AppTextStyles.labelSmall(isDark: false).copyWith(fontWeight: FontWeight.w600),
+                        style: AppTextStyles.labelSmall(
+                          isDark: false,
+                        ).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -115,7 +126,9 @@ class NearbySmallEventCard extends StatelessWidget {
             SizedBox(height: AppSizes.spacingXs),
             Text(
               event.title ?? 'Event',
-              style: AppTextStyles.titleSmall(isDark: isDark).copyWith(fontWeight: FontWeight.w700),
+              style: AppTextStyles.titleSmall(
+                isDark: isDark,
+              ).copyWith(fontWeight: FontWeight.w700),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -129,12 +142,20 @@ class NearbySmallEventCard extends StatelessWidget {
             SizedBox(height: AppSizes.spacingXs),
             Row(
               children: [
-                Icon(Icons.location_on_rounded, size: 12, color: distanceColor),
+                Icon(
+                  distance < 40
+                      ? Icons.telegram_sharp
+                      : Icons.location_on_rounded,
+                  size: 12,
+                  color: distanceColor,
+                ),
                 SizedBox(width: AppSizes.spacingXs / 2),
                 Expanded(
                   child: Text(
                     '$distanceKm km away',
-                    style: AppTextStyles.labelSmall(isDark: isDark).copyWith(color: distanceColor),
+                    style: AppTextStyles.labelSmall(
+                      isDark: isDark,
+                    ).copyWith(color: distanceColor),
                   ),
                 ),
               ],

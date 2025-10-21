@@ -33,7 +33,10 @@ class TopCityEventsSection extends ConsumerWidget {
             .where(
               (event) =>
                   event != null &&
-                  event.location?.toLowerCase().contains(cityName.toLowerCase()) == true,
+                  event.location?.toLowerCase().contains(
+                        cityName.toLowerCase(),
+                      ) ==
+                      true,
             )
             .toList();
 
@@ -47,7 +50,9 @@ class TopCityEventsSection extends ConsumerWidget {
 
         try {
           cityEvents.sort(
-            (a, b) => (b?.attendees?.length ?? 0).compareTo(a?.attendees?.length ?? 0),
+            (a, b) => (b?.attendees?.length ?? 0).compareTo(
+              a?.attendees?.length ?? 0,
+            ),
           );
         } catch (e) {}
 
@@ -67,11 +72,16 @@ class TopCityEventsSection extends ConsumerWidget {
               if (event == null) return const SizedBox(width: 10);
 
               final isFavorite = favorites.contains(event.id ?? '');
-              final attendeesCount = (event.attendees?.length ?? 0).clamp(0, 999);
+              final attendeesCount = (event.attendees?.length ?? 0).clamp(
+                0,
+                999,
+              );
 
               return Padding(
                 padding: EdgeInsets.only(
-                  right: index == topEvents.length - 1 ? 0 : AppSizes.spacingMedium,
+                  right: index == topEvents.length - 1
+                      ? 0
+                      : AppSizes.spacingMedium,
                 ),
                 child: TopCitySmallEventCard(
                   event: event,
@@ -79,8 +89,14 @@ class TopCityEventsSection extends ConsumerWidget {
                   rating: (4.5 + (attendeesCount % 5) * 0.1).toStringAsFixed(1),
                   isFavorite: isFavorite,
                   onFavoriteTap: () {
-                    ref.read(favoritesProvider.notifier).toggleFavorite(event.id ?? '');
-                    showFavoriteSnackbarSafe(context, isFavorite, event.title ?? 'Event');
+                    ref
+                        .read(favoritesProvider.notifier)
+                        .toggleFavorite(event.id ?? '');
+                    showFavoriteSnackbarSafe(
+                      context,
+                      isFavorite,
+                      event.title ?? 'Event',
+                    );
                   },
                   onTap: () => context.push('/event-detail', extra: event),
                 ),
