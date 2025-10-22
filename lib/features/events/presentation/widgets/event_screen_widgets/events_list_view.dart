@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/responsive_helper.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/features/events/presentation/widgets/event_screen_widgets/event_page_card.dart';
@@ -31,7 +32,7 @@ class EventsListView extends ConsumerWidget {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: EdgeInsets.all(AppSizes.paddingXxl),
+            padding: ResponsiveHelper.getResponsivePadding(context),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -132,51 +133,135 @@ class EventsListView extends ConsumerWidget {
       );
     }
 
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-      slivers: [
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            AppSizes.paddingMedium,
-            AppSizes.paddingSmall,
-            AppSizes.paddingMedium,
-            AppSizes.paddingMedium,
-          ),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final event = events[index];
-                final isAttending = event.attendees.contains(currentUserId);
-                final isFull = event.attendees.length >= event.maxAttendees;
-
-                return TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: Duration(milliseconds: 400 + (index * 100)),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, 30 * (1 - value)),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: EventCard(
-                    event: event,
-                    isAttending: isAttending,
-                    isFull: isFull,
-                    isDark: isDark,
-                    onTap: () => context.push('/event-detail', extra: event),
-                    onJoin: () => _joinEvent(context, ref, event.id, currentUserId),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = ResponsiveHelper.isDesktop(context);
+        final isTablet = ResponsiveHelper.isTablet(context);
+        
+        if (isDesktop || isTablet) {
+          // Use grid layout for tablet and desktop
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              SliverPadding(
+                padding: ResponsiveHelper.getResponsivePadding(context),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveHelper.getResponsiveGridColumns(
+                      context,
+                      mobileColumns: 1,
+                      tabletColumns: 2,
+                      desktopColumns: 3,
+                    ),
+                    crossAxisSpacing: ResponsiveHelper.getResponsiveSpacing(
+                      context,
+                      mobile: 16,
+                      tablet: 20,
+                      desktop: 24,
+                    ),
+                    mainAxisSpacing: ResponsiveHelper.getResponsiveSpacing(
+                      context,
+                      mobile: 16,
+                      tablet: 20,
+                      desktop: 24,
+                    ),
+                    childAspectRatio: ResponsiveHelper.getAspectRatio(
+                      context,
+                      mobileRatio: 1.2,
+                      tabletRatio: 1.1,
+                      desktopRatio: 1.0,
+                    ),
                   ),
-                );
-              },
-              childCount: events.length,
-            ),
-          ),
-        ),
-      ],
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final event = events[index];
+                      final isAttending = event.attendees.contains(currentUserId);
+                      final isFull = event.attendees.length >= event.maxAttendees;
+
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 400 + (index * 100)),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 30 * (1 - value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: EventCard(
+                          event: event,
+                          isAttending: isAttending,
+                          isFull: isFull,
+                          isDark: isDark,
+                          onTap: () => context.push('/event-detail', extra: event),
+                          onJoin: () => _joinEvent(context, ref, event.id, currentUserId),
+                        ),
+                      );
+                    },
+                    childCount: events.length,
+                  ),
+                ),
+              ),
+            ],
+          );
+        } else {
+          // Use list layout for mobile
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              SliverPadding(
+                padding: ResponsiveHelper.getResponsivePadding(context),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final event = events[index];
+                      final isAttending = event.attendees.contains(currentUserId);
+                      final isFull = event.attendees.length >= event.maxAttendees;
+
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 400 + (index * 100)),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 30 * (1 - value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: ResponsiveHelper.getResponsiveSpacing(
+                              context,
+                              mobile: 16,
+                              tablet: 20,
+                              desktop: 24,
+                            ),
+                          ),
+                          child: EventCard(
+                            event: event,
+                            isAttending: isAttending,
+                            isFull: isFull,
+                            isDark: isDark,
+                            onTap: () => context.push('/event-detail', extra: event),
+                            onJoin: () => _joinEvent(context, ref, event.id, currentUserId),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: events.length,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+      },
     );
   }
 
@@ -194,18 +279,43 @@ class EventsListView extends ConsumerWidget {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white),
-                SizedBox(width: AppSizes.spacingSmall),
-                const Text('Successfully joined the event!'),
+                Icon(
+                  Icons.check_circle_rounded, 
+                  color: Colors.white,
+                  size: ResponsiveHelper.getIconSize(context, baseSize: 20),
+                ),
+                SizedBox(
+                  width: ResponsiveHelper.getResponsiveSpacing(
+                    context,
+                    mobile: 8,
+                    tablet: 12,
+                    desktop: 16,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Successfully joined the event!',
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.getResponsiveFontSize(
+                        context,
+                        mobile: 14,
+                        tablet: 15,
+                        desktop: 16,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
             backgroundColor: AppColors.success,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              borderRadius: BorderRadius.circular(
+                ResponsiveHelper.getBorderRadius(context, baseRadius: 12),
+              ),
             ),
-            margin: EdgeInsets.all(AppSizes.paddingMedium),
+            margin: ResponsiveHelper.getResponsivePadding(context),
           ),
         );
       }
@@ -215,18 +325,43 @@ class EventsListView extends ConsumerWidget {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_rounded, color: Colors.white),
-                SizedBox(width: AppSizes.spacingSmall),
-                Expanded(child: Text('Failed to join: ${e.toString()}')),
+                Icon(
+                  Icons.error_rounded, 
+                  color: Colors.white,
+                  size: ResponsiveHelper.getIconSize(context, baseSize: 20),
+                ),
+                SizedBox(
+                  width: ResponsiveHelper.getResponsiveSpacing(
+                    context,
+                    mobile: 8,
+                    tablet: 12,
+                    desktop: 16,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Failed to join: ${e.toString()}',
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.getResponsiveFontSize(
+                        context,
+                        mobile: 14,
+                        tablet: 15,
+                        desktop: 16,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
             backgroundColor: AppColors.getError(isDark),
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              borderRadius: BorderRadius.circular(
+                ResponsiveHelper.getBorderRadius(context, baseRadius: 12),
+              ),
             ),
-            margin: EdgeInsets.all(AppSizes.paddingMedium),
+            margin: ResponsiveHelper.getResponsivePadding(context),
           ),
         );
       }

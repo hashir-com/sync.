@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/responsive_helper.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/events/presentation/widgets/event_screen_widgets/events_list_view.dart';
@@ -21,6 +22,7 @@ class EventsScreen extends ConsumerWidget {
     final filter = ref.watch(eventFilterProvider);
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     final isDark = ThemeUtils.isDark(context);
+    final navigationType = ResponsiveHelper.getNavigationType(context);
 
     return SafeArea(
       child: Scaffold(
@@ -30,25 +32,44 @@ class EventsScreen extends ConsumerWidget {
             'Discover Events',
             style: AppTextStyles.titleLarge(
               isDark: isDark,
-            ).copyWith(fontWeight: FontWeight.w700),
+            ).copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 20,
+                tablet: 22,
+                desktop: 24,
+              ),
+            ),
           ),
           centerTitle: false,
           elevation: 0,
           backgroundColor: AppColors.getBackground(isDark),
           actions: [
             // Filter button with badge
-            // Filter button with badge
             Padding(
-              padding: EdgeInsets.only(right: AppSizes.paddingXs),
+              padding: EdgeInsets.only(
+                right: ResponsiveHelper.getResponsiveSpacing(
+                  context,
+                  mobile: 8,
+                  tablet: 12,
+                  desktop: 16,
+                ),
+              ),
               child: Stack(
                 children: [
                   Container(
-                    margin: EdgeInsets.all(AppSizes.paddingXs),
+                    margin: EdgeInsets.all(
+                      ResponsiveHelper.getResponsiveSpacing(
+                        context,
+                        mobile: 4,
+                        tablet: 6,
+                        desktop: 8,
+                      ),
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.getSurface(isDark),
-                      borderRadius: BorderRadius.circular(
-                        50,
-                      ), // <-- fully rounded
+                      borderRadius: BorderRadius.circular(50),
                       border: Border.all(
                         color: filter.hasActiveFilters
                             ? AppColors.getPrimary(isDark).withOpacity(0.3)
@@ -62,6 +83,7 @@ class EventsScreen extends ConsumerWidget {
                         color: filter.hasActiveFilters
                             ? AppColors.getPrimary(isDark)
                             : AppColors.getTextSecondary(isDark),
+                        size: ResponsiveHelper.getIconSize(context, baseSize: 24),
                       ),
                       onPressed: () {
                         showFilterBottomSheet(
@@ -86,9 +108,7 @@ class EventsScreen extends ConsumerWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.getError(
-                                isDark,
-                              ).withOpacity(0.3),
+                              color: AppColors.getError(isDark).withOpacity(0.3),
                               blurRadius: 4,
                               spreadRadius: 1,
                             ),
@@ -98,7 +118,12 @@ class EventsScreen extends ConsumerWidget {
                           '${_getActiveFilterCount(filter)}',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: ResponsiveHelper.getResponsiveFontSize(
+                              context,
+                              mobile: 10,
+                              tablet: 11,
+                              desktop: 12,
+                            ),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -111,19 +136,32 @@ class EventsScreen extends ConsumerWidget {
             // Reset filters button
             if (filter.hasActiveFilters)
               Padding(
-                padding: EdgeInsets.only(right: AppSizes.paddingSmall),
+                padding: EdgeInsets.only(
+                  right: ResponsiveHelper.getResponsiveSpacing(
+                    context,
+                    mobile: 8,
+                    tablet: 12,
+                    desktop: 16,
+                  ),
+                ),
                 child: Container(
-                  margin: EdgeInsets.all(AppSizes.paddingXs),
+                  margin: EdgeInsets.all(
+                    ResponsiveHelper.getResponsiveSpacing(
+                      context,
+                      mobile: 4,
+                      tablet: 6,
+                      desktop: 8,
+                    ),
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.getError(isDark).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(
-                      50,
-                    ), // <-- fully rounded
+                    borderRadius: BorderRadius.circular(50),
                   ),
                   child: IconButton(
                     icon: Icon(
                       Icons.close_rounded,
                       color: AppColors.getError(isDark),
+                      size: ResponsiveHelper.getIconSize(context, baseSize: 24),
                     ),
                     onPressed: () {
                       ref.read(eventFilterProvider.notifier).reset();
@@ -139,11 +177,18 @@ class EventsScreen extends ConsumerWidget {
             ref.invalidate(approvedEventsStreamProvider);
           },
           color: AppColors.getPrimary(isDark),
-          child: EventsListView(
-            events: filteredEvents,
-            currentUserId: currentUserId,
-            filter: filter,
-            isDark: isDark,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Padding(
+                padding: ResponsiveHelper.getResponsivePadding(context),
+                child: EventsListView(
+                  events: filteredEvents,
+                  currentUserId: currentUserId,
+                  filter: filter,
+                  isDark: isDark,
+                ),
+              );
+            },
           ),
         ),
       ),

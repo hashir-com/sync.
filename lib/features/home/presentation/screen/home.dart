@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
-import 'package:sync_event/core/util/responsive_util.dart';
+import 'package:sync_event/core/util/responsive_helper.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/presentation/screen/drawer.dart';
 import 'package:sync_event/features/home/presentation/widgets/event_section.dart';
@@ -48,6 +48,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
     ref.watch(selectedCategoryProvider);
+    final navigationType = ResponsiveHelper.getNavigationType(context);
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(isDark),
@@ -57,57 +58,69 @@ class HomeScreen extends ConsumerWidget {
             onRefresh: () => _handleRefresh(ref, context),
             color: AppColors.getPrimary(isDark),
             backgroundColor: AppColors.getCard(isDark),
-            child: Column(
-              children: [
-                const HeaderSection(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight:
-                            constraints.maxHeight -
-                            AppSizes.getAppBarHeight(context) -
-                            MediaQuery.of(context).padding.top,
-                      ),
-                      child: IntrinsicHeight(
-                        child: Column(
-                          children: [
-                            const EventSection(),
-                            SizedBox(
-                              height: AppSizes.getHeightSpacing(
-                                context,
-                                baseSpacing: 20,
-                              ),
-                            ),
-                            const InviteBanner(),
-                            SizedBox(
-                              height: AppSizes.getHeightSpacing(
-                                context,
-                                baseSpacing: 20,
-                              ),
-                            ),
-                            // Add bottom padding for better UX
-                            SizedBox(
-                              height:
-                                  ResponsiveUtil.getBottomPadding(context) +
-                                  AppSizes.getHeightSpacing(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  const HeaderSection(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight -
+                              ResponsiveHelper.getAppBarHeight(context) -
+                              MediaQuery.of(context).padding.top -
+                              (navigationType == NavigationType.drawer 
+                                  ? ResponsiveHelper.getBottomNavHeight(context) 
+                                  : 0),
+                        ),
+                        child: IntrinsicHeight(
+                          child: Padding(
+                            padding: ResponsiveHelper.getResponsivePadding(context),
+                            child: Column(
+                              children: [
+                                const EventSection(),
+                                SizedBox(
+                                  height: ResponsiveHelper.getResponsiveHeightSpacing(
                                     context,
-                                    baseSpacing: 16,
+                                    mobile: 20,
+                                    tablet: 24,
+                                    desktop: 32,
                                   ),
+                                ),
+                                const InviteBanner(),
+                                SizedBox(
+                                  height: ResponsiveHelper.getResponsiveHeightSpacing(
+                                    context,
+                                    mobile: 20,
+                                    tablet: 24,
+                                    desktop: 32,
+                                  ),
+                                ),
+                                // Add bottom padding for better UX
+                                SizedBox(
+                                  height: ResponsiveHelper.getBottomPadding(context) +
+                                      ResponsiveHelper.getResponsiveHeightSpacing(
+                                        context,
+                                        mobile: 16,
+                                        tablet: 20,
+                                        desktop: 24,
+                                      ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
       ),
-      drawer: const CustomDrawer(),
+      drawer: navigationType == NavigationType.drawer ? const CustomDrawer() : null,
     );
   }
 }

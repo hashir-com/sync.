@@ -1910,6 +1910,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/util/responsive_helper.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/presentation/providers/location_provider.dart';
@@ -1933,23 +1934,39 @@ class EventSection extends ConsumerWidget {
     final isDark = ThemeUtils.isDark(context);
     final userCityAsync = ref.watch(userCityProvider);
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: AppSizes.spacingXxl),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 24,
+                  tablet: 28,
+                  desktop: 32,
+                ),
+              ),
 
-          // 1. POPULAR EVENTS BANNER
-          SectionHeader(
-            title: 'Upcoming Popular Events',
-            isDark: isDark,
-            onViewAll: () {
-              ref.read(eventFilterProvider.notifier).reset();
-              context.push('/events');
-            },
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
+              // 1. POPULAR EVENTS BANNER
+              SectionHeader(
+                title: 'Upcoming Popular Events',
+                isDark: isDark,
+                onViewAll: () {
+                  ref.read(eventFilterProvider.notifier).reset();
+                  context.push('/events');
+                },
+              ),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 16,
+                  tablet: 20,
+                  desktop: 24,
+                ),
+              ),
 
           eventsAsync.when(
             data: (events) {
@@ -1986,29 +2003,57 @@ class EventSection extends ConsumerWidget {
             ),
           ),
 
-          SizedBox(height: AppSizes.spacingXxxl),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 32,
+                  tablet: 36,
+                  desktop: 40,
+                ),
+              ),
 
-          // 2. NEARBY EVENTS
-          SectionHeader(
-            title: 'Popular Events Near You',
-            isDark: isDark,
-            onViewAll: () => context.push('/events'),
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
-          NearbyEventsSection(eventsAsync: eventsAsync, isDark: isDark),
+              // 2. NEARBY EVENTS
+              SectionHeader(
+                title: 'Popular Events Near You',
+                isDark: isDark,
+                onViewAll: () => context.push('/events'),
+              ),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 16,
+                  tablet: 20,
+                  desktop: 24,
+                ),
+              ),
+              NearbyEventsSection(eventsAsync: eventsAsync, isDark: isDark),
 
-          SizedBox(height: AppSizes.spacingXl),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 20,
+                  tablet: 24,
+                  desktop: 28,
+                ),
+              ),
 
-          // 3. SPORTS EVENTS
-          SectionHeader(
-            title: 'Sports Events',
-            isDark: isDark,
-            onViewAll: () {
-              ref.read(eventFilterProvider.notifier).updateCategories(['Sports']);
-              context.push('/events');
-            },
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
+              // 3. SPORTS EVENTS
+              SectionHeader(
+                title: 'Sports Events',
+                isDark: isDark,
+                onViewAll: () {
+                  ref.read(eventFilterProvider.notifier).updateCategories(['Sports']);
+                  context.push('/events');
+                },
+              ),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 16,
+                  tablet: 20,
+                  desktop: 24,
+                ),
+              ),
 
           eventsAsync.when(
             data: (events) {
@@ -2032,53 +2077,81 @@ class EventSection extends ConsumerWidget {
             error: (_, __) => const SizedBox.shrink(),
           ),
 
-          SizedBox(height: AppSizes.spacingXl),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 20,
+                  tablet: 24,
+                  desktop: 28,
+                ),
+              ),
 
-          // 4. MUSIC EVENTS
-          SectionHeader(
-            title: 'Music Events',
-            isDark: isDark,
-            onViewAll: () {
-              ref.read(eventFilterProvider.notifier).updateCategories(['Music']);
-              context.push('/events');
-            },
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
+              // 4. MUSIC EVENTS
+              SectionHeader(
+                title: 'Music Events',
+                isDark: isDark,
+                onViewAll: () {
+                  ref.read(eventFilterProvider.notifier).updateCategories(['Music']);
+                  context.push('/events');
+                },
+              ),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 16,
+                  tablet: 20,
+                  desktop: 24,
+                ),
+              ),
 
-          eventsAsync.when(
-            data: (events) {
-              final musicEvents = events
-                  .where((event) => event.category.toLowerCase() == 'music' ||
-                      event.category.toLowerCase().contains('music'))
-                  .take(10)
-                  .toList();
+              eventsAsync.when(
+                data: (events) {
+                  final musicEvents = events
+                      .where((event) => event.category.toLowerCase() == 'music' ||
+                          event.category.toLowerCase().contains('music'))
+                      .take(10)
+                      .toList();
 
-              if (musicEvents.isEmpty) {
-                return EmptyState(
-                  message: 'No music events available',
-                  icon: Icons.music_note_rounded,
-                  isDark: isDark,
-                );
-              }
+                  if (musicEvents.isEmpty) {
+                    return EmptyState(
+                      message: 'No music events available',
+                      icon: Icons.music_note_rounded,
+                      isDark: isDark,
+                    );
+                  }
 
-              return SmallEventCardList(events: musicEvents, isDark: isDark);
-            },
-            loading: () => SmallCardShimmer(isDark: isDark),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
+                  return SmallEventCardList(events: musicEvents, isDark: isDark);
+                },
+                loading: () => SmallCardShimmer(isDark: isDark),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
 
-          SizedBox(height: AppSizes.spacingXl),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 20,
+                  tablet: 24,
+                  desktop: 28,
+                ),
+              ),
 
-          // 5. FREE EVENTS
-          SectionHeader(
-            title: 'Free Events',
-            isDark: isDark,
-            onViewAll: () {
-              ref.read(eventFilterProvider.notifier).updatePriceRange(0, 0);
-              context.push('/events');
-            },
-          ),
-          SizedBox(height: AppSizes.spacingLarge),
+              // 5. FREE EVENTS
+              SectionHeader(
+                title: 'Free Events',
+                isDark: isDark,
+                onViewAll: () {
+                  ref.read(eventFilterProvider.notifier).updatePriceRange(0, 0);
+                  context.push('/events');
+                },
+              ),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 16,
+                  tablet: 20,
+                  desktop: 24,
+                ),
+              ),
 
           eventsAsync.when(
             data: (events) {
@@ -2101,36 +2174,59 @@ class EventSection extends ConsumerWidget {
             error: (_, __) => const SizedBox.shrink(),
           ),
 
-          SizedBox(height: AppSizes.spacingXl),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveHeightSpacing(
+                  context,
+                  mobile: 20,
+                  tablet: 24,
+                  desktop: 28,
+                ),
+              ),
 
-          // 6. TOP IN USER'S CITY
-          userCityAsync.when(
-            data: (userCity) {
-              return Column(
-                children: [
-                  SectionHeader(
-                    title: 'Top in $userCity',
-                    isDark: isDark,
-                    onViewAll: () {
-                      ref.read(eventFilterProvider.notifier).updateLocation(userCity);
-                      context.push('/events');
-                    },
-                  ),
-                  SizedBox(height: AppSizes.spacingLarge),
-                  TopCityEventsSection(
-                    eventsAsync: eventsAsync,
-                    isDark: isDark,
-                    cityName: userCity,
-                  ),
-                  SizedBox(height: AppSizes.spacingXxxl),
-                ],
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+              // 6. TOP IN USER'S CITY
+              userCityAsync.when(
+                data: (userCity) {
+                  return Column(
+                    children: [
+                      SectionHeader(
+                        title: 'Top in $userCity',
+                        isDark: isDark,
+                        onViewAll: () {
+                          ref.read(eventFilterProvider.notifier).updateLocation(userCity);
+                          context.push('/events');
+                        },
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveHeightSpacing(
+                          context,
+                          mobile: 16,
+                          tablet: 20,
+                          desktop: 24,
+                        ),
+                      ),
+                      TopCityEventsSection(
+                        eventsAsync: eventsAsync,
+                        isDark: isDark,
+                        cityName: userCity,
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveHeightSpacing(
+                          context,
+                          mobile: 32,
+                          tablet: 36,
+                          desktop: 40,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

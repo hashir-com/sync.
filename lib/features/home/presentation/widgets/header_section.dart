@@ -8,6 +8,7 @@ import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/core/util/responsive_helper.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
 import 'package:sync_event/features/home/presentation/screen/filter_bottom_sheet.dart';
 import 'package:sync_event/features/profile/presentation/providers/other_users_provider.dart';
@@ -232,44 +233,49 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingXl.w,
-                vertical: AppSizes.paddingLarge.h,
-              ),
+              padding: ResponsiveHelper.getResponsivePadding(context),
               child: Column(
                 children: [
                   // Search Bar Row
                   Row(
                     children: [
-                      // Drawer Icon
-                      InkWell(
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusRound,
-                        ),
-                        onTap: () => Scaffold.of(context).openDrawer(),
-                        child: Container(
-                          width: AppSizes.iconXl,
-                          height: AppSizes.iconXl,
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurface(isDark),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.getShadow(isDark),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                      // Drawer Icon (only show on mobile)
+                      if (ResponsiveHelper.isMobile(context))
+                        InkWell(
+                          borderRadius: BorderRadius.circular(
+                            ResponsiveHelper.getBorderRadius(context, baseRadius: 50),
                           ),
-                          child: Icon(
-                            Icons.menu,
-                            color: AppColors.getTextPrimary(isDark),
-                            size: AppSizes.iconMedium,
-                          ),
+                          onTap: () => Scaffold.of(context).openDrawer(),
+                          child: Container(
+                            width: ResponsiveHelper.getIconSize(context, baseSize: 40),
+                            height: ResponsiveHelper.getIconSize(context, baseSize: 40),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurface(isDark),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.getShadow(isDark),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.menu,
+                              color: AppColors.getTextPrimary(isDark),
+                              size: ResponsiveHelper.getIconSize(context, baseSize: 24),
+                            ),
                         ),
                       ),
 
-                      SizedBox(width: AppSizes.spacingMedium),
+                      SizedBox(
+                        width: ResponsiveHelper.getResponsiveSpacing(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
 
                       // Search Bar
                       Expanded(
@@ -277,7 +283,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                           decoration: BoxDecoration(
                             color: AppColors.getSurface(isDark),
                             borderRadius: BorderRadius.circular(
-                              AppSizes.radiusRound,
+                              ResponsiveHelper.getBorderRadius(context, baseRadius: 50),
                             ),
                             boxShadow: [
                               BoxShadow(
@@ -297,25 +303,26 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                             },
                             decoration: InputDecoration(
                               hintText: "Search events or users...",
-                              hintStyle:
-                                  AppTextStyles.bodyMedium(
-                                    isDark: isDark,
-                                  ).copyWith(
-                                    color: AppColors.getTextSecondary(isDark),
-                                  ),
+                              hintStyle: TextStyle(
+                                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                                  context,
+                                  mobile: 14,
+                                  tablet: 15,
+                                  desktop: 16,
+                                ),
+                                color: AppColors.getTextSecondary(isDark),
+                              ),
                               prefixIcon: Icon(
                                 Icons.search,
                                 color: AppColors.getTextPrimary(isDark),
-                                size: AppSizes.iconMedium,
+                                size: ResponsiveHelper.getIconSize(context, baseSize: 24),
                               ),
                               suffixIcon: hasQuery
                                   ? IconButton(
                                       icon: Icon(
                                         Icons.close,
-                                        color: AppColors.getTextSecondary(
-                                          isDark,
-                                        ),
-                                        size: AppSizes.iconMedium,
+                                        color: AppColors.getTextSecondary(isDark),
+                                        size: ResponsiveHelper.getIconSize(context, baseSize: 24),
                                       ),
                                       onPressed: _clearSearch,
                                     )
@@ -324,38 +331,61 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                               fillColor: AppColors.getSurface(isDark),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusRound.r,
+                                  ResponsiveHelper.getBorderRadius(context, baseRadius: 50),
                                 ),
                                 borderSide: BorderSide.none,
                               ),
                               contentPadding: EdgeInsets.symmetric(
-                                horizontal: AppSizes.paddingLarge,
-                                vertical: AppSizes.paddingLarge,
+                                horizontal: ResponsiveHelper.getResponsiveSpacing(
+                                  context,
+                                  mobile: 16,
+                                  tablet: 20,
+                                  desktop: 24,
+                                ),
+                                vertical: ResponsiveHelper.getResponsiveSpacing(
+                                  context,
+                                  mobile: 16,
+                                  tablet: 20,
+                                  desktop: 24,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusRound.r,
+                                  ResponsiveHelper.getBorderRadius(context, baseRadius: 50),
                                 ),
                                 borderSide: BorderSide.none,
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusRound.r,
+                                  ResponsiveHelper.getBorderRadius(context, baseRadius: 50),
                                 ),
                                 borderSide: BorderSide(
                                   color: AppColors.getPrimary(isDark),
-                                  width: AppSizes.borderWidthMedium,
+                                  width: 2.0,
                                 ),
                               ),
                             ),
-                            style: AppTextStyles.bodyMedium(
-                              isDark: isDark,
-                            ).copyWith(color: AppColors.getTextPrimary(isDark)),
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                                context,
+                                mobile: 14,
+                                tablet: 15,
+                                desktop: 16,
+                              ),
+                              color: AppColors.getTextPrimary(isDark),
+                            ),
                           ),
                         ),
                       ),
 
-                      SizedBox(width: AppSizes.spacingMedium),
+                      SizedBox(
+                        width: ResponsiveHelper.getResponsiveSpacing(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
 
                       // Filter Button
                       InkWell(
@@ -371,8 +401,8 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                           );
                         },
                         child: Container(
-                          width: AppSizes.iconXl,
-                          height: AppSizes.iconXl,
+                          width: ResponsiveHelper.getIconSize(context, baseSize: 40),
+                          height: ResponsiveHelper.getIconSize(context, baseSize: 40),
                           decoration: BoxDecoration(
                             color: AppColors.getSurface(isDark),
                             shape: BoxShape.circle,
@@ -390,7 +420,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                               Icon(
                                 Icons.tune_outlined,
                                 color: AppColors.getTextPrimary(isDark),
-                                size: AppSizes.iconMedium.sp,
+                                size: ResponsiveHelper.getIconSize(context, baseSize: 24),
                               ),
                               Consumer(
                                 builder: (context, ref, child) {

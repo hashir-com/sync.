@@ -1,36 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sync_event/core/util/responsive_helper.dart';
 
 /// Responsive utility class for handling different screen sizes and platforms
+/// This class now delegates to ResponsiveHelper for comprehensive breakpoint support
 class ResponsiveUtil {
   // Prevent instantiation
   ResponsiveUtil._();
 
-  // Breakpoints for responsive design
+  // Legacy breakpoints (deprecated - use ResponsiveHelper instead)
+  @Deprecated('Use ResponsiveHelper.isMobile() instead')
   static const double mobileBreakpoint = 600;
+  @Deprecated('Use ResponsiveHelper.isTablet() instead')
   static const double tabletBreakpoint = 900;
+  @Deprecated('Use ResponsiveHelper.isDesktop() instead')
   static const double desktopBreakpoint = 1200;
+  @Deprecated('Use ResponsiveHelper.isLargeDesktop() instead')
   static const double largeDesktopBreakpoint = 1600;
 
   /// Check if current screen is mobile
   static bool isMobile(BuildContext context) {
-    return MediaQuery.of(context).size.width < mobileBreakpoint;
+    return ResponsiveHelper.isMobile(context);
   }
 
   /// Check if current screen is tablet
   static bool isTablet(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return width >= mobileBreakpoint && width < desktopBreakpoint;
+    return ResponsiveHelper.isTablet(context);
   }
 
   /// Check if current screen is desktop
   static bool isDesktop(BuildContext context) {
-    return MediaQuery.of(context).size.width >= desktopBreakpoint;
+    return ResponsiveHelper.isDesktop(context);
   }
 
   /// Check if current screen is large desktop
   static bool isLargeDesktop(BuildContext context) {
-    return MediaQuery.of(context).size.width >= largeDesktopBreakpoint;
+    return ResponsiveHelper.isLargeDesktop(context);
   }
 
   /// Get responsive AppBar height

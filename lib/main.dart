@@ -25,6 +25,7 @@ class MyApp extends ConsumerWidget {
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
+      useInheritedMediaQuery: true,
       builder: (context, child) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'Sync Event',
@@ -32,6 +33,14 @@ class MyApp extends ConsumerWidget {
         darkTheme: AppTheme.darkTheme,
         themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
         routerConfig: appRouter,
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+            ),
+            child: child!,
+          );
+        },
       ),
     );
   }
