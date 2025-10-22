@@ -8,6 +8,14 @@ class AppColors {
   static const secondary = Color(0xFF64B5F6);
   static const secondaryVariant = Color(0xFF90CAF9);
 
+  static const Color primaryLight = Color(0xFF6B7FFF);
+  static const Color grey50 = Color(0xFFFAFAFA);
+  static const Color grey300 = Color(0xFFE0E0E0);
+  static const Color grey400 = Color(0xFFBDBDBD);
+  static const Color grey500 = Color(0xFF9E9E9E);
+  static const Color grey600 = Color(0xFF757575);
+  static const Color grey700 = Color(0xFF616161);
+
   // Light Mode Colors
 
   static const backgroundLight = Color(0xFFFFFFFF);

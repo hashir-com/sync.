@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,19 +7,13 @@ import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-// ============================================
 // Chat Screen
-// ============================================
 
 class ChatScreen extends ConsumerStatefulWidget {
   final dynamic otherUser;
 
-  const ChatScreen({
-    super.key,
-    required this.otherUser,
-  });
+  const ChatScreen({super.key, required this.otherUser});
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -40,9 +36,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     // TODO: Implement send message logic
     // Add message to Firebase/your backend
-    
+
     _messageController.clear();
-    
+
     // Show success feedback
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -50,9 +46,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             Icon(Icons.info_rounded, color: Colors.white),
             SizedBox(width: AppSizes.spacingSmall),
-            Expanded(
-              child: Text('Messaging feature coming soon!'),
-            ),
+            Expanded(child: Text('Messaging feature coming soon!')),
           ],
         ),
         backgroundColor: AppColors.getPrimary(ThemeUtils.isDark(context)),
@@ -68,7 +62,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = ThemeUtils.isDark(context);
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(isDark),
@@ -77,10 +70,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         elevation: 1,
         shadowColor: AppColors.getShadow(isDark),
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.getTextPrimary(isDark),
-          ),
+          icon: Icon(Icons.arrow_back, color: AppColors.getTextPrimary(isDark)),
           onPressed: () => context.pop(),
         ),
         title: Row(
@@ -113,17 +103,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 children: [
                   Text(
                     widget.otherUser.name,
-                    style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.bodyMedium(
+                      isDark: isDark,
+                    ).copyWith(fontWeight: FontWeight.w600),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     'Online',
-                    style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-                      color: AppColors.success,
-                      fontSize: 12,
-                    ),
+                    style: AppTextStyles.bodySmall(
+                      isDark: isDark,
+                    ).copyWith(color: AppColors.success, fontSize: 12),
                   ),
                 ],
               ),
@@ -145,9 +134,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       body: Column(
         children: [
           // Messages Area
-          Expanded(
-            child: _buildComingSoonMessage(isDark),
-          ),
+          Expanded(child: _buildComingSoonMessage(isDark)),
 
           // Message Input
           _buildMessageInput(isDark),
@@ -192,9 +179,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             SizedBox(height: AppSizes.spacingXl),
             Text(
               'Messaging Coming Soon',
-              style: AppTextStyles.titleLarge(isDark: isDark).copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.titleLarge(
+                isDark: isDark,
+              ).copyWith(fontWeight: FontWeight.w700),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: AppSizes.spacingMedium),
@@ -256,7 +243,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 _showAttachmentOptions(context, isDark);
               },
             ),
-            
+
             // Text Input
             Expanded(
               child: Container(
@@ -268,9 +255,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   controller: _messageController,
                   decoration: InputDecoration(
                     hintText: 'Type a message...',
-                    hintStyle: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-                      color: AppColors.getTextSecondary(isDark),
-                    ),
+                    hintStyle: AppTextStyles.bodyMedium(
+                      isDark: isDark,
+                    ).copyWith(color: AppColors.getTextSecondary(isDark)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppSizes.radiusRound),
                       borderSide: BorderSide.none,
@@ -303,10 +290,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ],
               ),
               child: IconButton(
-                icon: Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                ),
+                icon: Icon(Icons.send_rounded, color: Colors.white),
                 onPressed: _sendMessage,
               ),
             ),
@@ -346,9 +330,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   children: [
                     Text(
                       'Attachments',
-                      style: AppTextStyles.titleMedium(isDark: isDark).copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppTextStyles.titleMedium(
+                        isDark: isDark,
+                      ).copyWith(fontWeight: FontWeight.w700),
                     ),
                     SizedBox(height: AppSizes.spacingLarge),
                     Row(
@@ -410,8 +394,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
               ),
               ListTile(
-                leading: Icon(Icons.person_outline, color: AppColors.getPrimary(isDark)),
-                title: Text('View Profile', style: AppTextStyles.bodyMedium(isDark: isDark)),
+                leading: Icon(
+                  Icons.person_outline,
+                  color: AppColors.getPrimary(isDark),
+                ),
+                title: Text(
+                  'View Profile',
+                  style: AppTextStyles.bodyMedium(isDark: isDark),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   context.pop();
@@ -419,14 +409,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.block, color: AppColors.getError(isDark)),
-                title: Text('Block User', style: AppTextStyles.bodyMedium(isDark: isDark)),
+                title: Text(
+                  'Block User',
+                  style: AppTextStyles.bodyMedium(isDark: isDark),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                 },
               ),
               ListTile(
                 leading: Icon(Icons.report, color: AppColors.getError(isDark)),
-                title: Text('Report', style: AppTextStyles.bodyMedium(isDark: isDark)),
+                title: Text(
+                  'Report',
+                  style: AppTextStyles.bodyMedium(isDark: isDark),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                 },
@@ -440,9 +436,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 }
 
-// ============================================
 // Attachment Option Widget
-// ============================================
 
 class _AttachmentOption extends StatelessWidget {
   final IconData icon;
@@ -467,17 +461,10 @@ class _AttachmentOption extends StatelessWidget {
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 32,
-          ),
+          child: Icon(icon, color: color, size: 32),
         ),
         SizedBox(height: AppSizes.spacingSmall),
-        Text(
-          label,
-          style: AppTextStyles.bodySmall(isDark: isDark),
-        ),
+        Text(label, style: AppTextStyles.bodySmall(isDark: isDark)),
       ],
     );
   }

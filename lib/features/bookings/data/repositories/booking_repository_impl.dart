@@ -1,9 +1,10 @@
+// ignore_for_file: dead_code
+
 import 'package:dartz/dartz.dart';
 import 'package:sync_event/core/error/exceptions.dart';
 import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/core/network/network_info.dart';
 import 'package:sync_event/features/bookings/data/datasources/booking_remote_datasource.dart';
-import 'package:sync_event/features/bookings/data/models/booking_model.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/domain/repositories/booking_repositories.dart';
 import 'package:sync_event/features/events/domain/repositories/event_repository.dart';
@@ -45,7 +46,7 @@ class BookingRepositoryImpl implements BookingRepository {
           totalAmount: booking.totalAmount,
           paymentId: booking.paymentId,
           seatNumbers: booking.seatNumbers,
-          status: booking.status ?? 'confirmed',
+          status: booking.status,
           bookingDate: booking.bookingDate,
           cancellationDate: booking.cancellationDate,
           refundAmount: booking.refundAmount,

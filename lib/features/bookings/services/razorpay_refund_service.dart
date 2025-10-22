@@ -44,7 +44,7 @@ class RazorpayRefundService {
 
       print('✓ Bank refund record created: $bookingId');
 
-      // TODO: When you have Razorpay API credentials, implement actual refund:
+      //  When there is Razorpay API credentials, implement actual refund:
       // final refund = await _razorpayClient.payments.refund(
       //   paymentId,
       //   RazorpayRefundRequest(

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,14 +36,14 @@ class EditTitleField extends ConsumerWidget {
         hintText: 'Add title...',
         hintStyle: AppTextStyles.headingSmall(isDark: isDark).copyWith(
           color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
-          fontSize: AppSizes.fontXxl,
+          fontSize: AppSizes.fontXl,
           fontWeight: FontWeight.w400,
         ),
         border: InputBorder.none,
         contentPadding: EdgeInsets.zero,
       ),
       style: AppTextStyles.headingSmall(isDark: isDark).copyWith(
-        fontSize: AppSizes.fontXxl,
+        fontSize: AppSizes.fontXl,
         fontWeight: FontWeight.w400,
       ),
     );
