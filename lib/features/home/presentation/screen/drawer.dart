@@ -182,7 +182,7 @@ class CustomDrawer extends ConsumerWidget {
                           isDark,
                           Icons.calendar_today_outlined,
                           'Calendar',
-                          '/wallet',
+                          '/calendar',
                         ),
                         _buildItem(
                           context,

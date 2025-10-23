@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sync_event"
+    namespace = "ashir.developer.sync_event"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.sync_event"
+        applicationId = "ashir.developer.sync_event"
         minSdk = flutter.minSdkVersion  // Changed from flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

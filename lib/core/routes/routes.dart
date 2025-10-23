@@ -12,6 +12,7 @@ import 'package:sync_event/features/bookings/presentation/screens/booking_detail
 import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_details_loader.dart';
+import 'package:sync_event/features/calendar/presentation/screens/calendar_screen.dart';
 import 'package:sync_event/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:sync_event/features/chat/presentation/screens/chat_screen.dart';
 import 'package:sync_event/features/chat/presentation/screens/user_search_screen.dart';
@@ -251,6 +252,9 @@ GoRoute(
     return ChatScreen(chatId: chatId);
   },
 ),
-
+GoRoute(
+  path: '/calendar',
+  builder: (context, state) => const CalendarScreen(),
+),
   ],
 );
