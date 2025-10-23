@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -14,9 +14,18 @@ class FilterCard extends ConsumerWidget {
   final String userId;
   final BookingsFilterState filterState;
 
-  const FilterCard({super.key, required this.userId, required this.filterState});
+  const FilterCard({
+    super.key,
+    required this.userId,
+    required this.filterState,
+  });
 
-  Future<void> _showDateRangePicker(BuildContext context, WidgetRef ref, DateTimeRange? currentRange, bool isDark) async {
+  Future<void> _showDateRangePicker(
+    BuildContext context,
+    WidgetRef ref,
+    DateTimeRange? currentRange,
+    bool isDark,
+  ) async {
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
@@ -44,47 +53,68 @@ class FilterCard extends ConsumerWidget {
     return Card(
       color: AppColors.getCard(isDark),
       elevation: AppSizes.cardElevationLow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Filter Bookings', style: AppTextStyles.titleMedium(isDark: isDark)),
+                Text(
+                  'Filter Bookings',
+                  style: AppTextStyles.titleMedium(isDark: isDark),
+                ),
                 if (filterState.hasActiveFilters)
                   TextButton(
-                    onPressed: () => ref.read(bookingsFilterProvider.notifier).clearFilters(),
+                    onPressed: () => ref
+                        .read(bookingsFilterProvider.notifier)
+                        .clearFilters(),
                     child: Text(
                       'Clear All',
-                      style: AppTextStyles.bodySmall(isDark: isDark).copyWith(color: AppColors.getPrimary(isDark)),
+                      style: AppTextStyles.bodySmall(
+                        isDark: isDark,
+                      ).copyWith(color: AppColors.getPrimary(isDark)),
                     ),
                   ),
               ],
             ),
-            SizedBox(height: AppSizes.spacingSmall.h),
+            SizedBox(height: AppSizes.spacingSmall),
             TextField(
-              onChanged: (value) => ref.read(bookingsFilterProvider.notifier).setSearchQuery(value),
+              onChanged: (value) => ref
+                  .read(bookingsFilterProvider.notifier)
+                  .setSearchQuery(value),
               decoration: InputDecoration(
-                prefixIcon: Icon(Icons.search, size: AppSizes.getIconSize(context, baseSize: AppSizes.iconMedium), color: AppColors.getTextSecondary(isDark)),
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: AppSizes.getIconSize(
+                    context,
+                    baseSize: AppSizes.iconMedium,
+                  ),
+                  color: AppColors.getTextSecondary(isDark),
+                ),
                 hintText: 'Search by ID, type, or payment ID',
                 hintStyle: AppTextStyles.bodySmall(isDark: isDark),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                   borderSide: BorderSide(color: AppColors.getBorder(isDark)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
-                  borderSide: BorderSide(color: AppColors.getPrimary(isDark), width: AppSizes.borderWidthThick),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                  borderSide: BorderSide(
+                    color: AppColors.getPrimary(isDark),
+                    width: AppSizes.borderWidthThick,
+                  ),
                 ),
                 filled: true,
                 fillColor: AppColors.getSurface(isDark).withOpacity(0.5),
               ),
               style: AppTextStyles.bodyMedium(isDark: isDark),
             ),
-            SizedBox(height: AppSizes.spacingMedium.h),
+            SizedBox(height: AppSizes.spacingMedium),
             Row(
               children: [
                 Expanded(
@@ -92,18 +122,38 @@ class FilterCard extends ConsumerWidget {
                     value: filterState.statusFilter,
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('All')),
-                      DropdownMenuItem(value: 'confirmed', child: Text('Confirmed')),
-                      DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
-                      DropdownMenuItem(value: 'refunded', child: Text('Refunded')),
+                      DropdownMenuItem(
+                        value: 'confirmed',
+                        child: Text('Confirmed'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'cancelled',
+                        child: Text('Cancelled'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'refunded',
+                        child: Text('Refunded'),
+                      ),
                     ],
-                    onChanged: (value) => ref.read(bookingsFilterProvider.notifier).setStatusFilter(value ?? 'all'),
+                    onChanged: (value) => ref
+                        .read(bookingsFilterProvider.notifier)
+                        .setStatusFilter(value ?? 'all'),
                     decoration: InputDecoration(
                       labelText: 'Status',
                       labelStyle: AppTextStyles.bodySmall(isDark: isDark),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
+                      ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
-                        borderSide: BorderSide(color: AppColors.getPrimary(isDark), width: AppSizes.borderWidthThick),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
+                        borderSide: BorderSide(
+                          color: AppColors.getPrimary(isDark),
+                          width: AppSizes.borderWidthThick,
+                        ),
                       ),
                       filled: true,
                       fillColor: AppColors.getSurface(isDark).withOpacity(0.5),
@@ -111,11 +161,23 @@ class FilterCard extends ConsumerWidget {
                     style: AppTextStyles.bodyMedium(isDark: isDark),
                   ),
                 ),
-                SizedBox(width: AppSizes.spacingMedium.w),
+                SizedBox(width: AppSizes.spacingMedium),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _showDateRangePicker(context, ref, filterState.dateFilter, isDark),
-                    icon: Icon(Icons.date_range, size: AppSizes.getIconSize(context, baseSize: AppSizes.iconSmall), color: AppColors.getTextSecondary(isDark)),
+                    onPressed: () => _showDateRangePicker(
+                      context,
+                      ref,
+                      filterState.dateFilter,
+                      isDark,
+                    ),
+                    icon: Icon(
+                      Icons.date_range,
+                      size: AppSizes.getIconSize(
+                        context,
+                        baseSize: AppSizes.iconSmall,
+                      ),
+                      color: AppColors.getTextSecondary(isDark),
+                    ),
                     label: Text(
                       filterState.dateFilter == null
                           ? 'Filter by Date'
@@ -129,8 +191,17 @@ class FilterCard extends ConsumerWidget {
                 if (filterState.dateFilter != null)
                   IconButton(
                     tooltip: 'Clear date filter',
-                    onPressed: () => ref.read(bookingsFilterProvider.notifier).clearDateFilter(),
-                    icon: Icon(Icons.clear, size: AppSizes.getIconSize(context, baseSize: AppSizes.iconSmall), color: AppColors.getTextSecondary(isDark)),
+                    onPressed: () => ref
+                        .read(bookingsFilterProvider.notifier)
+                        .clearDateFilter(),
+                    icon: Icon(
+                      Icons.clear,
+                      size: AppSizes.getIconSize(
+                        context,
+                        baseSize: AppSizes.iconSmall,
+                      ),
+                      color: AppColors.getTextSecondary(isDark),
+                    ),
                   ),
               ],
             ),

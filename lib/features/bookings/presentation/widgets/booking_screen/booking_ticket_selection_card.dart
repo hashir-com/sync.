@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -43,7 +43,7 @@ class BookingTicketSelectionCard extends ConsumerWidget {
     }
 
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingLarge.w),
+      padding: EdgeInsets.all(AppSizes.paddingLarge),
       decoration: _buildCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,13 +54,13 @@ class BookingTicketSelectionCard extends ConsumerWidget {
               isDark: isDark,
             ).copyWith(fontWeight: FontWeight.w700),
           ),
-          SizedBox(height: AppSizes.spacingLarge.h),
+          SizedBox(height: AppSizes.spacingLarge),
           _buildCategoryDropdown(
             validCategories,
             selectedCategory,
             formNotifier,
           ),
-          SizedBox(height: AppSizes.spacingLarge.h),
+          SizedBox(height: AppSizes.spacingLarge),
           _buildQuantitySelector(
             formState,
             formNotifier,
@@ -75,10 +75,10 @@ class BookingTicketSelectionCard extends ConsumerWidget {
   BoxDecoration _buildCardDecoration() {
     return BoxDecoration(
       color: AppColors.getSurface(isDark),
-      borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+      borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
       border: Border.all(
         color: AppColors.getPrimary(isDark).withOpacity(0.15),
-        width: 1.w,
+        width: 1,
       ),
       boxShadow: [
         BoxShadow(
@@ -116,14 +116,14 @@ class BookingTicketSelectionCard extends ConsumerWidget {
           child: Row(
             children: [
               Container(
-                width: 8.w,
-                height: 8.w,
+                width: 8,
+                height: 8,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.getPrimary(isDark),
                 ),
               ),
-              SizedBox(width: AppSizes.spacingSmall.w),
+              SizedBox(width: AppSizes.spacingSmall),
               Text(
                 '${category.toUpperCase()} - ₹${price.toStringAsFixed(0)}',
                 style: AppTextStyles.bodyMedium(isDark: isDark),
@@ -149,10 +149,10 @@ class BookingTicketSelectionCard extends ConsumerWidget {
     final maxCapacity = event.categoryCapacities[selectedCategory] ?? 1;
 
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.getBackground(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         border: Border.all(
           color: AppColors.getPrimary(isDark).withOpacity(0.15),
         ),
@@ -173,9 +173,9 @@ class BookingTicketSelectionCard extends ConsumerWidget {
         Icon(
           Icons.person_add_alt_1_rounded,
           color: AppColors.getPrimary(isDark),
-          size: AppSizes.iconMedium.sp,
+          size: AppSizes.iconMedium,
         ),
-        SizedBox(width: AppSizes.spacingMedium.w),
+        SizedBox(width: AppSizes.spacingMedium),
         Text(
           'Quantity',
           style: AppTextStyles.bodyMedium(
@@ -199,9 +199,9 @@ class BookingTicketSelectionCard extends ConsumerWidget {
               ? () => notifier.setQuantity(formState.quantity - 1)
               : null,
         ),
-        SizedBox(width: AppSizes.spacingSmall.w),
+        SizedBox(width: AppSizes.spacingSmall),
         _buildQuantityDisplay(formState.quantity),
-        SizedBox(width: AppSizes.spacingSmall.w),
+        SizedBox(width: AppSizes.spacingSmall),
         _buildControlButton(
           icon: Icons.add_rounded,
           onPressed: formState.quantity < maxCapacity
@@ -219,13 +219,13 @@ class BookingTicketSelectionCard extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getPrimary(isDark).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: IconButton(
         icon: Icon(icon, color: AppColors.getPrimary(isDark)),
         onPressed: onPressed,
-        iconSize: AppSizes.iconMedium.sp,
-        constraints: BoxConstraints(minWidth: 40.w, minHeight: 40.w),
+        iconSize: AppSizes.iconMedium,
+        constraints: BoxConstraints(minWidth: 40, minHeight: 40),
       ),
     );
   }
@@ -233,12 +233,12 @@ class BookingTicketSelectionCard extends ConsumerWidget {
   Widget _buildQuantityDisplay(int quantity) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingMedium.w,
-        vertical: AppSizes.paddingSmall.h,
+        horizontal: AppSizes.paddingMedium,
+        vertical: AppSizes.paddingSmall,
       ),
       decoration: BoxDecoration(
         color: AppColors.getPrimary(isDark).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Text(
         '$quantity',

@@ -8,7 +8,6 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:sync_event/features/map/data/cache/marker_cache.dart';
 import 'package:sync_event/features/map/data/services/image_processor.dart';
 import 'package:sync_event/features/map/domain/repositories/marker_repository.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MarkerRepositoryImpl implements MarkerRepository {
   final DefaultCacheManager _cacheManager;
@@ -90,15 +89,15 @@ class MarkerRepositoryImpl implements MarkerRepository {
     // Resize image to 96x96 for larger marker
     final resizedImage = await ImageProcessor.processImageInIsolate(
       imageData,
-      targetSize: 90.sp.toInt(),
+      targetSize: 90.toInt(),
     );
 
     // Create a PictureRecorder and Canvas for drawing
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
-    final size = 180.sp; // Larger total marker size (including border)
-    final imageSize = 170.sp; // Larger inner image size
-// Thicker white border
+    final size = 180; // Larger total marker size (including border)
+    final imageSize = 170; // Larger inner image size
+    // Thicker white border
 
     // Draw white circular border
     final borderPaint = ui.Paint()
@@ -118,8 +117,8 @@ class MarkerRepositoryImpl implements MarkerRepository {
         ui.Rect.fromLTWH(
           (size - imageSize) / 2,
           (size - imageSize) / 2,
-          imageSize,
-          imageSize,
+          imageSize.toDouble(),
+          imageSize.toDouble(),
         ),
         ui.Radius.circular(imageSize / 2),
       ),
@@ -130,8 +129,8 @@ class MarkerRepositoryImpl implements MarkerRepository {
       ui.Rect.fromLTWH(
         (size - imageSize) / 2,
         (size - imageSize) / 2,
-        imageSize,
-        imageSize,
+        imageSize.toDouble(),
+        imageSize.toDouble(),
       ),
       ui.Paint(),
     );

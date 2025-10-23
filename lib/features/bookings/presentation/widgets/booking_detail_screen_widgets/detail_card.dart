@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -29,12 +28,12 @@ class DetailCard extends StatelessWidget {
         // Section header
         Row(
           children: [
-            Container(width: 4.w, height: 24.h, decoration: BoxDecoration(color: AppColors.getPrimary(isDark), borderRadius: BorderRadius.circular(2.r))),
-            SizedBox(width: AppSizes.spacingMedium.w),
+            Container(width: 4, height: 24, decoration: BoxDecoration(color: AppColors.getPrimary(isDark), borderRadius: BorderRadius.circular(2))),
+            SizedBox(width: AppSizes.spacingMedium),
             Text('Full Details', style: AppTextStyles.headingSmall(isDark: isDark).copyWith(fontWeight: FontWeight.w700)),
           ],
         ),
-        SizedBox(height: AppSizes.spacingLarge.h),
+        SizedBox(height: AppSizes.spacingLarge),
         // Booking information
         _buildCard('Booking Information', isDark, [
           DetailItem(icon: Icons.confirmation_number_outlined, label: 'Booking ID', value: booking.id.isNotEmpty ? booking.id : 'N/A', isDark: isDark),
@@ -47,7 +46,7 @@ class DetailCard extends StatelessWidget {
           DetailItem(icon: Icons.payment_outlined, label: 'Total Amount', value: '₹${booking.totalAmount.toStringAsFixed(2)}', isDark: isDark),
           DetailItem(icon: Icons.calendar_month_outlined, label: 'Booking Date', value: DateFormat('MMM d, y h:mm a').format(booking.bookingDate), isDark: isDark),
         ]),
-        SizedBox(height: AppSizes.spacingLarge.h),
+        SizedBox(height: AppSizes.spacingLarge),
         // Event information
         _buildCard('Event Information', isDark, [
           DetailItem(icon: Icons.location_on_outlined, label: 'Location', value: event.location.isNotEmpty ? event.location : 'Unknown', isDark: isDark),
@@ -56,7 +55,7 @@ class DetailCard extends StatelessWidget {
         ]),
         // Cancellation details (if applicable)
         if (booking.status == 'cancelled') ...[
-          SizedBox(height: AppSizes.spacingLarge.h),
+          SizedBox(height: AppSizes.spacingLarge),
           _buildCard('Cancellation Details', isDark, [
             if (booking.cancellationDate != null)
               DetailItem(
@@ -81,10 +80,10 @@ class DetailCard extends StatelessWidget {
   // Helper to build detail card
   Widget _buildCard(String title, bool isDark, List<Widget> children) {
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingLarge.w),
+      padding: EdgeInsets.all(AppSizes.paddingLarge),
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         border: Border.all(color: AppColors.getPrimary(isDark).withOpacity(0.15)),
         boxShadow: [BoxShadow(color: AppColors.getPrimary(isDark).withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 2))],
       ),
@@ -92,13 +91,13 @@ class DetailCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppTextStyles.titleMedium(isDark: isDark).copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: AppSizes.spacingMedium.h),
+          SizedBox(height: AppSizes.spacingMedium),
           ...List.generate(children.length, (index) => Column(
                 children: [
                   children[index],
                   if (index < children.length - 1)
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: AppSizes.spacingMedium.h),
+                      padding: EdgeInsets.symmetric(vertical: AppSizes.spacingMedium),
                       child: Divider(color: AppColors.getBorder(isDark).withOpacity(0.2)),
                     ),
                 ],

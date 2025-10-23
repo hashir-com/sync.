@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -127,27 +126,27 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         opacity: _fadeAnimation,
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium.w),
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
                 BookingEventHeaderCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingEventImageCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingEventDetailsCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingTicketSelectionCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingPriceSummaryCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingPaymentSection(
                   event: event,
                   isDark: isDark,
                   bookingState: bookingState,
                 ),
-                SizedBox(height: AppSizes.paddingXl.h),
+                SizedBox(height: AppSizes.paddingXl),
               ],
             ),
           ),

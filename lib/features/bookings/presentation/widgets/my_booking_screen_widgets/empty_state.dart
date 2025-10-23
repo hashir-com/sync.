@@ -25,18 +25,33 @@ class EmptyState extends ConsumerWidget {
               size: AppSizes.getIconSize(context, baseSize: AppSizes.iconXxl),
               color: AppColors.getTextSecondary(isDark),
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingMedium)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingMedium,
+              ),
+            ),
             Text(
               'No Bookings Yet',
               style: AppTextStyles.headingSmall(isDark: isDark),
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingSmall)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingSmall,
+              ),
+            ),
             Text(
               'Book your first event now!',
               style: AppTextStyles.bodyMedium(isDark: isDark),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingLarge)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingLarge,
+              ),
+            ),
             ElevatedButton(
               onPressed: () => context.go('/home'),
               style: Theme.of(context).elevatedButtonTheme.style,

@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -14,10 +14,10 @@ class ShareTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Build share tile with icon and text
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -25,21 +25,21 @@ class ShareTile extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 44.w,
-                height: 44.h,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                 ),
                 child: Center(
                   child: Icon(
                     Icons.share_rounded,
                     color: AppColors.primary,
-                    size: 20.sp,
+                    size: 20,
                   ),
                 ),
               ),
-              SizedBox(width: AppSizes.spacingSmall.w),
+              SizedBox(width: AppSizes.spacingSmall),
               Text(
                 'Share with your friends',
                 style: AppTextStyles.bodyMedium(isDark: false),

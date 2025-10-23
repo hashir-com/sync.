@@ -2,7 +2,7 @@
 // Purpose: Display Google Map with events, search bar, and event details
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sync_event/features/map/domain/services/location_service.dart';
 import 'package:sync_event/features/map/presentation/widgets/event_card.dart';
@@ -67,9 +67,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           children: [
             _buildMap(eventsAsync),
             Positioned(
-              top: 16.h,
-              left: 16.w,
-              right: 16.w,
+              top: 16,
+              left: 16,
+              right: 16,
               child: SearchBarWidget(
                 controller: _searchController,
                 focusNode: _searchFocusNode,
@@ -77,13 +77,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
             Positioned(
-              top: 90.h,
-              left: 16.w,
-              right: 16.w,
+              top: 90,
+              left: 16,
+              right: 16,
               child: const SearchResultsWidget(),
             ),
             Positioned(
-              bottom: 100.h,
+              bottom: 100,
               left: 0,
               right: 0,
               child: const Center(child: LoadingIndicatorWidget()),
@@ -145,9 +145,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(
-        child: Text('Error: $err', style: TextStyle(fontSize: 14.sp)),
-      ),
+      error: (err, _) =>
+          Center(child: Text('Error: $err', style: TextStyle(fontSize: 14))),
     );
   }
 

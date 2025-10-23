@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -131,7 +131,7 @@ class _RazorpayPaymentWidgetState extends ConsumerState<RazorpayPaymentWidget> {
           vertical: AppSizes.buttonPaddingVertical,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         ),
       ),
       child: Text(

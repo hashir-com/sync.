@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_detail_screen_widgets/ticket_back.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_detail_screen_widgets/ticket_front.dart';
@@ -28,10 +28,21 @@ class _TicketCardState extends State<TicketCard> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _flipController = AnimationController(duration: const Duration(milliseconds: 600), vsync: this);
-    _fadeController = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
-    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _flipController, curve: Curves.easeInOut));
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+    _flipController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
     _fadeController.forward();
   }
 
@@ -61,7 +72,7 @@ class _TicketCardState extends State<TicketCard> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: _toggleFlip,
       child: SizedBox(
-        height: 280.h,
+        height: 280,
         width: double.infinity,
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -72,12 +83,17 @@ class _TicketCardState extends State<TicketCard> with TickerProviderStateMixin {
               final isBack = _flipAnimation.value > 0.5;
               return Transform(
                 alignment: Alignment.center,
-                transform: Matrix4.identity()..setEntry(3, 2, 0.001)..rotateY(angle),
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001)
+                  ..rotateY(angle),
                 child: isBack
                     ? Transform(
                         alignment: Alignment.center,
                         transform: Matrix4.identity()..rotateY(math.pi),
-                        child: TicketBack(booking: widget.booking, event: widget.event),
+                        child: TicketBack(
+                          booking: widget.booking,
+                          event: widget.event,
+                        ),
                       )
                     : TicketFront(booking: widget.booking, event: widget.event),
               );

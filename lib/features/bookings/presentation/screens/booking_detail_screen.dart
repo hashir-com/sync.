@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -46,13 +45,13 @@ class BookingDetailsScreen extends ConsumerWidget {
           slivers: [
             SliverList(
               delegate: SliverChildListDelegate([
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
                 TicketCard(booking: booking, event: event),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 DetailCard(booking: booking, event: event),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 ActionButtons(booking: booking, event: event),
-                SizedBox(height: AppSizes.paddingLarge.h),
+                SizedBox(height: AppSizes.paddingLarge),
               ]),
             ),
           ],

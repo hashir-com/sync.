@@ -141,7 +141,7 @@ class UserProfileScreen extends ConsumerWidget {
                         child: ElevatedButton.icon(
                           onPressed: () {
                             // Navigate to messaging screen
-                            context.push('/chat', extra: user);
+                            context.push('/chat');
                           },
                           icon: Icon(Icons.message_rounded),
                           label: Text('Message'),

@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
@@ -63,7 +63,7 @@ class BookingPaymentSection extends ConsumerWidget {
           selectedCategory,
           formState,
         ),
-        SizedBox(height: AppSizes.spacingLarge.h),
+        SizedBox(height: AppSizes.spacingLarge),
         _buildPaymentStatus(),
       ],
     );
@@ -80,7 +80,7 @@ class BookingPaymentSection extends ConsumerWidget {
   ) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         boxShadow: [
           BoxShadow(
             color: AppColors.getPrimary(isDark).withOpacity(0.25),
@@ -91,7 +91,7 @@ class BookingPaymentSection extends ConsumerWidget {
       ),
       child: SizedBox(
         width: double.infinity,
-        height: AppSizes.buttonHeightLarge.h,
+        height: AppSizes.buttonHeightLarge,
         child: RazorpayPaymentWidget(
           amount: totalAmount,
           onSuccess: (paymentId) => _handlePaymentSuccess(
@@ -180,9 +180,9 @@ class BookingPaymentSection extends ConsumerWidget {
         Icon(
           Icons.check_circle_rounded,
           color: AppColors.getSuccess(isDark),
-          size: AppSizes.iconMedium.sp,
+          size: AppSizes.iconMedium,
         ),
-        SizedBox(width: AppSizes.spacingSmall.w),
+        SizedBox(width: AppSizes.spacingSmall),
         Text(
           'Processing booking...',
           style: AppTextStyles.bodyMedium(
@@ -201,17 +201,17 @@ class BookingPaymentSection extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 20.w,
-            height: 20.w,
+            width: 20,
+            height: 20,
             child: const CircularProgressIndicator(strokeWidth: 2),
           ),
-          SizedBox(width: AppSizes.spacingMedium.w),
+          SizedBox(width: AppSizes.spacingMedium),
           Container(
-            width: 150.w,
-            height: 16.h,
+            width: 150,
+            height: 16,
             decoration: BoxDecoration(
               color: AppColors.getSurface(isDark),
-              borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             ),
           ),
         ],
@@ -221,16 +221,16 @@ class BookingPaymentSection extends ConsumerWidget {
 
   Widget _buildErrorStatus(dynamic error) {
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.getError(isDark).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         border: Border.all(color: AppColors.getError(isDark).withOpacity(0.3)),
       ),
       child: Row(
         children: [
           Icon(Icons.error_rounded, color: AppColors.getError(isDark)),
-          SizedBox(width: AppSizes.spacingMedium.w),
+          SizedBox(width: AppSizes.spacingMedium),
           Expanded(
             child: Text(
               'Error: ${error is Failure ? error.message : error.toString()}',

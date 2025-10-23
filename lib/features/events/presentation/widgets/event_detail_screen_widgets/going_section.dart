@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -18,8 +18,8 @@ class GoingSection extends StatelessWidget {
         Row(
           children: [
             SizedBox(
-              width: 75.w,
-              height: 40.h,
+              width: 75,
+              height: 40,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -29,15 +29,21 @@ class GoingSection extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(width: AppSizes.spacingSmall.w),
+            SizedBox(width: AppSizes.spacingSmall),
             Text('Going', style: AppTextStyles.bodyMedium(isDark: false)),
           ],
         ),
         // Invite button
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-          decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r)),
-          child: Text('Invite', style: AppTextStyles.labelMedium(isDark: false)),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+          ),
+          child: Text(
+            'Invite',
+            style: AppTextStyles.labelMedium(isDark: false),
+          ),
         ),
       ],
     );
@@ -45,30 +51,32 @@ class GoingSection extends StatelessWidget {
 
   // Helper for avatar images
   Widget _buildAvatar(double left, String asset) => Positioned(
-        left: left.w,
-        child: Container(
-          width: 36.w,
-          height: 36.h,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2.w),
-            image: DecorationImage(image: AssetImage(asset), fit: BoxFit.cover),
-          ),
-        ),
-      );
+    left: left,
+    child: Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        image: DecorationImage(image: AssetImage(asset), fit: BoxFit.cover),
+      ),
+    ),
+  );
 
   // Helper for attendee count badge
   Widget _buildCountBadge(double left) => Positioned(
-        left: left.w,
-        child: Container(
-          width: 36.w,
-          height: 36.h,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primary,
-            border: Border.all(color: Colors.white, width: 2.w),
-          ),
-          child: Center(child: Text('+20', style: AppTextStyles.bodySmall(isDark: false))),
-        ),
-      );
+    left: left,
+    child: Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.primary,
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: Center(
+        child: Text('+20', style: AppTextStyles.bodySmall(isDark: false)),
+      ),
+    ),
+  );
 }

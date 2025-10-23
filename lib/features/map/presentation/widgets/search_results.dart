@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
@@ -36,10 +36,10 @@ class SearchResultsWidget extends ConsumerWidget {
         );
       },
       child: Container(
-        constraints: BoxConstraints(maxHeight: 300.h),
+        constraints: BoxConstraints(maxHeight: 300),
         decoration: BoxDecoration(
           color: AppColors.getCard(isDark),
-          borderRadius: BorderRadius.circular(AppSizes.radiusXl + 2.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusXl + 2),
           border: Border.all(
             color: AppColors.getBorder(isDark),
             width: AppSizes.borderWidthThin,
@@ -47,13 +47,13 @@ class SearchResultsWidget extends ConsumerWidget {
           boxShadow: [
             BoxShadow(
               color: AppColors.getShadow(isDark),
-              blurRadius: AppSizes.cardElevationHigh.r,
+              blurRadius: AppSizes.cardElevationHigh,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXl + 2.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusXl + 2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -69,8 +69,8 @@ class SearchResultsWidget extends ConsumerWidget {
   Widget _buildHeader(int count, bool isDark) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingLarge.w,
-        vertical: AppSizes.paddingMedium.h,
+        horizontal: AppSizes.paddingLarge,
+        vertical: AppSizes.paddingMedium,
       ),
       decoration: BoxDecoration(
         color: AppColors.getCard(isDark),
@@ -86,9 +86,9 @@ class SearchResultsWidget extends ConsumerWidget {
           Icon(
             Icons.search_rounded,
             color: AppColors.getTextSecondary(isDark),
-            size: AppSizes.iconSmall - 2.sp,
+            size: AppSizes.iconSmall - 2,
           ),
-          SizedBox(width: AppSizes.spacingSmall.w),
+          SizedBox(width: AppSizes.spacingSmall),
           Text(
             '$count result${count != 1 ? 's' : ''} found',
             style: AppTextStyles.labelMedium(isDark: isDark),
@@ -139,8 +139,8 @@ class SearchResultsWidget extends ConsumerWidget {
           splashColor: AppColors.getSurface(isDark),
           child: Container(
             padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingLarge.w,
-              vertical: AppSizes.paddingMedium.h,
+              horizontal: AppSizes.paddingLarge,
+              vertical: AppSizes.paddingMedium,
             ),
             decoration: BoxDecoration(
               border: index != totalCount - 1
@@ -155,11 +155,11 @@ class SearchResultsWidget extends ConsumerWidget {
             child: Row(
               children: [
                 _buildEventImage(event, isDark),
-                SizedBox(width: AppSizes.spacingMedium.w),
+                SizedBox(width: AppSizes.spacingMedium),
                 Expanded(child: _buildEventInfo(event, isDark)),
                 Icon(
                   Icons.arrow_forward_ios,
-                  size: AppSizes.fontSmall.sp,
+                  size: AppSizes.fontSmall,
                   color: AppColors.getTextSecondary(isDark),
                 ),
               ],
@@ -180,11 +180,11 @@ class SearchResultsWidget extends ConsumerWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        SizedBox(height: AppSizes.spacingXs.h),
+        SizedBox(height: AppSizes.spacingXs),
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.paddingSmall.w,
-            vertical: AppSizes.paddingXs - 1.h,
+            horizontal: AppSizes.paddingSmall,
+            vertical: AppSizes.paddingXs - 1,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -193,13 +193,13 @@ class SearchResultsWidget extends ConsumerWidget {
                 AppColors.getPrimary(isDark).withOpacity(0.2),
               ],
             ),
-            borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           ),
           child: Text(
             event.category,
             style: AppTextStyles.labelSmall(isDark: isDark).copyWith(
               color: AppColors.getPrimary(isDark),
-              fontSize: AppSizes.fontXs.sp,
+              fontSize: AppSizes.fontXs,
             ),
           ),
         ),
@@ -212,28 +212,28 @@ class SearchResultsWidget extends ConsumerWidget {
       tag: 'search_${event.id}',
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           boxShadow: [
             BoxShadow(
               color: AppColors.getShadow(isDark),
-              blurRadius: AppSizes.cardElevationLow.r + 4,
+              blurRadius: AppSizes.cardElevationLow + 4,
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge + 2.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge + 2),
           child: Image.network(
             event.imageUrl ?? 'https://via.placeholder.com/50',
-            width: AppSizes.avatarLarge.w,
-            height: AppSizes.avatarLarge.h,
+            width: AppSizes.avatarLarge,
+            height: AppSizes.avatarLarge,
             fit: BoxFit.cover,
             errorBuilder: (_, __, _) => Container(
-              width: AppSizes.avatarLarge.w,
-              height: AppSizes.avatarLarge.h,
+              width: AppSizes.avatarLarge,
+              height: AppSizes.avatarLarge,
               color: AppColors.getSurface(isDark),
               child: Icon(
                 Icons.event,
-                size: AppSizes.iconMedium.sp,
+                size: AppSizes.iconMedium,
                 color: AppColors.getTextSecondary(isDark),
               ),
             ),
@@ -248,7 +248,10 @@ class SearchResultsWidget extends ConsumerWidget {
     ref.read(searchQueryProvider.notifier).state = '';
 
     if (event.latitude != null && event.longitude != null) {
-      ref.read(mapControllerProvider.notifier).state?.animateCamera(
+      ref
+          .read(mapControllerProvider.notifier)
+          .state
+          ?.animateCamera(
             CameraUpdate.newCameraPosition(
               CameraPosition(
                 target: LatLng(event.latitude!, event.longitude!),

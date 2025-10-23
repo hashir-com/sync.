@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -21,13 +21,13 @@ class OrganizerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         border: Border.all(
           color: AppColors.getBorder(isDark).withOpacity(0.5),
-          width: 1.w,
+          width: 1,
         ),
       ),
       child: Row(
@@ -36,7 +36,7 @@ class OrganizerTile extends StatelessWidget {
           Row(
             children: [
               _buildOrganizerAvatar(),
-              SizedBox(width: AppSizes.spacingMedium.w),
+              SizedBox(width: AppSizes.spacingMedium),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -46,7 +46,7 @@ class OrganizerTile extends StatelessWidget {
                       isDark: isDark,
                     ).copyWith(fontWeight: FontWeight.w600),
                   ),
-                  SizedBox(height: AppSizes.spacingXs.h),
+                  SizedBox(height: AppSizes.spacingXs),
                   Text(
                     'Organizer',
                     style: AppTextStyles.bodySmall(
@@ -59,12 +59,12 @@ class OrganizerTile extends StatelessWidget {
           ),
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingMedium.w,
-              vertical: AppSizes.paddingSmall.h,
+              horizontal: AppSizes.paddingMedium,
+              vertical: AppSizes.paddingSmall,
             ),
             decoration: BoxDecoration(
               color: AppColors.getPrimary(isDark).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             ),
             child: Text(
               'Follow',
@@ -83,13 +83,13 @@ class OrganizerTile extends StatelessWidget {
     // Check if organizer has an image URL
     if (organizerImageUrl != null && organizerImageUrl!.isNotEmpty) {
       return Container(
-        width: 44.w,
-        height: 44.w,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
             color: AppColors.getPrimary(isDark).withOpacity(0.2),
-            width: 2.w,
+            width: 2,
           ),
         ),
         child: ClipOval(
@@ -112,8 +112,8 @@ class OrganizerTile extends StatelessWidget {
         : '?';
 
     return Container(
-      width: 44.w,
-      height: 44.w,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
@@ -126,7 +126,7 @@ class OrganizerTile extends StatelessWidget {
         ),
         border: Border.all(
           color: AppColors.getPrimary(isDark).withOpacity(0.3),
-          width: 2.w,
+          width: 2,
         ),
       ),
       child: Center(
@@ -135,7 +135,7 @@ class OrganizerTile extends StatelessWidget {
           style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
-            fontSize: AppSizes.fontXl.sp,
+            fontSize: AppSizes.fontXl,
           ),
         ),
       ),

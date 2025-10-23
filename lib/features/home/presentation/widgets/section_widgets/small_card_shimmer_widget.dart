@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -12,10 +12,10 @@ class SmallCardShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardWidth = ResponsiveUtil.isMobile(context) ? 140.w : 180.w;
+    final cardWidth = ResponsiveUtil.isMobile(context) ? 140 : 180;
 
     return SizedBox(
-      height: ResponsiveUtil.isMobile(context) ? 240.h : 280.h,
+      height: ResponsiveUtil.isMobile(context) ? 240 : 280,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
@@ -25,7 +25,7 @@ class SmallCardShimmer extends StatelessWidget {
           return Padding(
             padding: EdgeInsets.only(right: AppSizes.spacingMedium),
             child: SizedBox(
-              width: cardWidth,
+              width: cardWidth.toDouble(),
               child: Shimmer.fromColors(
                 baseColor: AppColors.getShimmerBase(isDark),
                 highlightColor: AppColors.getShimmerHighlight(isDark),

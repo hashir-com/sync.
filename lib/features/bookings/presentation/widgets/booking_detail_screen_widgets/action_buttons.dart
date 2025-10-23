@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
@@ -27,7 +26,7 @@ class ActionButtons extends StatelessWidget {
         // Invoice button
         Expanded(
           child: SizedBox(
-            height: AppSizes.buttonHeightLarge.h,
+            height: AppSizes.buttonHeightLarge,
             child: OutlinedButton.icon(
               onPressed: () async {
                 try {
@@ -40,7 +39,7 @@ class ActionButtons extends StatelessWidget {
                       backgroundColor: AppColors.getError(isDark),
                       duration: const Duration(seconds: 3),
                       behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusSmall)),
                     ),
                   );
                 }
@@ -51,11 +50,11 @@ class ActionButtons extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: AppSizes.spacingMedium.w),
+        SizedBox(width: AppSizes.spacingMedium),
         // Back button
         Expanded(
           child: SizedBox(
-            height: AppSizes.buttonHeightLarge.h,
+            height: AppSizes.buttonHeightLarge,
             child: ElevatedButton(
               onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
               style: Theme.of(context).elevatedButtonTheme.style,

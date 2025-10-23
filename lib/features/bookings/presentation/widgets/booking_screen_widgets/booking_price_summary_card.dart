@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -30,7 +30,8 @@ class BookingPriceSummaryCard extends ConsumerWidget {
         .map((entry) => entry.key)
         .toList();
 
-    final selectedCategory = validCategories.contains(formState.selectedCategory)
+    final selectedCategory =
+        validCategories.contains(formState.selectedCategory)
         ? formState.selectedCategory
         : (validCategories.isNotEmpty ? validCategories.first : '');
 
@@ -38,7 +39,7 @@ class BookingPriceSummaryCard extends ConsumerWidget {
     final totalAmount = pricePerTicket * formState.quantity;
 
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingLarge.w),
+      padding: EdgeInsets.all(AppSizes.paddingLarge),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -48,10 +49,10 @@ class BookingPriceSummaryCard extends ConsumerWidget {
             AppColors.getPrimary(isDark).withOpacity(0.04),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         border: Border.all(
           color: AppColors.getPrimary(isDark).withOpacity(0.2),
-          width: 1.w,
+          width: 1,
         ),
       ),
       child: Column(
@@ -59,29 +60,30 @@ class BookingPriceSummaryCard extends ConsumerWidget {
         children: [
           Text(
             'Price Summary',
-            style: AppTextStyles.headingSmall(isDark: isDark)
-                .copyWith(fontWeight: FontWeight.w700),
+            style: AppTextStyles.headingSmall(
+              isDark: isDark,
+            ).copyWith(fontWeight: FontWeight.w700),
           ),
-          SizedBox(height: AppSizes.spacingLarge.h),
+          SizedBox(height: AppSizes.spacingLarge),
           _PriceRow(
             label: 'Price per ticket',
             value: '₹${pricePerTicket.toStringAsFixed(0)}',
             isDark: isDark,
             isSubtitle: true,
           ),
-          SizedBox(height: AppSizes.spacingMedium.h),
+          SizedBox(height: AppSizes.spacingMedium),
           _PriceRow(
             label: 'Quantity',
             value: '${formState.quantity}x',
             isDark: isDark,
             isSubtitle: true,
           ),
-          SizedBox(height: AppSizes.spacingMedium.h),
+          SizedBox(height: AppSizes.spacingMedium),
           Divider(
             color: AppColors.getPrimary(isDark).withOpacity(0.2),
-            thickness: 1.h,
+            thickness: 1,
           ),
-          SizedBox(height: AppSizes.spacingMedium.h),
+          SizedBox(height: AppSizes.spacingMedium),
           _PriceRow(
             label: 'Total Amount',
             value: '₹${totalAmount.toStringAsFixed(0)}',
@@ -117,11 +119,12 @@ class _PriceRow extends StatelessWidget {
         Text(
           label,
           style: isTotal
-              ? AppTextStyles.bodyLarge(isDark: isDark)
-                  .copyWith(fontWeight: FontWeight.w700)
-              : AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-                  color: AppColors.getTextSecondary(isDark),
-                ),
+              ? AppTextStyles.bodyLarge(
+                  isDark: isDark,
+                ).copyWith(fontWeight: FontWeight.w700)
+              : AppTextStyles.bodyMedium(
+                  isDark: isDark,
+                ).copyWith(color: AppColors.getTextSecondary(isDark)),
         ),
         Text(
           value,
@@ -130,8 +133,9 @@ class _PriceRow extends StatelessWidget {
                   color: AppColors.getPrimary(isDark),
                   fontWeight: FontWeight.w800,
                 )
-              : AppTextStyles.bodyMedium(isDark: isDark)
-                  .copyWith(fontWeight: FontWeight.w600),
+              : AppTextStyles.bodyMedium(
+                  isDark: isDark,
+                ).copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );

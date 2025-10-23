@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -117,7 +117,7 @@ class CancelButton extends ConsumerWidget {
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         ),
       ),
     );
@@ -136,7 +136,7 @@ class CancelButton extends ConsumerWidget {
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         ),
       ),
     );
@@ -156,7 +156,7 @@ class CancelButton extends ConsumerWidget {
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         ),
       ),
     );
@@ -173,9 +173,9 @@ class CancelButton extends ConsumerWidget {
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: AppColors.getError(isDark)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           ),
-          padding: EdgeInsets.symmetric(vertical: AppSizes.paddingMedium.h),
+          padding: EdgeInsets.symmetric(vertical: AppSizes.paddingMedium),
         ),
         child: Text(
           'Cancel Booking',

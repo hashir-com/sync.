@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
@@ -28,16 +28,16 @@ class LoadingIndicatorWidget extends ConsumerWidget {
               },
               child: Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingXxl.w,
-                  vertical: AppSizes.paddingMedium + 2.h,
+                  horizontal: AppSizes.paddingXxl,
+                  vertical: AppSizes.paddingMedium + 2,
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.getPrimary(isDark),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.getShadow(isDark),
-                      blurRadius: AppSizes.cardElevationHigh.r,
+                      blurRadius: AppSizes.cardElevationHigh,
                       offset: const Offset(0, 2),
                     ),
                   ],
@@ -46,19 +46,19 @@ class LoadingIndicatorWidget extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: AppSizes.iconSmall - 2.w,
-                      height: AppSizes.iconSmall - 2.h,
+                      width: AppSizes.iconSmall - 2,
+                      height: AppSizes.iconSmall - 2,
                       child: const CircularProgressIndicator(
                         strokeWidth: 2.5,
                         valueColor: AlwaysStoppedAnimation(Colors.white),
                       ),
                     ),
-                    SizedBox(width: AppSizes.spacingMedium.w),
+                    SizedBox(width: AppSizes.spacingMedium),
                     Text(
                       'Loading markers...',
                       style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
                         color: Colors.white,
-                        fontSize: AppSizes.fontMedium.sp,
+                        fontSize: AppSizes.fontMedium,
                       ),
                     ),
                   ],

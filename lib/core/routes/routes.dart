@@ -12,6 +12,9 @@ import 'package:sync_event/features/bookings/presentation/screens/booking_detail
 import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_details_loader.dart';
+import 'package:sync_event/features/chat/presentation/screens/chat_list_screen.dart';
+import 'package:sync_event/features/chat/presentation/screens/chat_screen.dart';
+import 'package:sync_event/features/chat/presentation/screens/user_search_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/edit_event/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
@@ -22,7 +25,6 @@ import 'package:sync_event/features/events/presentation/Screens/my_events.dart';
 import 'package:sync_event/features/favorites/screens/favorite_screen.dart';
 import 'package:sync_event/features/home/presentation/screen/home.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
-import 'package:sync_event/features/profile/presentation/screens/chat_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
 import 'package:sync_event/features/profile/presentation/screens/other_users_profile_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart';
@@ -224,15 +226,31 @@ final GoRouter appRouter = GoRouter(
       path: '/user-profile',
       builder: (context, state) => UserProfileScreen(user: state.extra),
     ),
-    GoRoute(
-      path: '/chat',
-      builder: (context, state) => ChatScreen(otherUser: state.extra),
-    ),
+    // GoRoute(
+    //   path: '/chat',
+    //   builder: (context, state) => ChatScreen(otherUser: state.extra),
+    // ),
 
     GoRoute(
   path: '/favorites',
   name: 'favorites',
   builder: (context, state) => const FavoritesScreen(),
 ),
+GoRoute(
+  path: '/chat',
+  builder: (context, state) => const ChatListScreen(),
+),
+GoRoute(
+  path: '/chat/search',
+  builder: (context, state) => const UserSearchScreen(),
+),
+GoRoute(
+  path: '/chat/:chatId',
+  builder: (context, state) {
+    final chatId = state.pathParameters['chatId']!;
+    return ChatScreen(chatId: chatId);
+  },
+),
+
   ],
 );

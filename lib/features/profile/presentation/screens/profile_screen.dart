@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:sync_event/features/profile/presentation/providers/auth_state_provider.dart';
@@ -64,7 +64,7 @@ class ProfileScreen extends ConsumerWidget {
           "Profile",
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 24.sp,
+            fontSize: 24,
           ),
         ),
         backgroundColor: theme.colorScheme.surface,
@@ -84,26 +84,26 @@ class ProfileScreen extends ConsumerWidget {
                     "Please sign in to view your profile",
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 16.sp,
+                      fontSize: 16,
                     ),
                   ),
                 )
               : Padding(
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildProfileAvatar(user.image, theme),
-                      SizedBox(height: _spacingMedium.h),
+                      SizedBox(height: _spacingMedium),
                       _buildUserDetails(
                         user,
                         userStats,
                         navigateToEditProfile,
                         theme,
                       ),
-                      SizedBox(height: _spacingLarge.h),
+                      SizedBox(height: _spacingLarge),
                       _buildAboutSection(theme),
-                      SizedBox(height: _spacingSmall.h),
+                      SizedBox(height: _spacingSmall),
                       _buildInterestSection(ref, theme),
                     ],
                   ),
@@ -114,7 +114,7 @@ class ProfileScreen extends ConsumerWidget {
               "Failed to load profile: $error",
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.error,
-                fontSize: 16.sp,
+                fontSize: 16,
               ),
             ),
           ),
@@ -128,22 +128,22 @@ class ProfileScreen extends ConsumerWidget {
       child: photoURL != null
           ? CircleAvatar(
               backgroundImage: NetworkImage(photoURL),
-              radius: _avatarRadius.r,
+              radius: _avatarRadius,
               backgroundColor: theme.colorScheme.surface,
               child: Hero(
                 tag: 'profile',
                 child: CircleAvatar(
-                  radius: (_avatarRadius - 2).r,
+                  radius: (_avatarRadius - 2),
                   backgroundColor: Colors.transparent,
                 ),
               ),
             )
           : CircleAvatar(
-              radius: _avatarRadius.r,
+              radius: _avatarRadius,
               backgroundColor: theme.colorScheme.surfaceContainer,
               child: Icon(
                 Icons.person,
-                size: 40.sp,
+                size: 40,
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
@@ -164,50 +164,50 @@ class ProfileScreen extends ConsumerWidget {
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w900,
               color: theme.colorScheme.onSurface,
-              fontSize: 20.sp,
+              fontSize: 20,
             ),
           ),
-          SizedBox(height: (_spacingLarge + 15).h),
+          SizedBox(height: (_spacingLarge + 15)),
           IntrinsicHeight(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildStatColumn(stats['following']!, "Following", theme),
-                SizedBox(width: 40.w),
+                SizedBox(width: 40),
                 Padding(
-                  padding: EdgeInsets.only(top: 10.h, bottom: 10.h),
+                  padding: EdgeInsets.only(top: 10, bottom: 10),
                   child: VerticalDivider(
                     color: theme.colorScheme.onSurface.withOpacity(0.4),
                     thickness: 1,
-                    width: 20.w,
+                    width: 20,
                   ),
                 ),
-                SizedBox(width: 40.w),
+                SizedBox(width: 40),
                 _buildStatColumn(stats['followers']!, "Followers", theme),
               ],
             ),
           ),
-          SizedBox(height: (_spacingSmall + 5).h),
+          SizedBox(height: (_spacingSmall + 5)),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              minimumSize: Size(190.w, 45.h),
+              minimumSize: Size(190, 45),
               side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             onPressed: onEditPressed,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.edit, color: theme.colorScheme.primary, size: 18.sp),
-                SizedBox(width: 8.w),
+                Icon(Icons.edit, color: theme.colorScheme.primary, size: 18),
+                SizedBox(width: 8),
                 Text(
                   "Edit Profile",
                   style: TextStyle(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w400,
-                    fontSize: 14.sp,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -225,14 +225,11 @@ class ProfileScreen extends ConsumerWidget {
           count,
           style: theme.textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 16.sp,
+            fontSize: 16,
           ),
         ),
-        SizedBox(height: _spacingSmall.h),
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12.sp),
-        ),
+        SizedBox(height: _spacingSmall),
+        Text(label, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12)),
       ],
     );
   }
@@ -245,13 +242,13 @@ class ProfileScreen extends ConsumerWidget {
           "About Me",
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 16.sp,
+            fontSize: 16,
           ),
         ),
-        SizedBox(height: _spacingSmall.h),
+        SizedBox(height: _spacingSmall),
         Text(
           "I am someone who enjoys being around happy people who love hosting and attending parties and events, so I often host lovely events.",
-          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12.sp),
+          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
         ),
       ],
     );
@@ -270,23 +267,23 @@ class ProfileScreen extends ConsumerWidget {
               "Interest",
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: 16.sp,
+                fontSize: 16,
               ),
             ),
             SizedBox(
-              width: 100.w,
-              height: 30.h,
+              width: 100,
+              height: 30,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primaryContainer,
                   foregroundColor: theme.colorScheme.primary,
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 0),
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.r),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   textStyle: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    fontSize: 10.sp,
+                    fontSize: 10,
                   ),
                 ),
                 onPressed: () {
@@ -303,10 +300,10 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Icon(
                       Icons.edit,
-                      size: 12.sp,
+                      size: 12,
                       color: AppColors.backgroundLight,
                     ),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: 10),
                     Text(
                       "CHANGE",
                       style: TextStyle(color: AppColors.backgroundLight),
@@ -317,7 +314,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-        SizedBox(height: _spacingLarge.h),
+        SizedBox(height: _spacingLarge),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -327,7 +324,7 @@ class ProfileScreen extends ConsumerWidget {
                 .entries
                 .map(
                   (entry) => Padding(
-                    padding: EdgeInsets.only(right: 20.w),
+                    padding: EdgeInsets.only(right: 20),
                     child: _buildInterestBox(
                       entry.value['label'],
                       entry.value['icon'],
@@ -353,16 +350,16 @@ class ProfileScreen extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         CircleAvatar(
-          radius: 28.r,
+          radius: 28,
           backgroundColor: color.withOpacity(0.3),
-          child: Icon(icon, color: color, size: 22.sp),
+          child: Icon(icon, color: color, size: 22),
         ),
-        SizedBox(height: 6.h),
+        SizedBox(height: 6),
         Text(
           label,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
-            fontSize: 12.sp,
+            fontSize: 12,
           ),
         ),
       ],

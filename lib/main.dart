@@ -1,7 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/core/di/injection_container.dart';
 import 'package:sync_event/core/routes/routes.dart';
@@ -21,18 +22,14 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider);
 
-    return ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, child) => MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Sync Event',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-        routerConfig: appRouter,
-      ),
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'Sync Event',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      routerConfig: appRouter,
     );
   }
 }
+

@@ -25,18 +25,33 @@ class NotAuthenticatedView extends ConsumerWidget {
               size: AppSizes.getIconSize(context, baseSize: AppSizes.iconXxl),
               color: AppColors.getTextSecondary(isDark),
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingMedium)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingMedium,
+              ),
+            ),
             Text(
               'Please Log In',
               style: AppTextStyles.headingSmall(isDark: isDark),
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingSmall)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingSmall,
+              ),
+            ),
             Text(
               'You need to be logged in to view your bookings',
               style: AppTextStyles.bodyMedium(isDark: isDark),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingLarge)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingLarge,
+              ),
+            ),
             ElevatedButton(
               onPressed: () => context.go('/login'),
               style: Theme.of(context).elevatedButtonTheme.style,

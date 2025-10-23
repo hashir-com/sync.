@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -16,7 +16,11 @@ class DetailSection extends StatelessWidget {
   final EventEntity event;
   final bool isOrganizer;
 
-  const DetailSection({super.key, required this.event, required this.isOrganizer});
+  const DetailSection({
+    super.key,
+    required this.event,
+    required this.isOrganizer,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,25 +33,43 @@ class DetailSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GoingSection(),
-            SizedBox(height: AppSizes.spacingLarge.h),
+            SizedBox(height: AppSizes.spacingLarge),
             Text(event.title, style: AppTextStyles.headingLarge(isDark: false)),
-            SizedBox(height: AppSizes.spacingXxl.h),
-            DetailTile(icon: Icons.calendar_today_rounded, title: event.formattedDate, subtitle: event.formattedDayTime),
-            SizedBox(height: AppSizes.spacingMedium.h),
-            DetailTile(icon: Icons.access_time_rounded, title: 'Duration', subtitle: event.formattedDuration),
-            SizedBox(height: AppSizes.spacingMedium.h),
-            DetailTile(icon: Icons.location_on_rounded, title: event.location, subtitle: event.locationSubtitle),
-            SizedBox(height: AppSizes.spacingMedium.h),
-            OrganizerTile( organizerName: event.organizerName),
-            SizedBox(height: AppSizes.spacingMedium.h),
+            SizedBox(height: AppSizes.spacingXxl),
+            DetailTile(
+              icon: Icons.calendar_today_rounded,
+              title: event.formattedDate,
+              subtitle: event.formattedDayTime,
+            ),
+            SizedBox(height: AppSizes.spacingMedium),
+            DetailTile(
+              icon: Icons.access_time_rounded,
+              title: 'Duration',
+              subtitle: event.formattedDuration,
+            ),
+            SizedBox(height: AppSizes.spacingMedium),
+            DetailTile(
+              icon: Icons.location_on_rounded,
+              title: event.location,
+              subtitle: event.locationSubtitle,
+            ),
+            SizedBox(height: AppSizes.spacingMedium),
+            OrganizerTile(organizerName: event.organizerName),
+            SizedBox(height: AppSizes.spacingMedium),
             ShareTile(),
-            SizedBox(height: AppSizes.spacingXxl.h),
-            Text('About Event', style: AppTextStyles.titleMedium(isDark: false)),
-            SizedBox(height: AppSizes.spacingMedium.h),
-            Text(event.description, style: AppTextStyles.bodyMedium(isDark: false)),
-            SizedBox(height: AppSizes.spacingXxl.h),
+            SizedBox(height: AppSizes.spacingXxl),
+            Text(
+              'About Event',
+              style: AppTextStyles.titleMedium(isDark: false),
+            ),
+            SizedBox(height: AppSizes.spacingMedium),
+            Text(
+              event.description,
+              style: AppTextStyles.bodyMedium(isDark: false),
+            ),
+            SizedBox(height: AppSizes.spacingXxl),
             BookingButton(eventId: event.id, isOrganizer: isOrganizer),
-            SizedBox(height: AppSizes.spacingLarge.h),
+            SizedBox(height: AppSizes.spacingLarge),
           ],
         ),
       ),

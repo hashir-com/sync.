@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -31,7 +31,7 @@ class _CancellationReasonDialogState
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,7 +40,7 @@ class _CancellationReasonDialogState
               'Why are you cancelling?',
               style: AppTextStyles.headingSmall(isDark: widget.isDark),
             ),
-            SizedBox(height: AppSizes.spacingMedium.h),
+            SizedBox(height: AppSizes.spacingMedium),
             _buildReasonOption('Ordered by mistake', 'ordered_by_mistake'),
             _buildReasonOption("Can't attend the event", 'cant_attend'),
             _buildReasonOption('Event rescheduled', 'event_rescheduled'),
@@ -52,8 +52,8 @@ class _CancellationReasonDialogState
             if (selectedReason == 'other')
               Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingMedium.w,
-                  vertical: AppSizes.spacingSmall.h,
+                  horizontal: AppSizes.paddingMedium,
+                  vertical: AppSizes.spacingSmall,
                 ),
                 child: TextField(
                   controller: _otherReasonController,
@@ -62,12 +62,12 @@ class _CancellationReasonDialogState
                     labelStyle: AppTextStyles.bodyMedium(isDark: widget.isDark),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
-                        AppSizes.radiusMedium.r,
+                        AppSizes.radiusMedium,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
-                        AppSizes.radiusMedium.r,
+                        AppSizes.radiusMedium,
                       ),
                       borderSide: BorderSide(
                         color: AppColors.getBorder(widget.isDark),
@@ -75,11 +75,11 @@ class _CancellationReasonDialogState
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
-                        AppSizes.radiusMedium.r,
+                        AppSizes.radiusMedium,
                       ),
                       borderSide: BorderSide(
                         color: AppColors.getPrimary(widget.isDark),
-                        width: 2.w,
+                        width: 2,
                       ),
                     ),
                     filled: true,
@@ -89,7 +89,7 @@ class _CancellationReasonDialogState
                   maxLines: 2,
                 ),
               ),
-            SizedBox(height: AppSizes.spacingLarge.h),
+            SizedBox(height: AppSizes.spacingLarge),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -100,7 +100,7 @@ class _CancellationReasonDialogState
                     style: AppTextStyles.bodyMedium(isDark: widget.isDark),
                   ),
                 ),
-                SizedBox(width: AppSizes.spacingMedium.w),
+                SizedBox(width: AppSizes.spacingMedium),
                 ElevatedButton(
                   onPressed: selectedReason != null ? _handleNext : null,
                   style: ElevatedButton.styleFrom(
@@ -111,12 +111,12 @@ class _CancellationReasonDialogState
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
-                        AppSizes.radiusLarge.r,
+                        AppSizes.radiusLarge,
                       ),
                     ),
                     padding: EdgeInsets.symmetric(
-                      horizontal: AppSizes.paddingLarge.w,
-                      vertical: AppSizes.paddingMedium.h,
+                      horizontal: AppSizes.paddingLarge,
+                      vertical: AppSizes.paddingMedium,
                     ),
                   ),
                   child: Text(
@@ -184,29 +184,29 @@ class RefundMethodDialog extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppSizes.radiusLarge.r),
+          top: Radius.circular(AppSizes.radiusLarge),
         ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+          padding: EdgeInsets.all(AppSizes.paddingMedium),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40.w,
-                height: 4.h,
-                margin: EdgeInsets.only(bottom: AppSizes.spacingMedium.h),
+                width: 40,
+                height: 4,
+                margin: EdgeInsets.only(bottom: AppSizes.spacingMedium),
                 decoration: BoxDecoration(
                   color: AppColors.getTextSecondary(isDark).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
               ListTile(
                 leading: Icon(
                   Icons.account_balance_wallet_outlined,
                   color: AppColors.getPrimary(isDark),
-                  size: AppSizes.iconLarge.sp,
+                  size: AppSizes.iconLarge,
                 ),
                 title: Text(
                   'Refund to Wallet (Instant)',
@@ -221,15 +221,15 @@ class RefundMethodDialog extends StatelessWidget {
                 onTap: () => Navigator.pop(context, 'wallet'),
               ),
               Divider(
-                indent: 50.w,
-                endIndent: 20.w,
+                indent: 50,
+                endIndent: 20,
                 color: AppColors.getBorder(isDark),
               ),
               ListTile(
                 leading: Icon(
                   Icons.account_balance_outlined,
                   color: AppColors.getPrimary(isDark),
-                  size: AppSizes.iconLarge.sp,
+                  size: AppSizes.iconLarge,
                 ),
                 title: Text(
                   'Refund to Bank (5-7 days)',

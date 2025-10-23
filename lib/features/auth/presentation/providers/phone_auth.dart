@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/error/failures.dart';
 import 'package:sync_event/features/auth/domain/usecases/verify_otp_usecase.dart';
@@ -177,7 +176,7 @@ class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
             SnackBar(
               content: Text(
                 errorMessage,
-                style: TextStyle(fontSize: 14.sp, color: Colors.white),
+                style: TextStyle(fontSize: 14, color: Colors.white),
               ),
               backgroundColor: Theme.of(context).colorScheme.error,
               duration: const Duration(seconds: 3),
@@ -225,7 +224,7 @@ class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
         SnackBar(
           content: Text(
             errorMessage,
-            style: TextStyle(fontSize: 14.sp, color: Colors.white),
+            style: TextStyle(fontSize: 14, color: Colors.white),
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 3),
@@ -249,7 +248,7 @@ class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
         SnackBar(
           content: Text(
             errorMessage,
-            style: TextStyle(fontSize: 14.sp, color: Colors.white),
+            style: TextStyle(fontSize: 14, color: Colors.white),
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 3),
@@ -262,7 +261,7 @@ class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
         SnackBar(
           content: Text(
             "$e",
-            style: TextStyle(fontSize: 14.sp, color: Colors.white),
+            style: TextStyle(fontSize: 14, color: Colors.white),
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 3),

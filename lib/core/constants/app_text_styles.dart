@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -41,7 +41,7 @@ class AppTextStyles {
 
   static TextStyle headingxSmall({required bool isDark}) =>
       GoogleFonts.montserrat(
-        fontSize: 19.sp, // Responsive with flutter_screenutil
+        fontSize: 19, // Responsive with flutter_screenutil
         fontWeight:
             FontWeight.bold, // Medium-bold, mimicking AirBnB's thickness
         color: AppColors.getTextPrimary(isDark),
@@ -107,7 +107,7 @@ class AppTextStyles {
   // Captions / Hints
   // =======================
   static TextStyle caption({required bool isDark}) => TextStyle(
-    fontSize: AppSizes.fontSmall + 1.sp,
+    fontSize: AppSizes.fontSmall + 1,
     fontWeight: FontWeight.w400,
     color: AppColors.getTextSecondary(isDark),
   );
@@ -130,10 +130,9 @@ class AppTextStyles {
   );
 
   static TextStyle labelSmall({required bool isDark}) => TextStyle(
-    fontSize: AppSizes.fontXs + 1.sp,
+    fontSize: AppSizes.fontXs + 1,
     fontWeight: FontWeight.w500,
     color: AppColors.getTextSecondary(isDark),
     letterSpacing: AppSizes.letterSpacingLabel,
   );
 }
-

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -29,12 +29,12 @@ class BookingButton extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [AppColors.primaryVariant, AppColors.primaryVariant],
         ),
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
           onTap: () => context.push('/book/$eventId'),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -43,11 +43,11 @@ class BookingButton extends StatelessWidget {
                 isOrganizer ? 'VIEW EVENT' : 'BUY TICKET',
                 style: AppTextStyles.labelLarge(isDark: false),
               ),
-              SizedBox(width: AppSizes.spacingSmall.w),
+              SizedBox(width: AppSizes.spacingSmall),
               Icon(
                 Icons.arrow_forward_rounded,
                 color: Colors.white,
-                size: 18.sp,
+                size: 18,
               ),
             ],
           ),

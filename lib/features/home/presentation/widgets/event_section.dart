@@ -2,7 +2,7 @@
 
 // import 'package:flutter/material.dart';
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';
+//
 // import 'package:go_router/go_router.dart';
 // import 'package:intl/intl.dart';
 // import 'package:geolocator/geolocator.dart';
@@ -1905,7 +1905,6 @@
 //   }
 // }
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -1963,7 +1962,11 @@ class EventSection extends ConsumerWidget {
 
               // ignore: unnecessary_null_comparison
               final sortedEvents = List.from(events.where((e) => e != null))
-                ..sort((a, b) => (a?.startTime ?? DateTime.now()).compareTo(b?.startTime ?? DateTime.now()));
+                ..sort(
+                  (a, b) => (a?.startTime ?? DateTime.now()).compareTo(
+                    b?.startTime ?? DateTime.now(),
+                  ),
+                );
 
               if (sortedEvents.isEmpty) {
                 return EmptyState(
@@ -2004,7 +2007,9 @@ class EventSection extends ConsumerWidget {
             title: 'Sports Events',
             isDark: isDark,
             onViewAll: () {
-              ref.read(eventFilterProvider.notifier).updateCategories(['Sports']);
+              ref.read(eventFilterProvider.notifier).updateCategories([
+                'Sports',
+              ]);
               context.push('/events');
             },
           ),
@@ -2013,8 +2018,11 @@ class EventSection extends ConsumerWidget {
           eventsAsync.when(
             data: (events) {
               final sportEvents = events
-                  .where((event) => event.category.toLowerCase() == 'sports' ||
-                      event.category.toLowerCase().contains('sport'))
+                  .where(
+                    (event) =>
+                        event.category.toLowerCase() == 'sports' ||
+                        event.category.toLowerCase().contains('sport'),
+                  )
                   .take(10)
                   .toList();
 
@@ -2039,7 +2047,9 @@ class EventSection extends ConsumerWidget {
             title: 'Music Events',
             isDark: isDark,
             onViewAll: () {
-              ref.read(eventFilterProvider.notifier).updateCategories(['Music']);
+              ref.read(eventFilterProvider.notifier).updateCategories([
+                'Music',
+              ]);
               context.push('/events');
             },
           ),
@@ -2048,8 +2058,11 @@ class EventSection extends ConsumerWidget {
           eventsAsync.when(
             data: (events) {
               final musicEvents = events
-                  .where((event) => event.category.toLowerCase() == 'music' ||
-                      event.category.toLowerCase().contains('music'))
+                  .where(
+                    (event) =>
+                        event.category.toLowerCase() == 'music' ||
+                        event.category.toLowerCase().contains('music'),
+                  )
                   .take(10)
                   .toList();
 
@@ -2112,7 +2125,9 @@ class EventSection extends ConsumerWidget {
                     title: 'Top in $userCity',
                     isDark: isDark,
                     onViewAll: () {
-                      ref.read(eventFilterProvider.notifier).updateLocation(userCity);
+                      ref
+                          .read(eventFilterProvider.notifier)
+                          .updateLocation(userCity);
                       context.push('/events');
                     },
                   ),

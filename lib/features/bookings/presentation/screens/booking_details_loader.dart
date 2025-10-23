@@ -1,7 +1,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -105,16 +104,16 @@ class BookingDetailsLoaderScreen extends ConsumerWidget {
   Widget _buildError(BuildContext context, bool isDark, String message, Object? error) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.error_outline, size: AppSizes.iconXxl, color: AppColors.getError(isDark)),
-            SizedBox(height: AppSizes.spacingMedium.h),
+            SizedBox(height: AppSizes.spacingMedium),
             Text(message, style: AppTextStyles.headingSmall(isDark: isDark), textAlign: TextAlign.center),
             if (error != null)
               Padding(
-                padding: EdgeInsets.only(top: AppSizes.spacingSmall.h),
+                padding: EdgeInsets.only(top: AppSizes.spacingSmall),
                 child: Text(
                   error is Failure ? error.message : error.toString(),
                   style: AppTextStyles.bodyMedium(isDark: isDark),

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -24,8 +24,8 @@ class SettingsScreen extends ConsumerWidget {
         child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingLarge.w,
-              vertical: AppSizes.paddingXl.h,
+              horizontal: AppSizes.paddingLarge,
+              vertical: AppSizes.paddingXl,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,15 +34,15 @@ class SettingsScreen extends ConsumerWidget {
                 Text(
                   'Settings',
                   style: AppTextStyles.headingLarge(isDark: isDark).copyWith(
-                    fontSize: AppSizes.fontDisplay3.sp,
+                    fontSize: AppSizes.fontDisplay3,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: AppSizes.spacingXxxl.h),
+                SizedBox(height: AppSizes.spacingXxxl),
 
                 // --- Account Section ---
                 _buildSectionTitle('Account', isDark),
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
 
                 _buildSettingItem(
                   context,
@@ -51,7 +51,7 @@ class SettingsScreen extends ConsumerWidget {
                   'My Profile',
                   '/profile',
                 ),
-                SizedBox(height: AppSizes.spacingSmall.h),
+                SizedBox(height: AppSizes.spacingSmall),
 
                 _buildSettingItem(
                   context,
@@ -60,7 +60,7 @@ class SettingsScreen extends ConsumerWidget {
                   'My Tickets',
                   '/mybookings',
                 ),
-                SizedBox(height: AppSizes.spacingSmall.h),
+                SizedBox(height: AppSizes.spacingSmall),
 
                 _buildSettingItem(
                   context,
@@ -69,11 +69,11 @@ class SettingsScreen extends ConsumerWidget {
                   'My Wallet',
                   '/wallet',
                 ),
-                SizedBox(height: AppSizes.spacingXxxl.h),
+                SizedBox(height: AppSizes.spacingXxxl),
 
                 // --- Content Section ---
                 _buildSectionTitle('Content', isDark),
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
 
                 _buildSettingItem(
                   context,
@@ -82,7 +82,7 @@ class SettingsScreen extends ConsumerWidget {
                   'My Events',
                   '/my-events',
                 ),
-                SizedBox(height: AppSizes.spacingSmall.h),
+                SizedBox(height: AppSizes.spacingSmall),
 
                 _buildSettingItem(
                   context,
@@ -91,11 +91,11 @@ class SettingsScreen extends ConsumerWidget {
                   'Favorites',
                   '/bookings/:bookingId/cancel',
                 ),
-                SizedBox(height: AppSizes.spacingXxxl.h),
+                SizedBox(height: AppSizes.spacingXxxl),
 
                 // --- Support Section ---
                 _buildSectionTitle('Support', isDark),
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
 
                 _buildSettingItem(
                   context,
@@ -104,7 +104,7 @@ class SettingsScreen extends ConsumerWidget {
                   'Helps & FAQs',
                   '/help',
                 ),
-                SizedBox(height: AppSizes.spacingSmall.h),
+                SizedBox(height: AppSizes.spacingSmall),
 
                 _buildSettingItem(
                   context,
@@ -113,17 +113,17 @@ class SettingsScreen extends ConsumerWidget {
                   'Contact Us',
                   '/contact',
                 ),
-                SizedBox(height: AppSizes.spacingXxxl.h),
+                SizedBox(height: AppSizes.spacingXxxl),
 
                 // --- Appearance Section ---
                 _buildSectionTitle('Appearance', isDark),
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
 
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.getCard(isDark),
                     borderRadius: BorderRadius.circular(
-                      AppSizes.radiusMedium.r,
+                      AppSizes.radiusMedium,
                     ),
                     border: Border.all(
                       color: AppColors.getBorder(isDark),
@@ -131,8 +131,8 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                   padding: EdgeInsets.symmetric(
-                    horizontal: AppSizes.paddingMedium.w,
-                    vertical: AppSizes.paddingMedium.h,
+                    horizontal: AppSizes.paddingMedium,
+                    vertical: AppSizes.paddingMedium,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,14 +142,14 @@ class SettingsScreen extends ConsumerWidget {
                           Icon(
                             Icons.brightness_6_outlined,
                             color: AppColors.getTextPrimary(isDark),
-                            size: AppSizes.iconMedium.sp,
+                            size: AppSizes.iconMedium,
                           ),
-                          SizedBox(width: AppSizes.spacingMedium.w),
+                          SizedBox(width: AppSizes.spacingMedium),
                           Text(
                             'Dark Theme',
                             style: AppTextStyles.bodyLarge(isDark: isDark)
                                 .copyWith(
-                                  fontSize: AppSizes.fontMedium.sp,
+                                  fontSize: AppSizes.fontMedium,
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -168,17 +168,17 @@ class SettingsScreen extends ConsumerWidget {
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 400),
-                              width: 60.w,
-                              height: AppSizes.chipHeight.h,
+                              width: 60,
+                              height: AppSizes.chipHeight,
                               padding: EdgeInsets.symmetric(
-                                horizontal: AppSizes.paddingXs.w,
+                                horizontal: AppSizes.paddingXs,
                               ),
                               decoration: BoxDecoration(
                                 color: themeIsDark
                                     ? AppColors.getPrimary(isDark)
                                     : AppColors.getDisabled(isDark),
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusXl.r,
+                                  AppSizes.radiusXl,
                                 ),
                               ),
                               child: Stack(
@@ -190,8 +190,8 @@ class SettingsScreen extends ConsumerWidget {
                                         ? Alignment.centerRight
                                         : Alignment.centerLeft,
                                     child: Container(
-                                      width: AppSizes.iconMedium.w,
-                                      height: AppSizes.iconMedium.h,
+                                      width: AppSizes.iconMedium,
+                                      height: AppSizes.iconMedium,
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         shape: BoxShape.circle,
@@ -218,7 +218,7 @@ class SettingsScreen extends ConsumerWidget {
                                               ? Icons.dark_mode_rounded
                                               : Icons.light_mode_rounded,
                                           key: ValueKey<bool>(themeIsDark),
-                                          size: AppSizes.iconSmall.sp,
+                                          size: AppSizes.iconSmall,
                                           color: themeIsDark
                                               ? AppColors.getPrimary(isDark)
                                               : Colors.orangeAccent,
@@ -235,18 +235,18 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: AppSizes.spacingXxxl.h),
+                SizedBox(height: AppSizes.spacingXxxl),
 
                 // --- Sign Out Section ---
                 SizedBox(
                   width: double.infinity,
-                  height: AppSizes.buttonHeightLarge.h,
+                  height: AppSizes.buttonHeightLarge,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.getError(isDark),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
-                          AppSizes.radiusMedium.r,
+                          AppSizes.radiusMedium,
                         ),
                       ),
                     ),
@@ -257,20 +257,20 @@ class SettingsScreen extends ConsumerWidget {
                           backgroundColor: AppColors.getCard(isDark),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                              AppSizes.radiusXl.r,
+                              AppSizes.radiusXl,
                             ),
                           ),
                           title: Text(
                             'Sign Out?',
                             style: AppTextStyles.headingSmall(
                               isDark: isDark,
-                            ).copyWith(fontSize: AppSizes.fontXl.sp),
+                            ).copyWith(fontSize: AppSizes.fontXl),
                           ),
                           content: Text(
                             'Are you sure you want to sign out?',
                             style: AppTextStyles.bodyMedium(
                               isDark: isDark,
-                            ).copyWith(fontSize: AppSizes.fontMedium.sp),
+                            ).copyWith(fontSize: AppSizes.fontMedium),
                           ),
                           actions: [
                             TextButton(
@@ -279,7 +279,7 @@ class SettingsScreen extends ConsumerWidget {
                                 'Cancel',
                                 style: AppTextStyles.labelLarge(isDark: isDark)
                                     .copyWith(
-                                      fontSize: AppSizes.fontMedium.sp,
+                                      fontSize: AppSizes.fontMedium,
                                       color: AppColors.getTextSecondary(isDark),
                                     ),
                               ),
@@ -289,7 +289,7 @@ class SettingsScreen extends ConsumerWidget {
                                 backgroundColor: AppColors.getError(isDark),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppSizes.radiusSmall.r,
+                                    AppSizes.radiusSmall,
                                   ),
                                 ),
                               ),
@@ -298,7 +298,7 @@ class SettingsScreen extends ConsumerWidget {
                                 'Sign Out',
                                 style: AppTextStyles.labelLarge(isDark: false)
                                     .copyWith(
-                                      fontSize: AppSizes.fontMedium.sp,
+                                      fontSize: AppSizes.fontMedium,
                                       color: Colors.white,
                                     ),
                               ),
@@ -315,7 +315,7 @@ class SettingsScreen extends ConsumerWidget {
                     child: Text(
                       'Sign Out',
                       style: AppTextStyles.labelLarge(isDark: false).copyWith(
-                        fontSize: AppSizes.fontMedium.sp,
+                        fontSize: AppSizes.fontMedium,
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
@@ -323,7 +323,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
 
-                SizedBox(height: AppSizes.spacingXxxl.h),
+                SizedBox(height: AppSizes.spacingXxxl),
 
                 // --- Version Info ---
                 Center(
@@ -335,7 +335,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
 
-                SizedBox(height: AppSizes.spacingLarge.h),
+                SizedBox(height: AppSizes.spacingLarge),
               ],
             ),
           ),
@@ -365,29 +365,29 @@ class SettingsScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         border: Border.all(color: AppColors.getBorder(isDark), width: 1),
       ),
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingMedium.w,
-          vertical: AppSizes.paddingSmall.h,
+          horizontal: AppSizes.paddingMedium,
+          vertical: AppSizes.paddingSmall,
         ),
         leading: Icon(
           icon,
           color: AppColors.getTextPrimary(isDark),
-          size: AppSizes.iconMedium.sp,
+          size: AppSizes.iconMedium,
         ),
         title: Text(
           label,
           style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
-            fontSize: AppSizes.fontMedium.sp,
+            fontSize: AppSizes.fontMedium,
             fontWeight: FontWeight.w500,
           ),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios_rounded,
-          size: AppSizes.iconSmall.sp,
+          size: AppSizes.iconSmall,
           color: AppColors.getTextSecondary(isDark),
         ),
         onTap: () {
