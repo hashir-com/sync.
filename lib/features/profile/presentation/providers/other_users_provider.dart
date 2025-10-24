@@ -1,9 +1,9 @@
-// Add this to your event_providers.dart or create a new user_providers.dart file
+// lib/features/profile/presentation/providers/other_users_provider.dart
+// Ensure this file exports UserModel
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-// User Model (if you don't have one already)
 
 class UserModel {
   final String id;
@@ -62,6 +62,19 @@ class UserModel {
       'rating': rating,
       'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
     };
+  }
+
+  factory UserModel.fromFirebaseUser(firebase_auth.User? user) {
+    if (user == null) {
+      throw ArgumentError('User cannot be null');
+    }
+    return UserModel(
+      id: user.uid,
+      name: user.displayName ?? '',
+      email: user.email ?? '',
+      profileImageUrl: user.photoURL,
+      // Other fields would need to be fetched from Firestore if needed
+    );
   }
 }
 

@@ -429,8 +429,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            context.push('/event-detail/${event.id}');
+            context.push('/event-detail', extra: event.toEventEntity());
           },
+
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),

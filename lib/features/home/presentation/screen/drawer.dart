@@ -173,17 +173,18 @@ class CustomDrawer extends ConsumerWidget {
                         _buildItem(
                           context,
                           isDark,
-                          Icons.chat_bubble_outline_rounded,
-                          'Message',
-                          '/chat',
-                        ),
-                        _buildItem(
-                          context,
-                          isDark,
                           Icons.calendar_today_outlined,
                           'Calendar',
                           '/calendar',
                         ),
+                        _buildItem(
+                          context,
+                          isDark,
+                          Icons.chat_bubble_outline_rounded,
+                          'Messages',
+                          '/chat',
+                        ),
+
                         _buildItem(
                           context,
                           isDark,
@@ -194,17 +195,11 @@ class CustomDrawer extends ConsumerWidget {
                         _buildItem(
                           context,
                           isDark,
-                          Icons.mail_outline_rounded,
-                          'Contact Us',
-                          '/contact',
+                          Icons.confirmation_number_outlined,
+                          'My Bookings',
+                          '/mybookings',
                         ),
-                        _buildItem(
-                          context,
-                          isDark,
-                          Icons.settings_outlined,
-                          'Settings',
-                          '/settings',
-                        ),
+
                         _buildItem(
                           context,
                           isDark,
@@ -212,95 +207,112 @@ class CustomDrawer extends ConsumerWidget {
                           'My Events',
                           '/my-events',
                         ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(
-                            Icons.logout_rounded,
-                            color: AppColors.getError(isDark),
-                            size: AppSizes.iconMedium,
-                          ),
-                          title: Text(
-                            'Logout',
-                            style: AppTextStyles.bodyLarge(isDark: isDark)
-                                .copyWith(
-                                  color: AppColors.getError(isDark),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: AppSizes.fontMedium,
-                                ),
-                          ),
-                          onTap: () async {
-                            final shouldLogout = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                backgroundColor: AppColors.getCard(isDark),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppSizes.radiusXl,
-                                  ),
-                                ),
-                                title: Text(
-                                  'Confirm Logout',
-                                  style: AppTextStyles.headingSmall(
-                                    isDark: isDark,
-                                  ).copyWith(fontSize: AppSizes.fontXl),
-                                ),
-                                content: Text(
-                                  'Are you sure you want to log out?',
-                                  style: AppTextStyles.bodyMedium(
-                                    isDark: isDark,
-                                  ).copyWith(fontSize: AppSizes.fontMedium),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: Text(
-                                      'Cancel',
-                                      style:
-                                          AppTextStyles.labelLarge(
-                                            isDark: isDark,
-                                          ).copyWith(
-                                            fontSize: AppSizes.fontMedium,
-                                            color: AppColors.getTextSecondary(
-                                              isDark,
-                                            ),
-                                          ),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.getError(
-                                        isDark,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppSizes.radiusSmall,
-                                        ),
-                                      ),
-                                    ),
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: Text(
-                                      'Logout',
-                                      style:
-                                          AppTextStyles.labelLarge(
-                                            isDark: false,
-                                          ).copyWith(
-                                            fontSize: AppSizes.fontMedium,
-                                            color: Colors.white,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (shouldLogout == true) {
-                              await authNotifier.signOut();
-                              if (context.mounted) context.go('/login');
-                            }
-                          },
+                        _buildItem(
+                          context,
+                          isDark,
+                          Icons.wallet,
+                          'My Wallet',
+                          '/wallet',
                         ),
+
+                        Expanded(
+                          child: _buildItem(
+                            context,
+                            isDark,
+                            Icons.settings_outlined,
+                            'Settings',
+                            '/settings',
+                          ),
+                        ),
+                        // ListTile(
+                        //   contentPadding: EdgeInsets.zero,
+                        //   leading: Icon(
+                        //     Icons.logout_rounded,
+                        //     color: AppColors.getError(isDark),
+                        //     size: AppSizes.iconMedium,
+                        //   ),
+                        //   title: Text(
+                        //     'Logout',
+                        //     style: AppTextStyles.bodyLarge(isDark: isDark)
+                        //         .copyWith(
+                        //           color: AppColors.getError(isDark),
+                        //           fontWeight: FontWeight.w500,
+                        //           fontSize: AppSizes.fontMedium,
+                        //         ),
+                        //   ),
+                        //   onTap: () async {
+                        //     final shouldLogout = await showDialog<bool>(
+                        //       context: context,
+                        //       builder: (context) => AlertDialog(
+                        //         backgroundColor: AppColors.getCard(isDark),
+                        //         shape: RoundedRectangleBorder(
+                        //           borderRadius: BorderRadius.circular(
+                        //             AppSizes.radiusXl,
+                        //           ),
+                        //         ),
+                        //         title: Text(
+                        //           'Confirm Logout',
+                        //           style: AppTextStyles.headingSmall(
+                        //             isDark: isDark,
+                        //           ).copyWith(fontSize: AppSizes.fontXl),
+                        //         ),
+                        //         content: Text(
+                        //           'Are you sure you want to log out?',
+                        //           style: AppTextStyles.bodyMedium(
+                        //             isDark: isDark,
+                        //           ).copyWith(fontSize: AppSizes.fontMedium),
+                        //         ),
+                        //         actions: [
+                        //           TextButton(
+                        //             onPressed: () =>
+                        //                 Navigator.pop(context, false),
+                        //             child: Text(
+                        //               'Cancel',
+                        //               style:
+                        //                   AppTextStyles.labelLarge(
+                        //                     isDark: isDark,
+                        //                   ).copyWith(
+                        //                     fontSize: AppSizes.fontMedium,
+                        //                     color: AppColors.getTextSecondary(
+                        //                       isDark,
+                        //                     ),
+                        //                   ),
+                        //             ),
+                        //           ),
+                        //           ElevatedButton(
+                        //             style: ElevatedButton.styleFrom(
+                        //               backgroundColor: AppColors.getError(
+                        //                 isDark,
+                        //               ),
+                        //               shape: RoundedRectangleBorder(
+                        //                 borderRadius: BorderRadius.circular(
+                        //                   AppSizes.radiusSmall,
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //             onPressed: () =>
+                        //                 Navigator.pop(context, true),
+                        //             child: Text(
+                        //               'Logout',
+                        //               style:
+                        //                   AppTextStyles.labelLarge(
+                        //                     isDark: false,
+                        //                   ).copyWith(
+                        //                     fontSize: AppSizes.fontMedium,
+                        //                     color: Colors.white,
+                        //                   ),
+                        //             ),
+                        //           ),
+                        //         ],
+                        //       ),
+                        //     );
+
+                        //     if (shouldLogout == true) {
+                        //       await authNotifier.signOut();
+                        //       if (context.mounted) context.go('/login');
+                        //     }
+                        //   },
+                        // ),
 
                         // Animated Theme Toggle with Haptic Feedback
                       ],

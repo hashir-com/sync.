@@ -1,368 +1,318 @@
-// ignore_for_file: deprecated_member_use
+// lib/features/profile/presentation/screens/profile_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/responsive_util.dart';
+import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/profile/presentation/providers/auth_state_provider.dart';
-
-// Define a UserModel to match your repository's structure
-class UserModel {
-  final String? name;
-  final String? image;
-  final String? uid;
-
-  UserModel({this.name, this.image, this.uid});
-
-  factory UserModel.fromFirebaseUser(firebase_auth.User? user) {
-    return UserModel(
-      name: user?.displayName,
-      image: user?.photoURL,
-      uid: user?.uid,
-    );
-  }
-}
-
-final userStatsProvider = Provider<Map<String, String>>((ref) {
-  return {'following': '950', 'followers': '550'};
-});
-
-final interestsProvider = StateProvider<List<Map<String, dynamic>>>((ref) {
-  return [
-    {'label': 'Games', 'icon': Icons.videogame_asset, 'color': Colors.blue},
-    {'label': 'Concerts', 'icon': Icons.music_note, 'color': Colors.red},
-    {'label': 'Art', 'icon': Icons.brush, 'color': Colors.purple},
-    {'label': 'Music', 'icon': Icons.library_music, 'color': Colors.green},
-    {'label': 'Sports', 'icon': Icons.sports_soccer, 'color': Colors.orange},
-    {'label': 'Theatre', 'icon': Icons.theaters, 'color': Colors.teal},
-  ];
-});
+import 'package:sync_event/features/profile/presentation/providers/other_users_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+  final String? userId;
 
-  static const double _avatarRadius = 50;
-  static const double _spacingSmall = 10;
-  static const double _spacingMedium = 20;
-  static const double _spacingLarge = 25;
+  const ProfileScreen({super.key, this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authStateAsync = ref.watch(authStateProvider);
-    final userStats = ref.watch(userStatsProvider);
-    final theme = Theme.of(context);
+    final isDark = ThemeUtils.isDark(context);
+    final currentUser = ref.watch(currentUserProvider);
+    final currentUid = currentUser?.uid;
+    final isSelf = userId == null || userId == currentUid;
+    final effectiveUid = userId ?? currentUid;
 
-    void navigateToEditProfile() {
-      context.push('/edit-profile');
+    if (effectiveUid == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "Profile",
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
+    final profileAsync = ref.watch(userByIdProvider(effectiveUid));
+    final eventsAsync = ref.watch(userHostedEventsProvider(effectiveUid));
+
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: AppColors.getBackground(isDark),
+        body: CustomScrollView(
+          slivers: profileAsync.when(
+            data: (user) {
+              if (user == null) {
+                return [
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Text(
+                        'User not found',
+                        style: AppTextStyles.bodyMedium(isDark: isDark),
+                      ),
+                    ),
+                  ),
+                ];
+              }
+              return [
+                _buildProfileHeader(context, user, isSelf, isDark),
+                _buildEventsSection(context, eventsAsync, isDark),
+              ];
+            },
+            loading: () => [_buildShimmerHeader(context, isDark)],
+            error: (_, __) => [
+              SliverFillRemaining(
+                child: Center(
+                  child: Text(
+                    'Failed to load profile',
+                    style: AppTextStyles.bodyMedium(isDark: isDark),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        backgroundColor: theme.colorScheme.surface,
       ),
-      body: Container(
+    );
+  }
+
+  SliverToBoxAdapter _buildProfileHeader(
+    BuildContext context,
+    UserModel user,
+    bool isSelf,
+    bool isDark,
+  ) {
+    final double avatarSize = ResponsiveUtil.getAvatarSize(context) + 20;
+
+    return SliverToBoxAdapter(
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          vertical: ResponsiveUtil.getSpacing(context, baseSpacing: 20),
+          horizontal: ResponsiveUtil.getPadding(context),
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [theme.colorScheme.surface, theme.colorScheme.surface],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.getPrimary(isDark),
+              AppColors.getPrimary(isDark).withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
           ),
         ),
-        child: authStateAsync.when(
-          data: (user) => user == null
-              ? Center(
-                  child: Text(
-                    "Please sign in to view your profile",
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 16,
-                    ),
-                  ),
-                )
-              : Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildProfileAvatar(user.image, theme),
-                      SizedBox(height: _spacingMedium),
-                      _buildUserDetails(
-                        user,
-                        userStats,
-                        navigateToEditProfile,
-                        theme,
-                      ),
-                      SizedBox(height: _spacingLarge),
-                      _buildAboutSection(theme),
-                      SizedBox(height: _spacingSmall),
-                      _buildInterestSection(ref, theme),
-                    ],
-                  ),
-                ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(
-            child: Text(
-              "Failed to load profile: $error",
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.error,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileAvatar(String? photoURL, ThemeData theme) {
-    return Center(
-      child: photoURL != null
-          ? CircleAvatar(
-              backgroundImage: NetworkImage(photoURL),
-              radius: _avatarRadius,
-              backgroundColor: theme.colorScheme.surface,
-              child: Hero(
-                tag: 'profile',
-                child: CircleAvatar(
-                  radius: (_avatarRadius - 2),
-                  backgroundColor: Colors.transparent,
-                ),
-              ),
-            )
-          : CircleAvatar(
-              radius: _avatarRadius,
-              backgroundColor: theme.colorScheme.surfaceContainer,
-              child: Icon(
-                Icons.person,
-                size: 40,
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-    );
-  }
-
-  Widget _buildUserDetails(
-    UserModel user,
-    Map<String, String> stats,
-    VoidCallback onEditPressed,
-    ThemeData theme,
-  ) {
-    return Center(
-      child: Column(
-        children: [
-          Text(
-            user.name ?? 'N/A',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: theme.colorScheme.onSurface,
-              fontSize: 20,
-            ),
-          ),
-          SizedBox(height: (_spacingLarge + 15)),
-          IntrinsicHeight(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildStatColumn(stats['following']!, "Following", theme),
-                SizedBox(width: 40),
-                Padding(
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
-                  child: VerticalDivider(
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
-                    thickness: 1,
-                    width: 20,
-                  ),
-                ),
-                SizedBox(width: 40),
-                _buildStatColumn(stats['followers']!, "Followers", theme),
-              ],
-            ),
-          ),
-          SizedBox(height: (_spacingSmall + 5)),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              minimumSize: Size(190, 45),
-              side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: onEditPressed,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.edit, color: theme.colorScheme.primary, size: 18),
-                SizedBox(width: 8),
-                Text(
-                  "Edit Profile",
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatColumn(String count, String label, ThemeData theme) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        SizedBox(height: _spacingSmall),
-        Text(label, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildAboutSection(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "About Me",
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        SizedBox(height: _spacingSmall),
-        Text(
-          "I am someone who enjoys being around happy people who love hosting and attending parties and events, so I often host lovely events.",
-          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInterestSection(WidgetRef ref, ThemeData theme) {
-    final interests = ref.watch(interestsProvider);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
           children: [
-            Text(
-              "Interest",
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            SizedBox(
-              width: 100,
-              height: 30,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  foregroundColor: theme.colorScheme.primary,
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  textStyle: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 10,
-                  ),
-                ),
-                onPressed: () {
-                  ref.read(interestsProvider.notifier).state = [
-                    ...interests,
-                    {
-                      'label': 'Dance',
-                      'icon': Icons.directions_run,
-                      'color': Colors.pink,
-                    },
-                  ];
-                },
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.edit,
-                      size: 12,
-                      color: AppColors.backgroundLight,
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      "CHANGE",
-                      style: TextStyle(color: AppColors.backgroundLight),
+            Hero(
+              tag: 'user-${user.id}',
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
+                child: CircleAvatar(
+                  radius: avatarSize / 2,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: user.profileImageUrl != null
+                      ? NetworkImage(user.profileImageUrl!)
+                      : null,
+                  child: user.profileImageUrl == null
+                      ? Icon(
+                          Icons.person,
+                          size: avatarSize / 2,
+                          color: AppColors.getPrimary(isDark),
+                        )
+                      : null,
+                ),
               ),
+            ),
+            SizedBox(
+              height: ResponsiveUtil.getSpacing(context, baseSpacing: 12),
+            ),
+            Text(
+              user.name,
+              style: AppTextStyles.headingMedium(isDark: false).copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 26 * ResponsiveUtil.getFontSizeMultiplier(context),
+              ),
+            ),
+            SizedBox(
+              height: ResponsiveUtil.getSpacing(context, baseSpacing: 12),
+            ),
+            if (isSelf)
+              SizedBox(
+                width: 150,
+                child: ElevatedButton(
+                  onPressed: () => context.push('/edit-profile'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.getPrimary(isDark),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: Text(
+                    'Edit Profile',
+                    style: AppTextStyles.bodyMedium(
+                      isDark: false,
+                    ).copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            SizedBox(
+              height: ResponsiveUtil.getSpacing(context, baseSpacing: 16),
             ),
           ],
         ),
-        SizedBox(height: _spacingLarge),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: interests
-                .asMap()
-                .entries
-                .map(
-                  (entry) => Padding(
-                    padding: EdgeInsets.only(right: 20),
-                    child: _buildInterestBox(
-                      entry.value['label'],
-                      entry.value['icon'],
-                      entry.value['color'],
-                      theme,
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildInterestBox(
-    String label,
-    IconData icon,
-    Color color,
-    ThemeData theme,
+  Widget _buildEventsSection(
+    BuildContext context,
+    AsyncValue<List<dynamic>> eventsAsync,
+    bool isDark,
   ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CircleAvatar(
-          radius: 28,
-          backgroundColor: color.withOpacity(0.3),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        SizedBox(height: 6),
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtil.getPadding(context),
+      ),
+      sliver: eventsAsync.when(
+        data: (events) {
+          if (events.isEmpty) {
+            return SliverFillRemaining(
+              child: Center(
+                child: Text(
+                  'No events hosted yet',
+                  style: AppTextStyles.bodyMedium(isDark: isDark),
+                ),
+              ),
+            );
+          }
+
+          final crossAxisCount = ResponsiveUtil.getColumnCount(
+            context,
+            mobileColumns: 1,
+            tabletColumns: 2,
+            desktopColumns: 3,
+          );
+
+          return SliverGrid.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.3,
+            ),
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return GestureDetector(
+                onTap: () => context.push('/event-detail', extra: event),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.getCard(isDark),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withOpacity(0.3)
+                            : Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
+                          ),
+                          child: event.imageUrl != null
+                              ? Image.network(
+                                  event.imageUrl!,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(color: Colors.grey[300]),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              event.title ?? 'Untitled',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.bodyMedium(
+                                isDark: isDark,
+                              ).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              DateFormat.yMMMd().format(
+                                event.date ?? DateTime.now(),
+                              ),
+                              style: AppTextStyles.bodySmall(isDark: isDark),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(ResponsiveUtil.getSpacing(context)),
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(height: 150, color: Colors.white),
+            ),
           ),
         ),
-      ],
+        error: (e, __) {
+          debugPrint('Error loading events: $e');
+          debugPrintStack(stackTrace: __);
+          return SliverFillRemaining(
+            child: Center(
+              child: Text(
+                'Failed to load events $e ',
+                style: AppTextStyles.bodyMedium(isDark: isDark),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildShimmerHeader(BuildContext context, bool isDark) {
+    return SliverToBoxAdapter(
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Container(height: 260, color: Colors.white),
+      ),
     );
   }
 }

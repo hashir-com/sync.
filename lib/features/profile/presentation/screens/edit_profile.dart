@@ -1,23 +1,20 @@
+// lib/features/profile/presentation/screens/edit_profile_screen.dart
 // ignore_for_file: use_build_context_synchronously
 
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:go_router/go_router.dart';
 import 'package:sync_event/features/profile/presentation/providers/user_provider.dart';
+import 'package:go_router/go_router.dart';
 
-// Provider for the picked image
+// Providers
 final pickedImageProvider = StateProvider<File?>((ref) => null);
-
-// Provider for the uploading state
 final isUploadingProvider = StateProvider<bool>((ref) => false);
-
-// Provider for the name input
 final nameControllerProvider = StateProvider<String>((ref) {
   final user = ref.watch(currentUserProvider);
   return user?.displayName ?? '';
@@ -31,12 +28,12 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  late TextEditingController _nameController;
 
   @override
   void initState() {
     super.initState();
-    // Sync nameController with provider
+    _nameController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _nameController.text = ref.read(nameControllerProvider);
       _nameController.addListener(() {
@@ -59,7 +56,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         maxHeight: 512,
         imageQuality: 75,
       );
-
       if (pickedFile != null) {
         ref.read(pickedImageProvider.notifier).state = File(pickedFile.path);
       }
@@ -82,7 +78,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
 
-    // Validate name
     if (name.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -96,26 +91,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       String? photoURL = user.photoURL;
       final pickedImage = ref.read(pickedImageProvider);
 
-      // Upload new image to Firebase Storage if picked
       if (pickedImage != null) {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('profile_pictures')
-            .child(user.uid);
-
-        final metadata = SettableMetadata(
-          contentType: 'image/jpeg',
-          customMetadata: {
-            'uploaded_by': user.uid,
-            'uploaded_at': DateTime.now().toIso8601String(),
-          },
+        final storageRef = FirebaseStorage.instance.ref().child(
+          'profile_pictures/${user.uid}',
         );
-
-        await storageRef.putFile(pickedImage, metadata);
+        await storageRef.putFile(
+          pickedImage,
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
         photoURL = await storageRef.getDownloadURL();
       }
 
-      // Update profile using Riverpod notifier
       final success = await ref
           .read(profileNotifierProvider.notifier)
           .updateProfile(displayName: name, photoURL: photoURL);
@@ -123,9 +109,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
 
       if (success) {
-        // NEW: Reload user data from Firebase to refresh local cache
         await FirebaseAuth.instance.currentUser?.reload();
-        // NEW: Invalidate the provider to force ProfileScreen to refresh with updated data
         ref.invalidate(authStateProvider);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -134,7 +118,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.pop(); // Go back to ProfileScreen
+        context.pop();
       } else {
         final error = ref.read(profileNotifierProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -144,26 +128,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
         );
       }
-    } on FirebaseException catch (e) {
-      if (!mounted) return;
-      String errorMessage = 'Failed to update profile';
-
-      if (e.code == 'unauthorized') {
-        errorMessage =
-            'Permission denied. Please check Firebase Storage rules.';
-      } else if (e.code == 'quota-exceeded') {
-        errorMessage = 'Storage quota exceeded.';
-      } else if (e.code == 'unauthenticated') {
-        errorMessage = 'Please sign in again.';
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -173,40 +137,43 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
       );
     } finally {
-      if (mounted) {
-        ref.read(isUploadingProvider.notifier).state = false;
-      }
+      if (mounted) ref.read(isUploadingProvider.notifier).state = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = ref.watch(currentUserProvider);
-    final profileState = ref.watch(profileNotifierProvider);
     final pickedImage = ref.watch(pickedImageProvider);
     final isUploading = ref.watch(isUploadingProvider);
+    final profileState = ref.watch(profileNotifierProvider);
 
     return Scaffold(
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text(
           "Edit Profile",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+        foregroundColor: isDark ? Colors.white : Colors.black,
         elevation: 0,
       ),
       body: isUploading || profileState.isLoading
-          ? _buildShimmerEffect()
+          ? _buildShimmerEffect(isDark)
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Profile Picture
                   Stack(
                     children: [
                       CircleAvatar(
-                        radius: 50,
+                        radius: 60,
                         backgroundColor: Colors.grey.shade300,
                         backgroundImage: pickedImage != null
                             ? FileImage(pickedImage)
@@ -214,10 +181,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ? NetworkImage(user!.photoURL!) as ImageProvider
                             : null,
                         child: pickedImage == null && user?.photoURL == null
-                            ? const Icon(
+                            ? Icon(
                                 Icons.person,
-                                size: 50,
-                                color: Colors.grey,
+                                size: 60,
+                                color: Colors.grey.shade600,
                               )
                             : null,
                       ),
@@ -227,7 +194,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: GestureDetector(
                           onTap: _pickImage,
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
@@ -243,29 +210,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   TextButton(
                     onPressed: _pickImage,
                     child: const Text("Change Profile Picture"),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   // Name Field
                   TextField(
                     controller: _nameController,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
                     decoration: InputDecoration(
                       labelText: "Full Name",
-                      prefixIcon: const Icon(Icons.person_outline),
+                      labelStyle: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.grey,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.person_outline,
+                        color: isDark ? Colors.white70 : Colors.grey,
+                      ),
+                      filled: true,
+                      fillColor: isDark ? AppColors.cardDark : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primary),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
@@ -277,15 +248,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
+                      onPressed: _updateProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 2,
                       ),
-                      onPressed: _updateProfile,
                       child: const Text(
                         "Save Changes",
                         style: TextStyle(
@@ -301,44 +271,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  Widget _buildShimmerEffect() {
+  Widget _buildShimmerEffect(bool isDark) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Shimmer.fromColors(
-        baseColor: Colors.grey.shade300,
-        highlightColor: Colors.grey.shade100,
+        baseColor: isDark ? Colors.grey[800]! : Colors.grey.shade300,
+        highlightColor: isDark ? Colors.grey[700]! : Colors.grey.shade100,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Shimmer for profile picture
-            Stack(
-              children: [
-                CircleAvatar(radius: 50, backgroundColor: Colors.grey.shade300),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.grey,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            CircleAvatar(radius: 60, backgroundColor: Colors.grey.shade300),
             const SizedBox(height: 10),
-            // Shimmer for change picture button
-            Container(width: 150, height: 20, color: Colors.grey.shade300),
-            const SizedBox(height: 20),
-            // Shimmer for name field
+            Container(width: 160, height: 20, color: Colors.grey.shade300),
+            const SizedBox(height: 24),
             Container(
-              width: double.infinity,
               height: 56,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
@@ -346,7 +292,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 30),
-            // Shimmer for save button
             Container(
               width: double.infinity,
               height: 50,
