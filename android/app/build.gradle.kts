@@ -11,7 +11,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        // ✅ Upgrade to Java 17 (required for latest Android Gradle Plugin)
+        // Upgrade to Java 17 (required for latest Android Gradle Plugin)
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
