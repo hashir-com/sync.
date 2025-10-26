@@ -8,19 +8,23 @@ final bookingFormProvider =
 class BookingFormState {
   final String selectedCategory;
   final int quantity;
+  final bool useWallet;
 
   BookingFormState({
     required this.selectedCategory,
     this.quantity = 1,
+    this.useWallet = false,
   });
 
   BookingFormState copyWith({
     String? selectedCategory,
     int? quantity,
+    bool? useWallet,
   }) {
     return BookingFormState(
       selectedCategory: selectedCategory ?? this.selectedCategory,
       quantity: quantity ?? this.quantity,
+      useWallet: useWallet ?? this.useWallet,
     );
   }
 }
@@ -34,5 +38,9 @@ class BookingFormNotifier extends StateNotifier<BookingFormState> {
 
   void setQuantity(int quantity) {
     state = state.copyWith(quantity: quantity);
+  }
+
+  void toggleUseWallet(bool value) {
+    state = state.copyWith(useWallet: value);
   }
 }

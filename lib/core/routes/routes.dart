@@ -8,6 +8,7 @@ import 'package:sync_event/features/auth/presentation/screens/otp_verification_s
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
+import 'package:sync_event/features/bookings/presentation/screens/booking_confirmation_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_detail_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/my_bookings_screen.dart';
@@ -78,7 +79,7 @@ final GoRouter appRouter = GoRouter(
         },
       ),
     ),
-    
+
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
     GoRoute(path: '/root', builder: (context, state) => const RootShell()),
@@ -227,34 +228,41 @@ final GoRouter appRouter = GoRouter(
       path: '/user-profile',
       builder: (context, state) => UserProfileScreen(user: state.extra),
     ),
+
     // GoRoute(
     //   path: '/chat',
     //   builder: (context, state) => ChatScreen(otherUser: state.extra),
     // ),
-
     GoRoute(
-  path: '/favorites',
-  name: 'favorites',
-  builder: (context, state) => const FavoritesScreen(),
-),
-GoRoute(
-  path: '/chat',
-  builder: (context, state) => const ChatListScreen(),
-),
-GoRoute(
-  path: '/chat/search',
-  builder: (context, state) => const UserSearchScreen(),
-),
-GoRoute(
-  path: '/chat/:chatId',
+      path: '/favorites',
+      name: 'favorites',
+      builder: (context, state) => const FavoritesScreen(),
+    ),
+    GoRoute(path: '/chat', builder: (context, state) => const ChatListScreen()),
+    GoRoute(
+      path: '/chat/search',
+      builder: (context, state) => const UserSearchScreen(),
+    ),
+    GoRoute(
+      path: '/chat/:chatId',
+      builder: (context, state) {
+        final chatId = state.pathParameters['chatId']!;
+        return ChatScreen(chatId: chatId);
+      },
+    ),
+    GoRoute(
+      path: '/calendar',
+      builder: (context, state) => const CalendarScreen(),
+    ),
+    GoRoute(
+  path: '/booking-confirmation',
   builder: (context, state) {
-    final chatId = state.pathParameters['chatId']!;
-    return ChatScreen(chatId: chatId);
+    final extra = state.extra as Map<String, dynamic>;
+    return BookingConfirmationScreen(
+      booking: extra['booking'] as BookingEntity,
+      event: extra['event'] as EventEntity,
+    );
   },
-),
-GoRoute(
-  path: '/calendar',
-  builder: (context, state) => const CalendarScreen(),
 ),
   ],
 );

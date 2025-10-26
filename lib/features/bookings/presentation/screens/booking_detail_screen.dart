@@ -35,7 +35,7 @@ class BookingDetailsScreen extends ConsumerWidget {
         elevation: AppSizes.appBarElevation,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: AppColors.getPrimary(isDark)),
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.go('/root'),
         ),
         toolbarHeight: ResponsiveUtil.getAppBarHeight(context),
       ),

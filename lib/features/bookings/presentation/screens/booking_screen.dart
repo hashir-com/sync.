@@ -14,8 +14,11 @@ import 'package:sync_event/features/bookings/presentation/widgets/booking_screen
 import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_price_summary_card.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_ticket_selection_card.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_widget.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/wallet_balance_card.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
+import 'package:sync_event/features/wallet/presentation/provider/wallet_provider.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
   final String eventId;
@@ -37,6 +40,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
+    _initializeWallet();
   }
 
   void _initializeAnimations() {
@@ -60,6 +64,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
 
     _fadeController.forward();
     _slideController.forward();
+  }
+
+  void _initializeWallet() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authNotifierProvider);
+      final user = authState.user;
+      if (user != null && user.uid.isNotEmpty) {
+        ref.read(walletNotifierProvider.notifier).fetchWallet(user.uid);
+      }
+    });
   }
 
   @override
@@ -140,6 +154,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                 BookingTicketSelectionCard(event: event, isDark: isDark),
                 SizedBox(height: AppSizes.spacingXxl),
                 BookingPriceSummaryCard(event: event, isDark: isDark),
+                SizedBox(height: AppSizes.spacingXxl),
+                const BookingWalletBalanceCard(),
                 SizedBox(height: AppSizes.spacingXxl),
                 BookingPaymentSection(
                   event: event,

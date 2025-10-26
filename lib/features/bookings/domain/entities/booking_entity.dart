@@ -8,7 +8,7 @@ class BookingEntity extends Equatable {
   final int ticketQuantity;
   final double totalAmount;
   final String paymentId;
-  final List<String> seatNumbers;  // Changed from List<int>
+  final List<String> seatNumbers; // Changed from List<int>
   final String status;
   final DateTime bookingDate;
   final DateTime? cancellationDate;
@@ -16,6 +16,7 @@ class BookingEntity extends Equatable {
   final DateTime startTime;
   final DateTime endTime;
   final String userEmail;
+  final String paymentMethod;
 
   const BookingEntity({
     required this.id,
@@ -33,8 +34,9 @@ class BookingEntity extends Equatable {
     required this.startTime,
     required this.endTime,
     required this.userEmail,
+    this.paymentMethod = 'razorpay',
   });
-  
+
   BookingEntity copyWith({
     String? id,
     String? userId,
@@ -51,6 +53,7 @@ class BookingEntity extends Equatable {
     DateTime? startTime,
     DateTime? endTime,
     String? userEmail,
+    String? paymentMethod,
   }) {
     return BookingEntity(
       id: id ?? this.id,
@@ -68,13 +71,48 @@ class BookingEntity extends Equatable {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       userEmail: userEmail ?? this.userEmail,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'eventId': eventId,
+      'ticketType': ticketType,
+      'ticketQuantity': ticketQuantity,
+      'totalAmount': totalAmount,
+      'paymentId': paymentId,
+      'seatNumbers': seatNumbers,
+      'status': status,
+      'bookingDate': bookingDate,
+      'cancellationDate': cancellationDate,
+      'refundAmount': refundAmount,
+      'startTime': startTime,
+      'endTime': endTime,
+      'userEmail': userEmail,
+      'paymentMethod': paymentMethod,
+    };
   }
 
   @override
   List<Object?> get props => [
-    id, userId, eventId, ticketType, ticketQuantity, totalAmount,
-    paymentId, seatNumbers, status, bookingDate, cancellationDate,
-    refundAmount, startTime, endTime, userEmail,
+    id,
+    userId,
+    eventId,
+    ticketType,
+    ticketQuantity,
+    totalAmount,
+    paymentId,
+    seatNumbers,
+    status,
+    bookingDate,
+    cancellationDate,
+    refundAmount,
+    startTime,
+    endTime,
+    userEmail,
+    paymentMethod,
   ];
 }

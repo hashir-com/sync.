@@ -53,7 +53,7 @@ class EmptyState extends ConsumerWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.go('/root'),
               style: Theme.of(context).elevatedButtonTheme.style,
               child: const Text('Browse Events'),
             ),

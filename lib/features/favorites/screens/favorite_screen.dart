@@ -97,7 +97,7 @@ class FavoritesScreen extends ConsumerWidget {
             ),
             SizedBox(height: AppSizes.spacingXxl),
             ElevatedButton.icon(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.go('/root'),
               icon: Icon(Icons.explore_rounded),
               label: Text('Explore Events'),
               style: ElevatedButton.styleFrom(

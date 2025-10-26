@@ -124,6 +124,7 @@ class CancelButton extends ConsumerWidget {
   }
 
   void _showErrorSnackBar(BuildContext context, String error) {
+    debugPrint('Error cancelling booking: $error');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

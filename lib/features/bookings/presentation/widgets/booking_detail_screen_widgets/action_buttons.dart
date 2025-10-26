@@ -56,7 +56,7 @@ class ActionButtons extends StatelessWidget {
           child: SizedBox(
             height: AppSizes.buttonHeightLarge,
             child: ElevatedButton(
-              onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+              onPressed: () => context.canPop() ? context.pop() : context.go('/root'),
               style: Theme.of(context).elevatedButtonTheme.style,
               child: Text('Back', style: AppTextStyles.labelMedium(isDark: isDark).copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
             ),
