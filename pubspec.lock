@@ -409,6 +409,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  flow_drawer:
+    dependency: "direct main"
+    description:
+      name: flow_drawer
+      sha256: b5abffd30f8d32a839b81120e3f1d62a1dfc7ca7bf226afd38a405a2d3c60f45
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -494,6 +502,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.1"
+  flutter_hooks:
+    dependency: transitive
+    description:
+      name: flutter_hooks
+      sha256: "8ae1f090e5f4ef5cfa6670ce1ab5dddadd33f3533a7f9ba19d9f958aa2a89f42"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.21.3+1"
   flutter_keyboard_visibility:
     dependency: transitive
     description:

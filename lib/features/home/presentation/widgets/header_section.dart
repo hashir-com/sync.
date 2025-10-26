@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flow_drawer/flow_drawer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -168,7 +168,12 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
 // Updated Header Section with Search
 
 class HeaderSection extends ConsumerStatefulWidget {
-  const HeaderSection({super.key});
+  final FlowDrawerController controller;
+
+  const HeaderSection({
+    super.key,
+    required this.controller,
+  });
 
   @override
   ConsumerState<HeaderSection> createState() => _HeaderSectionState();
@@ -241,12 +246,12 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                   // Search Bar Row
                   Row(
                     children: [
-                      // Drawer Icon
+                      // Drawer Icon - UPDATED TO USE FLOW DRAWER CONTROLLER
                       InkWell(
                         borderRadius: BorderRadius.circular(
                           AppSizes.radiusRound,
                         ),
-                        onTap: () => Scaffold.of(context).openDrawer(),
+                        onTap: widget.controller.toggle,
                         child: Container(
                           width: AppSizes.iconXl,
                           height: AppSizes.iconXl,
@@ -417,38 +422,6 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                       ),
                     ],
                   ),
-
-                  // if (!_showSearchResults) ...[
-                  //   SizedBox(height: AppSizes.spacingXxl),
-
-                  //   // Categories Row
-                  //   // Row(
-                  //   //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //   //   children: [
-                  //   //     _buildCategoryItem(
-                  //   //       context: context,
-                  //   //       isDark: isDark,
-                  //   //       icon: '🔔',
-                  //   //       label: 'Notification',
-                  //   //       isSelected: true,
-                  //   //     ),
-                  //   //     _buildCategoryItem(
-                  //   //       context: context,
-                  //   //       isDark: isDark,
-                  //   //       icon: '🎯',
-                  //   //       label: 'Filter',
-                  //   //       hasNewBadge: true,
-                  //   //     ),
-                  //   //     _buildCategoryItem(
-                  //   //       context: context,
-                  //   //       isDark: isDark,
-                  //   //       icon: '⭐',
-                  //   //       label: 'Popular',
-                  //   //       hasNewBadge: true,
-                  //   //     ),
-                  //   //   ],
-                  //   // ),
-                  // ],
                   SizedBox(height: AppSizes.spacingMedium),
                 ],
               ),

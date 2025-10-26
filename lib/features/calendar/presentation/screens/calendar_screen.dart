@@ -468,7 +468,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 // Event image (safe fallback)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: (event.imageUrl != null && event.imageUrl.isNotEmpty)
+                  child: (event.imageUrl.isNotEmpty)
                       ? Image.network(
                           event.imageUrl,
                           width: 60,
