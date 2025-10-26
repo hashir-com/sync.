@@ -15,60 +15,78 @@ import 'package:sync_event/features/events/presentation/widgets/event_detail_scr
 class DetailSection extends StatelessWidget {
   final EventEntity event;
   final bool isOrganizer;
+  final bool isDark;
 
   const DetailSection({
     super.key,
     required this.event,
     required this.isOrganizer,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     // Build detail section with padding
     return Container(
-      color: AppColors.getBackground(false),
+      color: AppColors.getCard(isDark),
       child: Padding(
-        padding: ResponsiveUtil.getResponsivePadding(context),
+        padding: ResponsiveUtil.getResponsivePadding(
+          context,
+        ).copyWith(bottom: 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GoingSection(),
-            SizedBox(height: AppSizes.spacingLarge),
-            Text(event.title, style: AppTextStyles.headingLarge(isDark: false)),
+            // GoingSection(isDark: isDark),
+            // SizedBox(height: AppSizes.spacingLarge),
+            Text(
+              event.title,
+              style: AppTextStyles.headingLarge(isDark: isDark),
+            ),
             SizedBox(height: AppSizes.spacingXxl),
             DetailTile(
               icon: Icons.calendar_today_rounded,
               title: event.formattedDate,
               subtitle: event.formattedDayTime,
+              isDark: isDark,
             ),
             SizedBox(height: AppSizes.spacingMedium),
             DetailTile(
               icon: Icons.access_time_rounded,
               title: 'Duration',
               subtitle: event.formattedDuration,
+              isDark: isDark,
             ),
             SizedBox(height: AppSizes.spacingMedium),
             DetailTile(
               icon: Icons.location_on_rounded,
               title: event.location,
               subtitle: event.locationSubtitle,
+              isDark: isDark,
             ),
             SizedBox(height: AppSizes.spacingMedium),
-            OrganizerTile(organizerName: event.organizerName),
+            OrganizerTile(
+              organizerName: event.organizerName,
+              organizerImageUrl: '',
+              isDark: isDark,
+            ),
             SizedBox(height: AppSizes.spacingMedium),
-            ShareTile(),
+            ShareTile(isDark: isDark),
             SizedBox(height: AppSizes.spacingXxl),
             Text(
               'About Event',
-              style: AppTextStyles.titleMedium(isDark: false),
+              style: AppTextStyles.titleMedium(isDark: isDark),
             ),
             SizedBox(height: AppSizes.spacingMedium),
             Text(
               event.description,
-              style: AppTextStyles.bodyMedium(isDark: false),
+              style: AppTextStyles.bodyMedium(isDark: isDark),
             ),
             SizedBox(height: AppSizes.spacingXxl),
-            BookingButton(eventId: event.id, isOrganizer: isOrganizer),
+            BookingButton(
+              eventId: event.id,
+              isOrganizer: isOrganizer,
+              isDark: isDark,
+            ),
             SizedBox(height: AppSizes.spacingLarge),
           ],
         ),

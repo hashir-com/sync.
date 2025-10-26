@@ -59,8 +59,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              HeaderImage(event: widget.event, isOrganizer: isOrganizer),
-              DetailSection(event: widget.event, isOrganizer: isOrganizer),
+              HeaderImage(event: widget.event, isOrganizer: isOrganizer, isDark: isDark),
+              DetailSection(event: widget.event, isOrganizer: isOrganizer, isDark: isDark),
             ],
           ),
         ),

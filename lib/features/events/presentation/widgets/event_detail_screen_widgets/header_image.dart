@@ -12,11 +12,13 @@ import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 class HeaderImage extends StatefulWidget {
   final EventEntity event;
   final bool isOrganizer;
+  final bool isDark;
 
   const HeaderImage({
     super.key,
     required this.event,
     required this.isOrganizer,
+    required this.isDark,
   });
 
   @override
@@ -53,8 +55,8 @@ class _HeaderImageState extends State<HeaderImage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.2),
-                Colors.black.withOpacity(0.5),
+                Colors.black.withOpacity(0.3),
+                Colors.black.withOpacity(0.7),
               ],
             ),
           ),
@@ -76,7 +78,9 @@ class _HeaderImageState extends State<HeaderImage> {
                   _buildButton(
                     _isBookmarked ? Icons.favorite : Icons.favorite_border,
                     _toggleBookmark,
-                    _isBookmarked ? Colors.red : Colors.white,
+                    _isBookmarked
+                        ? AppColors.getFavorite(widget.isDark)
+                        : Colors.white,
                   ),
               ],
             ),
@@ -88,20 +92,41 @@ class _HeaderImageState extends State<HeaderImage> {
 
   // Helper for placeholder image
   Widget _buildPlaceholder() => Container(
-    height: 280,
-    color: AppColors.grey300,
-    child: Icon(Icons.event_rounded, size: 80, color: AppColors.grey400),
-  );
+        height: 280,
+        decoration: BoxDecoration(
+          color: AppColors.getSurface(widget.isDark),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.getSurface(widget.isDark),
+              AppColors.getSurface(widget.isDark).withOpacity(0.8),
+            ],
+          ),
+        ),
+        child: Icon(
+          Icons.event_rounded,
+          size: 80,
+          color: AppColors.getPrimary(widget.isDark).withOpacity(0.5),
+        ),
+      );
 
   // Helper for buttons
   Widget _buildButton(IconData icon, VoidCallback onTap, [Color? iconColor]) =>
       GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.all(8),
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withOpacity(0.6),
             borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Icon(icon, color: iconColor ?? Colors.white, size: 20),
         ),

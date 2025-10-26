@@ -61,80 +61,31 @@ class BookingPaymentSection extends ConsumerWidget {
       orElse: () => false,
     );
 
-    // Check if booking is in progress
-    final isBookingInProgress = bookingState.isLoading;
-
-    return Stack(
+    return Column(
       children: [
-        Column(
-          children: [
-            if (totalAmount > 0) ...[
-              _buildWalletToggle(
-                context,
-                ref,
-                formState.useWallet,
-                canUseWallet,
-                totalAmount,
-              ),
-              SizedBox(height: AppSizes.spacingLarge),
-            ],
-            _buildPaymentButton(
-              context,
-              ref,
-              userId,
-              userEmail,
-              totalAmount,
-              selectedCategory,
-              formState,
-              walletAsync,
-              canUseWallet,
-            ),
-            SizedBox(height: AppSizes.spacingLarge),
-            _buildPaymentStatus(),
-          ],
-        ),
-        
-        // Full-screen loading overlay when booking is processing
-        if (isBookingInProgress)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black54,
-              child: Center(
-                child: Container(
-                  padding: EdgeInsets.all(AppSizes.paddingXl),
-                  margin: EdgeInsets.symmetric(horizontal: AppSizes.paddingXl),
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurface(isDark),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.getPrimary(isDark),
-                        ),
-                      ),
-                      SizedBox(height: AppSizes.spacingLarge),
-                      Text(
-                        'Confirming Your Booking',
-                        style: AppTextStyles.headingMedium(isDark: isDark),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: AppSizes.spacingSmall),
-                      Text(
-                        'Reserving your seat...',
-                        style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-                          color: AppColors.getTextSecondary(isDark),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+        if (totalAmount > 0) ...[
+          _buildWalletToggle(
+            context,
+            ref,
+            formState.useWallet,
+            canUseWallet,
+            totalAmount,
           ),
+          SizedBox(height: AppSizes.spacingLarge),
+        ],
+        _buildPaymentButton(
+          context,
+          ref,
+          userId,
+          userEmail,
+          totalAmount,
+          selectedCategory,
+          formState,
+          walletAsync,
+          canUseWallet,
+        ),
+        SizedBox(height: AppSizes.spacingLarge),
+        _buildPaymentStatus(),
       ],
     );
   }
@@ -283,13 +234,20 @@ class BookingPaymentSection extends ConsumerWidget {
       return;
     }
 
+    print('💰 Starting wallet payment for ₹$totalAmount');
+
+    // Immediately navigate to confirmation loading screen
+    if (context.mounted) {
+      context.go(
+        '/booking-confirmation',
+        extra: {'event': event},
+      );
+    }
+
     const uuid = Uuid();
     final walletPaymentId = 'wallet_${uuid.v4()}';
 
     try {
-      print('💰 Starting wallet payment for ₹$totalAmount');
-      
-      // Book the ticket - this will deduct from wallet in Firestore transaction
       await ref.read(bookingNotifierProvider.notifier).bookTicket(
             eventId: event.id,
             userId: userId,
@@ -304,68 +262,9 @@ class BookingPaymentSection extends ConsumerWidget {
             paymentMethod: 'wallet',
           );
 
-      print('✓ Booking completed, now checking result...');
-
-      // Get the booking result
-      final bookingState = ref.read(bookingNotifierProvider);
-      
-      await bookingState.when(
-        data: (booking) async {
-          if (booking != null) {
-            print('✓ Booking successful, refreshing wallet...');
-            
-            // CRITICAL: Small delay to ensure Firestore propagates the transaction
-            await Future.delayed(const Duration(milliseconds: 500));
-            
-            // CRITICAL: Refresh wallet BEFORE navigation
-            await ref.read(walletNotifierProvider.notifier).fetchWallet(userId);
-            
-            print('✓ Wallet refreshed, new balance should be visible');
-
-            // Send invoice (non-blocking)
-            try {
-              await EmailService.sendInvoice(
-                userId,
-                booking.id,
-                totalAmount,
-                userEmail,
-              );
-            } catch (e) {
-              print('⚠️ Email failed but continuing: $e');
-            }
-
-            // Invalidate bookings cache
-            ref.invalidate(userBookingsProvider(userId));
-
-            // Navigate to confirmation screen first
-            if (context.mounted) {
-              context.go(
-                '/booking-confirmation',
-                extra: {'booking': booking, 'event': event},
-              );
-            }
-          } else {
-            print('✗ Booking is null');
-            if (context.mounted) {
-              _showErrorSnackBar(context, 'Booking failed: No booking data');
-            }
-          }
-        },
-        loading: () {
-          print('⏳ Still loading...');
-        },
-        error: (error, stack) {
-          print('✗ Booking error: $error');
-          if (context.mounted) {
-            _showErrorSnackBar(context, 'Booking failed: $error');
-          }
-        },
-      );
+      print('✓ Booking request sent');
     } catch (e) {
       print('✗ Exception during wallet payment: $e');
-      if (context.mounted) {
-        _showErrorSnackBar(context, 'Booking failed: $e');
-      }
     }
   }
 
@@ -384,10 +283,17 @@ class BookingPaymentSection extends ConsumerWidget {
       return;
     }
 
+    print('💳 Razorpay payment successful, processing booking...');
+
+    // Immediately navigate to confirmation loading screen
+    if (context.mounted) {
+      context.go(
+        '/booking-confirmation',
+        extra: {'event': event},
+      );
+    }
+
     try {
-      print('💳 Razorpay payment successful, processing booking...');
-      
-      // Book the ticket
       await ref.read(bookingNotifierProvider.notifier).bookTicket(
             eventId: event.id,
             userId: userId,
@@ -402,60 +308,9 @@ class BookingPaymentSection extends ConsumerWidget {
             paymentMethod: 'razorpay',
           );
 
-      print('✓ Booking request completed, checking result...');
-
-      // Get the booking result
-      final bookingState = ref.read(bookingNotifierProvider);
-      
-      await bookingState.when(
-        data: (booking) async {
-          if (booking != null) {
-            print('✓ Booking successful with Razorpay');
-
-            // Send invoice (non-blocking)
-            try {
-              await EmailService.sendInvoice(
-                userId,
-                booking.id,
-                totalAmount,
-                userEmail,
-              );
-            } catch (e) {
-              print('⚠️ Email failed but continuing: $e');
-            }
-
-            // Invalidate bookings cache
-            ref.invalidate(userBookingsProvider(userId));
-
-            // Navigate to confirmation screen
-            if (context.mounted) {
-              context.go(
-                '/booking-confirmation',
-                extra: {'booking': booking, 'event': event},
-              );
-            }
-          } else {
-            print('✗ Booking is null');
-            if (context.mounted) {
-              _showErrorSnackBar(context, 'Booking failed: No booking data');
-            }
-          }
-        },
-        loading: () {
-          print('⏳ Still loading...');
-        },
-        error: (error, stack) {
-          print('✗ Booking error: $error');
-          if (context.mounted) {
-            _showErrorSnackBar(context, 'Booking failed: $error');
-          }
-        },
-      );
+      print('✓ Booking request sent');
     } catch (e) {
       print('✗ Exception during Razorpay payment processing: $e');
-      if (context.mounted) {
-        _showErrorSnackBar(context, 'Booking failed: $e');
-      }
     }
   }
 

@@ -15,7 +15,7 @@ class OrganizerTile extends StatelessWidget {
     super.key,
     required this.organizerName,
     this.organizerImageUrl,
-    this.isDark = false,
+    required this.isDark,
   });
 
   @override
@@ -23,12 +23,19 @@ class OrganizerTile extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: AppColors.getSurface(isDark),
+        color: AppColors.getSurface(isDark).withOpacity(0.5),
         borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         border: Border.all(
-          color: AppColors.getBorder(isDark).withOpacity(0.5),
+          color: AppColors.getBorder(isDark).withOpacity(0.3),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.getShadow(isDark),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -44,14 +51,19 @@ class OrganizerTile extends StatelessWidget {
                     organizerName,
                     style: AppTextStyles.bodyMedium(
                       isDark: isDark,
-                    ).copyWith(fontWeight: FontWeight.w600),
+                    ).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.getTextPrimary(isDark),
+                    ),
                   ),
                   SizedBox(height: AppSizes.spacingXs),
                   Text(
                     'Organizer',
                     style: AppTextStyles.bodySmall(
                       isDark: isDark,
-                    ).copyWith(color: AppColors.getTextSecondary(isDark)),
+                    ).copyWith(
+                      color: AppColors.getTextSecondary(isDark),
+                    ),
                   ),
                 ],
               ),
@@ -65,13 +77,28 @@ class OrganizerTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.getPrimary(isDark).withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-            ),
-            child: Text(
-              'Follow',
-              style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
-                color: AppColors.getPrimary(isDark),
-                fontWeight: FontWeight.w600,
+              border: Border.all(
+                color: AppColors.getPrimary(isDark).withOpacity(0.3),
+                width: 1,
               ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 16,
+                  color: AppColors.getPrimary(isDark),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Chat',
+                  style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
+                    color: AppColors.getPrimary(isDark),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

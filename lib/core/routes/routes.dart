@@ -255,14 +255,11 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const CalendarScreen(),
     ),
     GoRoute(
-  path: '/booking-confirmation',
-  builder: (context, state) {
-    final extra = state.extra as Map<String, dynamic>;
-    return BookingConfirmationScreen(
-      booking: extra['booking'] as BookingEntity,
-      event: extra['event'] as EventEntity,
-    );
-  },
-),
+      path: '/booking-confirmation',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return BookingConfirmationScreen(event: extra['event'] as EventEntity);
+      },
+    ),
   ],
 );

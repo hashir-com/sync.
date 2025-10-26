@@ -11,12 +11,14 @@ class DetailTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool isDark;
 
   const DetailTile({
     super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.isDark,
   });
 
   @override
@@ -25,8 +27,15 @@ class DetailTile extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: AppColors.grey50,
+        color: AppColors.getSurface(isDark).withOpacity(0.5),
         borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.getShadow(isDark),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -34,11 +43,11 @@ class DetailTile extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.getPrimary(isDark).withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
             ),
             child: Center(
-              child: Icon(icon, color: AppColors.primary, size: 20),
+              child: Icon(icon, color: AppColors.getPrimary(isDark), size: 20),
             ),
           ),
           SizedBox(width: AppSizes.spacingSmall),
@@ -46,9 +55,18 @@ class DetailTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.bodyMedium(isDark: false)),
+                Text(
+                  title,
+                  style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.getTextPrimary(isDark),
+                  ),
+                ),
                 SizedBox(height: 4),
-                Text(subtitle, style: AppTextStyles.bodySmall(isDark: false)),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.bodySmall(isDark: isDark),
+                ),
               ],
             ),
           ),
