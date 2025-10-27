@@ -1,7 +1,7 @@
 // File: features/map/data/repositories/marker_repositories_impl.dart
-// Purpose: Implement marker icon fetching and caching with larger circular event image markers
+// Purpose: Implement marker icon fetching and caching with responsive circular event image markers
 import 'dart:ui' as ui;
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';  // For kIsWeb
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -13,9 +13,9 @@ class MarkerRepositoryImpl implements MarkerRepository {
   final DefaultCacheManager _cacheManager;
 
   MarkerRepositoryImpl({DefaultCacheManager? cacheManager})
-    : _cacheManager = cacheManager ?? DefaultCacheManager();
+      : _cacheManager = cacheManager ?? DefaultCacheManager();
 
-  // GetMarkerIcon: Fetch and process event image into a larger circular marker with border
+  // GetMarkerIcon: Fetch and process event image into a responsive circular marker with border
   @override
   Future<BitmapDescriptor> getMarkerIcon(
     String? imageUrl,
@@ -32,7 +32,9 @@ class MarkerRepositoryImpl implements MarkerRepository {
 
     try {
       if (imageUrl != null && imageUrl.isNotEmpty) {
-        final cacheKey = 'marker_${eventId}_v3';
+        // Responsive cache key: Platform-specific to avoid mixing
+        final platformSuffix = kIsWeb ? '_web' : '_mobile';
+        final cacheKey = 'marker_${eventId}_v3$platformSuffix';
         final cachedFile = await _cacheManager.getFileFromCache(cacheKey);
 
         Uint8List? imageData;
@@ -54,8 +56,10 @@ class MarkerRepositoryImpl implements MarkerRepository {
         }
 
         if (imageData != null) {
-          // Process image into a larger circular marker with border
-          final circularImage = await _createCircularMarker(imageData);
+          // Responsive: Smaller on web to match mobile visual size (counters 2x DPR)
+          final int targetSize = kIsWeb ? 45 : 90;
+          // Process image into a responsive circular marker with border
+          final circularImage = await _createCircularMarker(imageData, targetSize: targetSize);
           final markerIcon = BitmapDescriptor.fromBytes(circularImage);
           MarkerCache.setIcon(eventId, markerIcon);
           await _cacheManager.putFile(
@@ -64,7 +68,7 @@ class MarkerRepositoryImpl implements MarkerRepository {
             fileExtension: 'png',
           );
           print(
-            'MarkerRepositoryImpl: Created and cached circular marker for eventId=$eventId',
+            'MarkerRepositoryImpl: Created and cached circular marker for eventId=$eventId (platform: ${kIsWeb ? "web" : "mobile"}, size: ${targetSize * 2}px)',
           );
           return markerIcon;
         }
@@ -84,26 +88,28 @@ class MarkerRepositoryImpl implements MarkerRepository {
     return defaultIcon;
   }
 
-  // CreateCircularMarker: Convert image to a larger circular marker with a white border
-  Future<Uint8List> _createCircularMarker(Uint8List imageData) async {
-    // Resize image to 96x96 for larger marker
+  // CreateCircularMarker: Convert image to a responsive circular marker with a white border
+  Future<Uint8List> _createCircularMarker(Uint8List imageData, {required int targetSize}) async {
+    // Resize image to target size while maintaining aspect ratio
     final resizedImage = await ImageProcessor.processImageInIsolate(
       imageData,
-      targetSize: 90.toInt(),
+      targetSize: targetSize,
     );
+
+    // Responsive canvas: Double the targetSize for border room (proportional to original 180px)
+    final int canvasSize = targetSize * 2;
+    final double borderRatio = 170 / 180;  // Original inner-to-canvas ratio (~0.944)
+    final int innerSize = (canvasSize * borderRatio).round();
 
     // Create a PictureRecorder and Canvas for drawing
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
-    final size = 180; // Larger total marker size (including border)
-    final imageSize = 170; // Larger inner image size
-    // Thicker white border
 
     // Draw white circular border
     final borderPaint = ui.Paint()
-      ..color = ui.Color.fromARGB(255, 255, 255, 255)
+      ..color = const ui.Color.fromARGB(255, 255, 255, 255)
       ..style = ui.PaintingStyle.fill;
-    canvas.drawCircle(ui.Offset(size / 2, size / 2), size / 2, borderPaint);
+    canvas.drawCircle(ui.Offset(canvasSize / 2, canvasSize / 2), canvasSize / 2, borderPaint);
 
     // Decode resized image
     final codec = await ui.instantiateImageCodec(resizedImage);
@@ -115,22 +121,22 @@ class MarkerRepositoryImpl implements MarkerRepository {
     canvas.clipRRect(
       ui.RRect.fromRectAndRadius(
         ui.Rect.fromLTWH(
-          (size - imageSize) / 2,
-          (size - imageSize) / 2,
-          imageSize.toDouble(),
-          imageSize.toDouble(),
+          (canvasSize - innerSize) / 2,
+          (canvasSize - innerSize) / 2,
+          innerSize.toDouble(),
+          innerSize.toDouble(),
         ),
-        ui.Radius.circular(imageSize / 2),
+        ui.Radius.circular(innerSize / 2),
       ),
     );
     canvas.drawImageRect(
       image,
       ui.Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
       ui.Rect.fromLTWH(
-        (size - imageSize) / 2,
-        (size - imageSize) / 2,
-        imageSize.toDouble(),
-        imageSize.toDouble(),
+        (canvasSize - innerSize) / 2,
+        (canvasSize - innerSize) / 2,
+        innerSize.toDouble(),
+        innerSize.toDouble(),
       ),
       ui.Paint(),
     );
@@ -138,10 +144,10 @@ class MarkerRepositoryImpl implements MarkerRepository {
 
     // Convert canvas to image
     final picture = recorder.endRecording();
-    final img = await picture.toImage(size.toInt(), size.toInt());
+    final img = await picture.toImage(canvasSize, canvasSize);
     final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
     print(
-      'MarkerRepositoryImpl: Created circular marker with size=${size.toInt()}px',
+      'MarkerRepositoryImpl: Created circular marker with canvas=${canvasSize}px, inner=${innerSize}px (platform: ${kIsWeb ? "web" : "mobile"})',
     );
     return bytes!.buffer.asUint8List();
   }

@@ -1,6 +1,11 @@
-// File: features/map/presentation/map_screen.dart
-// Purpose: Display Google Map with events, search bar, and event details
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, Factory; // Fixed: Only kIsWeb from foundation
+import 'package:flutter/gestures.dart'
+    show
+        Factory,
+        OneSequenceGestureRecognizer,
+        EagerGestureRecognizer; // Gestures for Factory, etc.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -24,14 +29,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final LocationService _locationService = LocationService();
   bool _listenerSetup = false;
 
-  // Initialize: Set up search controller listener
   @override
   void initState() {
     super.initState();
     _initializeSearchController();
   }
 
-  // InitializeSearchController: Update search query provider on text change
   void _initializeSearchController() {
     _searchController.addListener(() {
       final currentText = _searchController.text;
@@ -42,7 +45,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
-  // Dispose: Clean up controllers and focus node
   @override
   void dispose() {
     _searchController.dispose();
@@ -50,7 +52,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     super.dispose();
   }
 
-  // Build: Render map, search bar, results, and event details
   @override
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsMapProvider);
@@ -132,11 +133,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           mapType: MapType.hybrid,
           initialCameraPosition: _getInitialCameraPosition(events),
           markers: ref.watch(markerStateProvider),
+          // Web: Add gesture recognizers to prevent conflicts with overlays
+          gestureRecognizers: kIsWeb
+              ? <Factory<OneSequenceGestureRecognizer>>{
+                  Factory<OneSequenceGestureRecognizer>(
+                    () => EagerGestureRecognizer(),
+                  ),
+                }.toSet()
+              : <
+                  Factory<OneSequenceGestureRecognizer>
+                >{}, // Fixed: Empty set instead of null for non-web
           onMapCreated: (controller) {
             ref.read(mapControllerProvider.notifier).state = controller;
             print('MapScreen: Map created');
-            // Force map refresh to address ImageReader_JNI
-            controller.setMapStyle(null);
+            // Web: Avoid setMapStyle (can blank map)
+            if (!kIsWeb) {
+              controller.setMapStyle(null);
+            }
           },
           onTap: (_) {
             ref.read(selectedEventProvider.notifier).state = null;
@@ -145,12 +158,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) =>
-          Center(child: Text('Error: $err', style: TextStyle(fontSize: 14))),
+      error: (err, _) => Center(
+        child: Text('Error: $err', style: const TextStyle(fontSize: 14)),
+      ),
     );
   }
 
-  // GetInitialCameraPosition: Set initial map position based on events
   CameraPosition _getInitialCameraPosition(List<dynamic> events) {
     if (events.isNotEmpty &&
         events.first.latitude != null &&
@@ -172,7 +185,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  // SetupEventListener: Listen for event updates and trigger marker building
   void _setupEventListener() {
     ref.listen(eventsMapProvider, (previous, state) {
       state.whenData((events) {
@@ -185,7 +197,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
-  // HandleLocateMe: Move map to user's current location
   Future<void> _handleLocateMe() async {
     try {
       final cameraPosition = await _locationService.getCurrentLocation();
@@ -195,9 +206,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             .state
             ?.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
         print('MapScreen: Animated to user location');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Location found!')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Location found!')));
+        }
       }
     } on LocationException catch (e) {
       if (mounted) {
