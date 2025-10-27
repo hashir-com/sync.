@@ -1,15 +1,16 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
+import 'package:sync_event/features/favorites/providers/favorites_provider.dart';
 
-// Widget for the header image with back and bookmark buttons
-class HeaderImage extends StatefulWidget {
+// Widget for the header image with back and favorite buttons
+class HeaderImage extends ConsumerWidget {
   final EventEntity event;
   final bool isOrganizer;
   final bool isDark;
@@ -22,24 +23,18 @@ class HeaderImage extends StatefulWidget {
   });
 
   @override
-  State<HeaderImage> createState() => _HeaderImageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch favorite IDs to check if this event is favorited
+    final favoriteIds = ref.watch(favoritesProvider);
+    final isFavorite = favoriteIds.contains(event.id ?? '');
 
-class _HeaderImageState extends State<HeaderImage> {
-  bool _isBookmarked = false;
-
-  // Toggle bookmark state
-  void _toggleBookmark() => setState(() => _isBookmarked = !_isBookmarked);
-
-  @override
-  Widget build(BuildContext context) {
     // Build header with image and overlay
     return Stack(
       children: [
         // Event image or placeholder
-        widget.event.imageUrl != null
+        event.imageUrl != null
             ? Image.network(
-                widget.event.imageUrl!,
+                event.imageUrl!,
                 height: 280,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -61,7 +56,7 @@ class _HeaderImageState extends State<HeaderImage> {
             ),
           ),
         ),
-        // Back and bookmark buttons
+        // Back and favorite buttons
         Positioned(
           top: 0,
           left: 0,
@@ -73,14 +68,20 @@ class _HeaderImageState extends State<HeaderImage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildButton(Icons.arrow_back_ios_rounded, () => context.pop()),
-                if (!widget.isOrganizer)
+                _buildButton(
+                  Icons.arrow_back_ios_rounded,
+                  () => context.pop(),
+                  Colors.white,
+                ),
+                if (!isOrganizer)
                   _buildButton(
-                    _isBookmarked ? Icons.favorite : Icons.favorite_border,
-                    _toggleBookmark,
-                    _isBookmarked
-                        ? AppColors.getFavorite(widget.isDark)
-                        : Colors.white,
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    () {
+                      ref
+                          .read(favoritesProvider.notifier)
+                          .toggleFavorite(event.id ?? '');
+                    },
+                    isFavorite ? Colors.red : Colors.white,
                   ),
               ],
             ),
@@ -92,27 +93,27 @@ class _HeaderImageState extends State<HeaderImage> {
 
   // Helper for placeholder image
   Widget _buildPlaceholder() => Container(
-        height: 280,
-        decoration: BoxDecoration(
-          color: AppColors.getSurface(widget.isDark),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.getSurface(widget.isDark),
-              AppColors.getSurface(widget.isDark).withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: Icon(
-          Icons.event_rounded,
-          size: 80,
-          color: AppColors.getPrimary(widget.isDark).withOpacity(0.5),
-        ),
-      );
+    height: 280,
+    decoration: BoxDecoration(
+      color: AppColors.getSurface(isDark),
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          AppColors.getSurface(isDark),
+          AppColors.getSurface(isDark).withOpacity(0.8),
+        ],
+      ),
+    ),
+    child: Icon(
+      Icons.event_rounded,
+      size: 80,
+      color: AppColors.getPrimary(isDark).withOpacity(0.5),
+    ),
+  );
 
   // Helper for buttons
-  Widget _buildButton(IconData icon, VoidCallback onTap, [Color? iconColor]) =>
+  Widget _buildButton(IconData icon, VoidCallback onTap, Color iconColor) =>
       GestureDetector(
         onTap: onTap,
         child: Container(
@@ -128,7 +129,7 @@ class _HeaderImageState extends State<HeaderImage> {
               ),
             ],
           ),
-          child: Icon(icon, color: iconColor ?? Colors.white, size: 20),
+          child: Icon(icon, color: iconColor, size: 20),
         ),
       );
 }

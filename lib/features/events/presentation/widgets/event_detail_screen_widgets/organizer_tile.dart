@@ -1,25 +1,98 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/features/auth/presentation/providers/user_data_provider.dart';
+import 'package:sync_event/features/chat/presentation/providers/chat_providers.dart';
+// Import the user data provider
+// import 'package:sync_event/features/auth/presentation/providers/user_data_provider.dart';
 
-class OrganizerTile extends StatelessWidget {
+class OrganizerTile extends ConsumerWidget {
+  final String organizerId;
   final String organizerName;
-  final String? organizerImageUrl;
   final bool isDark;
 
   const OrganizerTile({
     super.key,
+    required this.organizerId,
     required this.organizerName,
-    this.organizerImageUrl,
     required this.isDark,
   });
 
+  Future<void> _handleChatTap(BuildContext context, WidgetRef ref) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              AppColors.getPrimary(isDark),
+            ),
+          ),
+        ),
+      );
+
+      // Create or get chat with organizer
+      final chatId = await ref
+          .read(createOrGetChatUseCaseProvider)
+          .call(organizerId);
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Navigate to chat screen
+      if (context.mounted) {
+        context.push('/chat/$chatId');
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start chat: $e'),
+            backgroundColor: AppColors.getError(isDark),
+          ),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Fetch organizer user data
+    final userDataAsync = ref.watch(userDataProvider(organizerId));
+
+    return userDataAsync.when(
+      data: (userData) {
+        final organizerImageUrl = userData?.image;
+        final displayName = userData?.name ?? organizerName;
+
+        return _buildTileContent(context, ref, displayName, organizerImageUrl);
+      },
+      loading: () => _buildTileContent(context, ref, organizerName, null),
+      error: (_, __) => _buildTileContent(context, ref, organizerName, null),
+    );
+  }
+
+  Widget _buildTileContent(
+    BuildContext context,
+    WidgetRef ref,
+    String displayName,
+    String? imageUrl,
+  ) {
     return Container(
       padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
@@ -42,13 +115,13 @@ class OrganizerTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              _buildOrganizerAvatar(),
+              _buildOrganizerAvatar(displayName, imageUrl),
               SizedBox(width: AppSizes.spacingMedium),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    organizerName,
+                    displayName,
                     style: AppTextStyles.bodyMedium(
                       isDark: isDark,
                     ).copyWith(
@@ -69,36 +142,39 @@ class OrganizerTile extends StatelessWidget {
               ),
             ],
           ),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingMedium,
-              vertical: AppSizes.paddingSmall,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.getPrimary(isDark).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-              border: Border.all(
-                color: AppColors.getPrimary(isDark).withOpacity(0.3),
-                width: 1,
+          GestureDetector(
+            onTap: () => _handleChatTap(context, ref),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingMedium,
+                vertical: AppSizes.paddingSmall,
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  size: 16,
-                  color: AppColors.getPrimary(isDark),
+              decoration: BoxDecoration(
+                color: AppColors.getPrimary(isDark).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                border: Border.all(
+                  color: AppColors.getPrimary(isDark).withOpacity(0.3),
+                  width: 1,
                 ),
-                SizedBox(width: 4),
-                Text(
-                  'Chat',
-                  style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 16,
                     color: AppColors.getPrimary(isDark),
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
-              ],
+                  SizedBox(width: 4),
+                  Text(
+                    'Chat',
+                    style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
+                      color: AppColors.getPrimary(isDark),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -106,9 +182,9 @@ class OrganizerTile extends StatelessWidget {
     );
   }
 
-  Widget _buildOrganizerAvatar() {
+  Widget _buildOrganizerAvatar(String displayName, String? imageUrl) {
     // Check if organizer has an image URL
-    if (organizerImageUrl != null && organizerImageUrl!.isNotEmpty) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
       return Container(
         width: 44,
         height: 44,
@@ -121,22 +197,21 @@ class OrganizerTile extends StatelessWidget {
         ),
         child: ClipOval(
           child: Image.network(
-            organizerImageUrl!,
+            imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _buildInitialAvatar(),
+            errorBuilder: (context, error, stackTrace) =>
+                _buildInitialAvatar(displayName),
           ),
         ),
       );
     }
 
     // Show initial letter avatar if no image
-    return _buildInitialAvatar();
+    return _buildInitialAvatar(displayName);
   }
 
-  Widget _buildInitialAvatar() {
-    final initial = organizerName.isNotEmpty
-        ? organizerName[0].toUpperCase()
-        : '?';
+  Widget _buildInitialAvatar(String displayName) {
+    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
 
     return Container(
       width: 44,

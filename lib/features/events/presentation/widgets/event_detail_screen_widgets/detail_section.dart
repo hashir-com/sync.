@@ -65,8 +65,9 @@ class DetailSection extends StatelessWidget {
             ),
             SizedBox(height: AppSizes.spacingMedium),
             OrganizerTile(
+              organizerId:
+                  event.organizerId ?? '', // Pass the organizer's user ID
               organizerName: event.organizerName,
-              organizerImageUrl: '',
               isDark: isDark,
             ),
             SizedBox(height: AppSizes.spacingMedium),
