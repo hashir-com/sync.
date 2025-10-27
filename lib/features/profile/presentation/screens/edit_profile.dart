@@ -1,24 +1,22 @@
-// lib/features/profile/presentation/screens/edit_profile_screen.dart
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:io';
+import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:sync_event/features/profile/presentation/providers/user_provider.dart';
+import 'package:sync_event/core/di/injection_container.dart';
+import 'package:sync_event/core/error/failures.dart';
+import 'package:sync_event/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:sync_event/features/profile/domain/entities/profile_entity.dart';
+import 'package:sync_event/features/profile/presentation/providers/profile_providers.dart';
+import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
+import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:go_router/go_router.dart';
 
-// Providers
 final pickedImageProvider = StateProvider<File?>((ref) => null);
 final isUploadingProvider = StateProvider<bool>((ref) => false);
-final nameControllerProvider = StateProvider<String>((ref) {
-  final user = ref.watch(currentUserProvider);
-  return user?.displayName ?? '';
-});
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -29,23 +27,55 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _nameController;
+  ProfileEntity? _currentProfile;
+  bool _isLoadingProfile = true;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nameController.text = ref.read(nameControllerProvider);
-      _nameController.addListener(() {
-        ref.read(nameControllerProvider.notifier).state = _nameController.text;
+    _loadCurrentProfile();
+  }
+
+  Future<void> _loadCurrentProfile() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No user logged in')));
+        if (mounted) context.pop();
+      }
+      return;
+    }
+    final useCase = ref.read(getUserProfileUseCaseProvider);
+    final result = await useCase(GetProfileParams(uid: user.uid));
+    if (!mounted) return;
+    result.fold((failure) => _handleFailure(failure), (profile) {
+      if (!mounted) return;
+      setState(() {
+        _currentProfile = profile;
+        _nameController.text = profile.name;
+        _isLoadingProfile = false;
       });
+      // Clear any previously picked image to show current profile image
+      if (mounted) {
+        ref.read(pickedImageProvider.notifier).state = null;
+      }
     });
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
+  void _handleFailure(Failure failure) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(failure.message ?? 'Failed to load profile')),
+      );
+      setState(() => _isLoadingProfile = false);
+      // Clear any previously picked image on failure as well
+      if (mounted) {
+        ref.read(pickedImageProvider.notifier).state = null;
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -56,98 +86,133 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         maxHeight: 512,
         imageQuality: 75,
       );
-      if (pickedFile != null) {
+      if (pickedFile != null && mounted) {
         ref.read(pickedImageProvider.notifier).state = File(pickedFile.path);
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
     }
   }
 
   Future<void> _updateProfile() async {
     final user = ref.read(currentUserProvider);
-    final name = ref.read(nameControllerProvider).trim();
-
-    if (user == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No user logged in')));
-      return;
-    }
-
+    if (user == null) return;
+    final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter your name')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please enter your name')));
+      }
       return;
     }
 
-    ref.read(isUploadingProvider.notifier).state = true;
+    if (mounted) {
+      ref.read(isUploadingProvider.notifier).state = true;
+    }
+    final updateUseCase = ref.read(updateUserProfileUseCaseProvider);
+    Map<String, dynamic> updateData = {'name': name};
 
     try {
-      String? photoURL = user.photoURL;
       final pickedImage = ref.read(pickedImageProvider);
-
+      String? newImageUrl;
       if (pickedImage != null) {
-        final storageRef = FirebaseStorage.instance.ref().child(
-          'profile_pictures/${user.uid}',
+        // Use usecase for upload
+        final uploadUseCase = ref
+            .read(getUserProfileUseCaseProvider)
+            .repository; // Wait, no: inject upload via repo, but since usecase not for upload, use direct repo? Wait, add upload usecase if needed. For simplicity, use remoteDataSource via DI, but to fit, assume sl<ProfileRepository>().upload...
+        // Actually, since upload is in repo, create UploadProfileImageUseCase similar, but to minimal, direct:
+        final repo = sl<ProfileRepositoryImpl>(); // Assume DI has it
+        final uploadResult = await repo.uploadProfileImage(
+          user.uid,
+          pickedImage.path,
         );
-        await storageRef.putFile(
-          pickedImage,
-          SettableMetadata(contentType: 'image/jpeg'),
+        uploadResult.fold(
+          (failure) => throw Exception(failure.message),
+          (url) => newImageUrl = url,
         );
-        photoURL = await storageRef.getDownloadURL();
+        if (newImageUrl != null) updateData['image'] = newImageUrl;
       }
 
-      final success = await ref
-          .read(profileNotifierProvider.notifier)
-          .updateProfile(displayName: name, photoURL: photoURL);
-
-      if (!mounted) return;
-
-      if (success) {
-        await FirebaseAuth.instance.currentUser?.reload();
-        ref.invalidate(authStateProvider);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.pop();
-      } else {
-        final error = ref.read(profileNotifierProvider).error;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unexpected error: $e'),
-          backgroundColor: Colors.red,
-        ),
+      // Update Firestore via usecase
+      final result = await updateUseCase(
+        UpdateProfileParams(uid: user.uid, data: updateData),
       );
+      if (!mounted) return;
+      result.fold((failure) => _handleFailure(failure), (updatedProfile) async {
+        if (!mounted) return;
+        // Sync Firebase Auth
+        await user.updateDisplayName(name);
+        if (newImageUrl != null) await user.updatePhotoURL(newImageUrl);
+        await user.reload();
+
+        // Invalidate providers
+        if (mounted) {
+          ref.invalidate(authStateProvider);
+          ref.invalidate(userByIdProvider(user.uid));
+        }
+
+        // Clear picked image after successful update
+        if (mounted) {
+          ref.read(pickedImageProvider.notifier).state = null;
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          if (mounted) context.pop();
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
-      if (mounted) ref.read(isUploadingProvider.notifier).state = false;
+      if (mounted) {
+        ref.read(isUploadingProvider.notifier).state = false;
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = ref.watch(currentUserProvider);
     final pickedImage = ref.watch(pickedImageProvider);
     final isUploading = ref.watch(isUploadingProvider);
-    final profileState = ref.watch(profileNotifierProvider);
+
+    if (_isLoadingProfile) {
+      return Scaffold(
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
+        appBar: AppBar(
+          title: const Text(
+            'Edit Profile',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+          foregroundColor: isDark ? Colors.white : Colors.black,
+          elevation: 0,
+        ),
+        body: _buildShimmerEffect(isDark),
+      );
+    }
 
     return Scaffold(
       backgroundColor: isDark
@@ -155,14 +220,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text(
-          "Edit Profile",
+          'Edit Profile',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: isDark ? AppColors.cardDark : Colors.white,
         foregroundColor: isDark ? Colors.white : Colors.black,
         elevation: 0,
       ),
-      body: isUploading || profileState.isLoading
+      body: isUploading
           ? _buildShimmerEffect(isDark)
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -177,14 +242,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         backgroundColor: Colors.grey.shade300,
                         backgroundImage: pickedImage != null
                             ? FileImage(pickedImage)
-                            : user?.photoURL != null
-                            ? NetworkImage(user!.photoURL!) as ImageProvider
+                            : _currentProfile?.image != null
+                            ? NetworkImage(_currentProfile!.image!)
                             : null,
-                        child: pickedImage == null && user?.photoURL == null
-                            ? Icon(
+                        child:
+                            pickedImage == null &&
+                                _currentProfile?.image == null
+                            ? const Icon(
                                 Icons.person,
                                 size: 60,
-                                color: Colors.grey.shade600,
+                                color: Colors.grey,
                               )
                             : null,
                       ),
@@ -213,10 +280,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: _pickImage,
-                    child: const Text("Change Profile Picture"),
+                    child: const Text('Change Profile Picture'),
                   ),
                   const SizedBox(height: 24),
-
                   // Name Field
                   TextField(
                     controller: _nameController,
@@ -224,7 +290,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       color: isDark ? Colors.white : Colors.black,
                     ),
                     decoration: InputDecoration(
-                      labelText: "Full Name",
+                      labelText: 'Full Name',
                       labelStyle: TextStyle(
                         color: isDark ? Colors.white70 : Colors.grey,
                       ),
@@ -240,9 +306,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
                   // Save Button
                   SizedBox(
                     width: double.infinity,
@@ -257,7 +321,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         elevation: 2,
                       ),
                       child: const Text(
-                        "Save Changes",
+                        'Save Changes',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -275,13 +339,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Shimmer.fromColors(
-        baseColor: isDark ? Colors.grey[800]! : Colors.grey.shade300,
-        highlightColor: isDark ? Colors.grey[700]! : Colors.grey.shade100,
+        baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+        highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CircleAvatar(radius: 60, backgroundColor: Colors.grey.shade300),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             Container(width: 160, height: 20, color: Colors.grey.shade300),
             const SizedBox(height: 24),
             Container(

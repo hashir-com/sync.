@@ -191,25 +191,10 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         await firestore.collection('chats').doc(chatId).update({
           'unreadCount.$currentUserId': 0,
         });
-
-        final messages = await firestore
-            .collection('messages')
-            .doc(chatId)
-            .collection('messages')
-            .where('senderId', isNotEqualTo: currentUserId)
-            .where('isRead', isEqualTo: false)
-            .get();
-
-        final batch = firestore.batch();
-        for (var doc in messages.docs) {
-          batch.update(doc.reference, {'isRead': true});
-        }
-        await batch.commit();
       }
     } catch (e) {
       print(e);
       throw Exception('Failed to mark messages as read: $e');
-      
     }
   }
 

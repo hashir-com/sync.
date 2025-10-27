@@ -9,7 +9,7 @@ class UserModel {
   final String id;
   final String name;
   final String email;
-  final String? profileImageUrl;
+  final String? image;
   final String? bio;
   final List<String>? interests;
   final int? hostedEventsCount;
@@ -21,7 +21,7 @@ class UserModel {
     required this.id,
     required this.name,
     required this.email,
-    this.profileImageUrl,
+    this.image,
     this.bio,
     this.interests,
     this.hostedEventsCount,
@@ -36,7 +36,7 @@ class UserModel {
       id: doc.id,
       name: data['name'] ?? '',
       email: data['email'] ?? '',
-      profileImageUrl: data['profileImageUrl'],
+      image: data['image'],
       bio: data['bio'],
       interests: data['interests'] != null
           ? List<String>.from(data['interests'])
@@ -54,7 +54,7 @@ class UserModel {
     return {
       'name': name,
       'email': email,
-      'profileImageUrl': profileImageUrl,
+      'image': image,
       'bio': bio,
       'interests': interests,
       'hostedEventsCount': hostedEventsCount,
@@ -72,7 +72,7 @@ class UserModel {
       id: user.uid,
       name: user.displayName ?? '',
       email: user.email ?? '',
-      profileImageUrl: user.photoURL,
+      image: user.photoURL,
       // Other fields would need to be fetched from Firestore if needed
     );
   }
@@ -107,7 +107,7 @@ final userByIdProvider = StreamProvider.family<UserModel?, String>((
 });
 
 // Provider to get events hosted by a specific user
-final userHostedEventsProvider = StreamProvider.family<List<dynamic>, String>((
+final userHostedEventsProvider = StreamProvider.family<List<Map<String, dynamic>>, String>((
   ref,
   userId,
 ) {

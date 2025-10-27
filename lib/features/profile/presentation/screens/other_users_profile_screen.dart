@@ -1,5 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,65 @@ class UserProfileScreen extends ConsumerWidget {
   final dynamic user;
 
   const UserProfileScreen({super.key, required this.user});
+
+  Future<void> _openChat(BuildContext context, String otherUserId) async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+      final firestore = FirebaseFirestore.instance;
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Find existing chat
+      final querySnapshot = await firestore
+          .collection('chats')
+          .where('participants', arrayContains: currentUserId)
+          .get();
+
+      String? chatId;
+
+      for (var doc in querySnapshot.docs) {
+        final participants = List<String>.from(doc.data()['participants']);
+        if (participants.contains(otherUserId) && participants.length == 2) {
+          chatId = doc.id;
+          break;
+        }
+      }
+
+      // Create new chat if not found
+      if (chatId == null) {
+        final newChatRef = await firestore.collection('chats').add({
+          'participants': [currentUserId, otherUserId],
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastMessage': '',
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'unreadCount': {currentUserId: 0, otherUserId: 0},
+        });
+        chatId = newChatRef.id;
+      }
+
+      // Close loading dialog and navigate
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        context.push('/chat/$chatId');
+      }
+    } catch (e) {
+      // Close loading dialog if it's still open
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open chat: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,10 +98,10 @@ class UserProfileScreen extends ConsumerWidget {
             CircleAvatar(
               radius: 60,
               backgroundColor: Colors.grey.shade300,
-              backgroundImage: user.profileImageUrl != null
-                  ? NetworkImage(user.profileImageUrl!)
+              backgroundImage: user.image != null
+                  ? NetworkImage(user.image!)
                   : null,
-              child: user.profileImageUrl == null
+              child: user.image == null
                   ? Icon(Icons.person, size: 60, color: Colors.grey.shade700)
                   : null,
             ),
@@ -69,9 +130,7 @@ class UserProfileScreen extends ConsumerWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  context.push('/chat', extra: user);
-                },
+                onPressed: () => _openChat(context, user.id),
                 icon: const Icon(Icons.message_rounded),
                 label: const Text('Message'),
                 style: ElevatedButton.styleFrom(
@@ -175,6 +234,10 @@ class _UserEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('MMM d, yyyy');
+    final imageUrl = event['imageUrl'] as String?;
+    final title = event['title'] as String? ?? 'Untitled Event';
+    final startTime =
+        (event['startTime'] as Timestamp?)?.toDate() ?? DateTime.now();
 
     return GestureDetector(
       onTap: onTap,
@@ -191,9 +254,9 @@ class _UserEventCard extends StatelessWidget {
             // Event Image
             ClipRRect(
               borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-              child: event.imageUrl != null
+              child: imageUrl != null
                   ? Image.network(
-                      event.imageUrl!,
+                      imageUrl,
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
@@ -214,7 +277,7 @@ class _UserEventCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    event.title ?? 'Untitled Event',
+                    title,
                     style: AppTextStyles.bodyMedium(
                       isDark: isDark,
                     ).copyWith(fontWeight: FontWeight.w600),
@@ -231,7 +294,7 @@ class _UserEventCard extends StatelessWidget {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        dateFormat.format(event.startTime ?? DateTime.now()),
+                        dateFormat.format(startTime),
                         style: AppTextStyles.bodySmall(
                           isDark: isDark,
                         ).copyWith(color: Colors.grey),

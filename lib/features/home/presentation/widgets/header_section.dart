@@ -145,7 +145,7 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
                 id: user.id,
                 title: user.name,
                 subtitle: user.email,
-                imageUrl: user.profileImageUrl,
+                imageUrl: user.image,
                 type: SearchResultType.user,
                 data: user,
               ),
@@ -170,10 +170,7 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
 class HeaderSection extends ConsumerStatefulWidget {
   final FlowDrawerController controller;
 
-  const HeaderSection({
-    super.key,
-    required this.controller,
-  });
+  const HeaderSection({super.key, required this.controller});
 
   @override
   ConsumerState<HeaderSection> createState() => _HeaderSectionState();
@@ -776,29 +773,7 @@ class _SearchResultTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        result.type == SearchResultType.event
-                            ? Icons.location_on_outlined
-                            : Icons.email_outlined,
-                        size: 14,
-                        color: AppColors.getTextSecondary(isDark),
-                      ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          result.subtitle,
-                          style: AppTextStyles.bodySmall(
-                            isDark: isDark,
-                          ).copyWith(color: AppColors.getTextSecondary(isDark)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+                  
                 ],
               ),
             ),
