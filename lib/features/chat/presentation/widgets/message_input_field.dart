@@ -34,10 +34,7 @@ class MessageInputField extends StatelessWidget {
         child: Row(
           children: [
             if (onImagePick != null) ...[
-              IconButton(
-                icon: const Icon(Icons.image),
-                onPressed: onImagePick,
-              ),
+              IconButton(icon: const Icon(Icons.image), onPressed: onImagePick),
               SizedBox(width: AppSizes.spacingXs),
             ],
             Expanded(
@@ -46,7 +43,7 @@ class MessageInputField extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Type a message...',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(54),
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
