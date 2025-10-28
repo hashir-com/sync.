@@ -108,6 +108,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen>
     return Scaffold(
       backgroundColor: AppColors.getBackground(isDark),
       appBar: AppBar(
+        foregroundColor: AppColors.getPrimary(isDark),
         backgroundColor: AppColors.getBackground(isDark),
         elevation: 0,
         title: Container(
@@ -157,6 +158,20 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen>
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound),
                 borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound),
+                borderSide: BorderSide(
+                  color: AppColors.getBorder(isDark),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound),
+                borderSide: BorderSide(
+                  color: AppColors.getPrimary(isDark),
+                  width: 2,
+                ),
               ),
               filled: true,
               fillColor: Colors.transparent,
