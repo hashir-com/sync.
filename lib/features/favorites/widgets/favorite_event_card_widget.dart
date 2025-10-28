@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -28,18 +28,15 @@ class FavoriteEventCard extends StatelessWidget {
     final timeFormat = DateFormat('h:mm a');
 
     return Padding(
-      padding: EdgeInsets.only(bottom: AppSizes.spacingMedium.h),
+      padding: EdgeInsets.only(bottom: AppSizes.spacingMedium),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.getCard(isDark),
-            borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
-            border: Border.all(
-              color: AppColors.getBorder(isDark),
-              width: 1.w,
-            ),
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+            border: Border.all(color: AppColors.getBorder(isDark), width: 1),
             boxShadow: [
               BoxShadow(
                 color: isDark
@@ -55,13 +52,13 @@ class FavoriteEventCard extends StatelessWidget {
               // Event Image
               ClipRRect(
                 borderRadius: BorderRadius.horizontal(
-                  left: Radius.circular(AppSizes.radiusLarge.r),
+                  left: Radius.circular(AppSizes.radiusLarge),
                 ),
                 child: event.imageUrl != null && event.imageUrl!.isNotEmpty
                     ? Image.network(
                         event.imageUrl!,
-                        width: 120.w,
-                        height: 120.h,
+                        width: 120,
+                        height: 120,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             _buildPlaceholder(),
@@ -72,58 +69,59 @@ class FavoriteEventCard extends StatelessWidget {
               // Event Details
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+                  padding: EdgeInsets.all(AppSizes.paddingMedium),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         event.title ?? 'Event',
-                        style: AppTextStyles.titleMedium(isDark: isDark)
-                            .copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.titleMedium(
+                          isDark: isDark,
+                        ).copyWith(fontWeight: FontWeight.w700),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: AppSizes.spacingSmall.h),
+                      SizedBox(height: AppSizes.spacingSmall),
                       Row(
                         children: [
                           Icon(
                             Icons.calendar_today_rounded,
-                            size: AppSizes.iconSmall.sp,
+                            size: AppSizes.iconSmall,
                             color: AppColors.getTextSecondary(isDark),
                           ),
-                          SizedBox(width: AppSizes.spacingXs.w),
+                          SizedBox(width: AppSizes.spacingXs),
                           Expanded(
                             child: Text(
                               dateFormat.format(event.startTime),
                               style: AppTextStyles.bodySmall(isDark: isDark)
                                   .copyWith(
-                                color: AppColors.getTextSecondary(isDark),
-                              ),
+                                    color: AppColors.getTextSecondary(isDark),
+                                  ),
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: AppSizes.spacingXs.h),
+                      SizedBox(height: AppSizes.spacingXs),
                       Row(
                         children: [
                           Icon(
                             Icons.access_time_rounded,
-                            size: AppSizes.iconSmall.sp,
+                            size: AppSizes.iconSmall,
                             color: AppColors.getTextSecondary(isDark),
                           ),
-                          SizedBox(width: AppSizes.spacingXs.w),
+                          SizedBox(width: AppSizes.spacingXs),
                           Expanded(
                             child: Text(
                               timeFormat.format(event.startTime),
                               style: AppTextStyles.bodySmall(isDark: isDark)
                                   .copyWith(
-                                color: AppColors.getTextSecondary(isDark),
-                              ),
+                                    color: AppColors.getTextSecondary(isDark),
+                                  ),
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: AppSizes.spacingSmall.h),
+                      SizedBox(height: AppSizes.spacingSmall),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -131,24 +129,24 @@ class FavoriteEventCard extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.people_rounded,
-                                size: AppSizes.iconSmall.sp,
+                                size: AppSizes.iconSmall,
                                 color: AppColors.getPrimary(isDark),
                               ),
-                              SizedBox(width: AppSizes.spacingXs.w),
+                              SizedBox(width: AppSizes.spacingXs),
                               Text(
                                 '${event.attendees?.length ?? 0} going',
                                 style: AppTextStyles.labelSmall(isDark: isDark)
                                     .copyWith(
-                                  color: AppColors.getPrimary(isDark),
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                      color: AppColors.getPrimary(isDark),
+                                      fontWeight: FontWeight.w600,
+                                    ),
                               ),
                             ],
                           ),
                           GestureDetector(
                             onTap: onFavoriteTap,
                             child: Container(
-                              padding: EdgeInsets.all(AppSizes.paddingSmall.w),
+                              padding: EdgeInsets.all(AppSizes.paddingSmall),
                               decoration: BoxDecoration(
                                 color: Colors.red.withOpacity(0.1),
                                 shape: BoxShape.circle,
@@ -156,7 +154,7 @@ class FavoriteEventCard extends StatelessWidget {
                               child: Icon(
                                 Icons.favorite,
                                 color: Colors.red,
-                                size: AppSizes.iconMedium.sp,
+                                size: AppSizes.iconMedium,
                               ),
                             ),
                           ),
@@ -175,12 +173,12 @@ class FavoriteEventCard extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      width: 120.w,
-      height: 120.h,
+      width: 120,
+      height: 120,
       color: AppColors.getSurface(isDark),
       child: Icon(
         Icons.event_rounded,
-        size: AppSizes.iconXxl.sp,
+        size: AppSizes.iconXxl,
         color: AppColors.getTextSecondary(isDark),
       ),
     );

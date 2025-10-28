@@ -11,7 +11,11 @@
         android:icon="@mipmap/launcher_icon">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyB-dmFRLtBLjtJ-Vl5gKaKrHlGecZS3DnU" /> <!-- Use the correct key here -->
+            android:value="AIzaSyB-dmFRLtBLjtJ-Vl5gKaKrHlGecZS3DnU" />
+
+        <meta-data
+            android:name="io.flutter.embedded_views_preview"
+            android:value="true" />    
 
         <activity
             android:name=".MainActivity"

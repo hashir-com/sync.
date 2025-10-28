@@ -10,6 +10,12 @@ abstract class WalletRemoteDataSource {
     String bookingId,
     String? reason,
   );
+  Future<void> deductFromWallet(
+    String userId,
+    double amount,
+    String bookingId,
+    String description,
+  );
 }
 
 class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
@@ -138,6 +144,86 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
     } catch (e) {
       print('Error adding refund to wallet: $e');
       throw Exception('Failed to add refund to wallet: $e');
+    }
+  }
+
+  @override
+  Future<void> deductFromWallet(
+    String userId,
+    double amount,
+    String bookingId,
+    String description,
+  ) async {
+    try {
+      print('💰 WalletRemoteDataSource: Starting deduction from wallet');
+      print('   userId: $userId');
+      print('   amount: ₹$amount');
+      print('   bookingId: $bookingId');
+      print('   description: $description');
+
+      final walletRef = firestore.collection('wallets').doc(userId);
+
+      // Ensure wallet exists
+      final walletSnap = await walletRef.get();
+      if (!walletSnap.exists) {
+        print('   ⚠️ Wallet does not exist, creating new one with balance 0');
+        await walletRef.set({
+          'userId': userId,
+          'balance': 0.0,
+          'transactionHistory': [],
+          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+        // Since new balance is 0, and amount > 0, will throw insufficient later
+      } else {
+        print('   ✓ Wallet exists');
+      }
+
+      // Run the transaction
+      await firestore.runTransaction((transaction) async {
+        final snap = await transaction.get(walletRef);
+
+        if (!snap.exists) {
+          print('   ✗ Wallet snapshot not found in transaction');
+          throw Exception('Wallet not found in transaction');
+        }
+
+        final data = snap.data()!;
+        final currentBalance = (data['balance'] as num?)?.toDouble() ?? 0.0;
+        print('   Current balance in transaction: ₹$currentBalance');
+
+        if (currentBalance < amount) {
+          print('   ✗ Insufficient balance: $currentBalance < $amount');
+          throw Exception('Insufficient balance: $currentBalance < $amount');
+        }
+
+        final newBalance = currentBalance - amount;
+        print('   New calculated balance: ₹$newBalance');
+
+        final newTransaction = {
+          'type': 'debit',
+          'amount': amount,
+          'bookingId': bookingId,
+          'timestamp': DateTime.now().toIso8601String(),
+          'description': description,
+          'reason': 'Event booking payment',
+        };
+        print('   New transaction: $newTransaction');
+
+        // Update in transaction
+        transaction.update(walletRef, {
+          'balance': newBalance,
+          'transactionHistory': FieldValue.arrayUnion([newTransaction]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        print('   Transaction update queued');
+      });
+
+      print('✓ Transaction completed successfully');
+      print('✓ Deducted from wallet: $userId, Amount: ₹$amount');
+    } catch (e) {
+      print('✗ Error during wallet deduction: $e');
+      rethrow;
     }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -30,7 +30,12 @@ class ErrorView extends ConsumerWidget {
               size: AppSizes.getIconSize(context, baseSize: AppSizes.iconXxl),
               color: AppColors.getError(isDark),
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingMedium)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingMedium,
+              ),
+            ),
             Text(
               message,
               style: AppTextStyles.headingSmall(isDark: isDark),
@@ -39,8 +44,8 @@ class ErrorView extends ConsumerWidget {
             if (error != null)
               Padding(
                 padding: EdgeInsets.symmetric(
-                  vertical: AppSizes.spacingMedium.h,
-                  horizontal: AppSizes.paddingMedium.w,
+                  vertical: AppSizes.spacingMedium,
+                  horizontal: AppSizes.paddingMedium,
                 ),
                 child: Text(
                   error is Failure ? error.message : error.toString(),
@@ -48,7 +53,12 @@ class ErrorView extends ConsumerWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingMedium)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingMedium,
+              ),
+            ),
             ElevatedButton(
               onPressed: () => context.pop(),
               style: Theme.of(context).elevatedButtonTheme.style,

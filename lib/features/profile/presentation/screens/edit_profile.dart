@@ -1,27 +1,27 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:io';
+import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:sync_event/core/constants/app_sizes.dart';
+import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/di/injection_container.dart';
+import 'package:sync_event/core/error/failures.dart';
+import 'package:sync_event/core/util/responsive_util.dart';
+import 'package:sync_event/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:sync_event/features/profile/domain/entities/profile_entity.dart';
+import 'package:sync_event/features/profile/domain/repositories/profile_repository.dart';
+import 'package:sync_event/features/profile/presentation/providers/profile_providers.dart';
+import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
+import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sync_event/features/profile/presentation/providers/user_provider.dart';
 
-// Provider for the picked image
 final pickedImageProvider = StateProvider<File?>((ref) => null);
-
-// Provider for the uploading state
 final isUploadingProvider = StateProvider<bool>((ref) => false);
-
-// Provider for the name input
-final nameControllerProvider = StateProvider<String>((ref) {
-  final user = ref.watch(currentUserProvider);
-  return user?.displayName ?? '';
-});
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -30,25 +30,68 @@ class EditProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  final TextEditingController _nameController = TextEditingController();
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
+    with TickerProviderStateMixin {
+  late TextEditingController _nameController;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  ProfileEntity? _currentProfile;
+  bool _isLoadingProfile = true;
 
   @override
   void initState() {
     super.initState();
-    // Sync nameController with provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nameController.text = ref.read(nameControllerProvider);
-      _nameController.addListener(() {
-        ref.read(nameControllerProvider.notifier).state = _nameController.text;
+    _nameController = TextEditingController();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
+    _animationController.forward();
+    _loadCurrentProfile();
+  }
+
+  Future<void> _loadCurrentProfile() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No user logged in')));
+        if (mounted) context.pop();
+      }
+      return;
+    }
+    final useCase = ref.read(getUserProfileUseCaseProvider);
+    final result = await useCase(GetProfileParams(uid: user.uid));
+    if (!mounted) return;
+    result.fold((failure) => _handleFailure(failure), (profile) {
+      if (!mounted) return;
+      setState(() {
+        _currentProfile = profile;
+        _nameController.text = profile.name;
+        _isLoadingProfile = false;
       });
+      // Clear any previously picked image to show current profile image
+      if (mounted) {
+        ref.read(pickedImageProvider.notifier).state = null;
+      }
     });
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
+  void _handleFailure(Failure failure) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(failure.message ?? 'An error occurred')),
+      );
+      setState(() => _isLoadingProfile = false);
+      // Clear any previously picked image on failure as well
+      if (mounted) {
+        ref.read(pickedImageProvider.notifier).state = null;
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -59,119 +102,100 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         maxHeight: 512,
         imageQuality: 75,
       );
-
-      if (pickedFile != null) {
+      if (pickedFile != null && mounted) {
         ref.read(pickedImageProvider.notifier).state = File(pickedFile.path);
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
     }
   }
 
   Future<void> _updateProfile() async {
     final user = ref.read(currentUserProvider);
-    final name = ref.read(nameControllerProvider).trim();
-
-    if (user == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No user logged in')));
+    if (user == null) return;
+    final name = _nameController.text.trim();
+    if (name.isEmpty || name.length < 2) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Name must be at least 2 characters long'),
+          ),
+        );
+      }
       return;
     }
 
-    // Validate name
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter your name')));
-      return;
+    if (mounted) {
+      ref.read(isUploadingProvider.notifier).state = true;
     }
-
-    ref.read(isUploadingProvider.notifier).state = true;
+    final updateUseCase = ref.read(updateUserProfileUseCaseProvider);
+    Map<String, dynamic> updateData = {'name': name};
 
     try {
-      String? photoURL = user.photoURL;
       final pickedImage = ref.read(pickedImageProvider);
-
-      // Upload new image to Firebase Storage if picked
+      String? newImageUrl;
       if (pickedImage != null) {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('profile_pictures')
-            .child(user.uid);
-
-        final metadata = SettableMetadata(
-          contentType: 'image/jpeg',
-          customMetadata: {
-            'uploaded_by': user.uid,
-            'uploaded_at': DateTime.now().toIso8601String(),
-          },
+        // Use repo directly for upload
+        final repo = sl<ProfileRepository>();
+        final uploadResult = await repo.uploadProfileImage(
+          user.uid,
+          pickedImage.path,
         );
-
-        await storageRef.putFile(pickedImage, metadata);
-        photoURL = await storageRef.getDownloadURL();
+        uploadResult.fold(
+          (failure) => throw Exception(failure.message),
+          (url) => newImageUrl = url,
+        );
+        if (newImageUrl != null) updateData['image'] = newImageUrl;
       }
 
-      // Update profile using Riverpod notifier
-      final success = await ref
-          .read(profileNotifierProvider.notifier)
-          .updateProfile(displayName: name, photoURL: photoURL);
-
+      // Update Firestore via usecase
+      final result = await updateUseCase(
+        UpdateProfileParams(uid: user.uid, data: updateData),
+      );
       if (!mounted) return;
 
-      if (success) {
-        // NEW: Reload user data from Firebase to refresh local cache
-        await FirebaseAuth.instance.currentUser?.reload();
-        // NEW: Invalidate the provider to force ProfileScreen to refresh with updated data
-        ref.invalidate(authStateProvider);
+      final updatedProfile = result.fold<ProfileEntity?>((failure) {
+        _handleFailure(failure);
+        return null;
+      }, (profile) => profile);
 
+      if (updatedProfile == null) return;
+
+      // Sync Firebase Auth - now awaited in the try block
+      await user.updateDisplayName(name);
+      if (newImageUrl != null) await user.updatePhotoURL(newImageUrl);
+      await user.reload();
+
+      // Invalidate providers
+      if (mounted) {
+        ref.invalidate(authStateProvider);
+        ref.invalidate(userByIdProvider(user.uid));
+      }
+
+      // Clear picked image after successful update
+      if (mounted) {
+        ref.read(pickedImageProvider.notifier).state = null;
+      }
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
-        context.pop(); // Go back to ProfileScreen
-      } else {
-        final error = ref.read(profileNotifierProvider).error;
+        if (mounted) context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile: $error'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
-    } on FirebaseException catch (e) {
-      if (!mounted) return;
-      String errorMessage = 'Failed to update profile';
-
-      if (e.code == 'unauthorized') {
-        errorMessage =
-            'Permission denied. Please check Firebase Storage rules.';
-      } else if (e.code == 'quota-exceeded') {
-        errorMessage = 'Storage quota exceeded.';
-      } else if (e.code == 'unauthenticated') {
-        errorMessage = 'Please sign in again.';
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unexpected error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
       if (mounted) {
         ref.read(isUploadingProvider.notifier).state = false;
@@ -180,182 +204,436 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
-    final profileState = ref.watch(profileNotifierProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pickedImage = ref.watch(pickedImageProvider);
     final isUploading = ref.watch(isUploadingProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Edit Profile",
-          style: TextStyle(fontWeight: FontWeight.bold),
+    if (_isLoadingProfile) {
+      return Scaffold(
+        backgroundColor: AppColors.getBackground(isDark),
+        appBar: AppBar(
+          title: Text(
+            'Edit Profile',
+            style: AppTextStyles.headingSmall(isDark: isDark),
+          ),
+          backgroundColor: AppColors.getCard(isDark),
+          foregroundColor: AppColors.getTextPrimary(isDark),
+          elevation: 0,
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        body: _buildShimmerEffect(isDark),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.getBackground(isDark),
+      appBar: AppBar(
+        title: Text(
+          'Edit Profile',
+          style: AppTextStyles.headingSmall(isDark: isDark),
+        ),
+        backgroundColor: AppColors.getCard(isDark),
+        foregroundColor: AppColors.getTextPrimary(isDark),
         elevation: 0,
       ),
-      body: isUploading || profileState.isLoading
-          ? _buildShimmerEffect()
+      body: isUploading
+          ? _buildShimmerEffect(isDark)
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Profile Picture
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.grey.shade300,
-                        backgroundImage: pickedImage != null
-                            ? FileImage(pickedImage)
-                            : user?.photoURL != null
-                            ? NetworkImage(user!.photoURL!) as ImageProvider
-                            : null,
-                        child: pickedImage == null && user?.photoURL == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 50,
-                                color: Colors.grey,
-                              )
-                            : null,
+              padding: ResponsiveUtil.getResponsivePadding(context).copyWith(
+                bottom:
+                    ResponsiveUtil.getResponsivePadding(context).bottom + 16,
+              ),
+              child: AnimatedBuilder(
+                animation: _scaleAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Material(
+                      elevation: ResponsiveUtil.getElevation(
+                        context,
+                        baseElevation: 8,
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtil.getBorderRadius(context, baseRadius: 24),
+                      ),
+                      color: Colors.transparent,
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            ResponsiveUtil.getBorderRadius(
+                              context,
+                              baseRadius: 24,
                             ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 20,
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.getCard(isDark),
+                              AppColors.getCard(isDark).withOpacity(0.95),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.getShadow(
+                                isDark,
+                              ).withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(
+                            ResponsiveUtil.getSpacing(context, baseSpacing: 20),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Profile Picture
+                              Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: ResponsiveUtil.getAvatarSize(
+                                      context,
+                                      baseSize: 60,
+                                    ),
+                                    backgroundColor: isDark
+                                        ? AppColors.surfaceDark
+                                        : AppColors.grey300,
+                                    backgroundImage: pickedImage != null
+                                        ? FileImage(pickedImage)
+                                        : _currentProfile?.image != null
+                                        ? NetworkImage(_currentProfile!.image!)
+                                        : null,
+                                    child:
+                                        pickedImage == null &&
+                                            _currentProfile?.image == null
+                                        ? Icon(
+                                            Icons.person,
+                                            size: ResponsiveUtil.getIconSize(
+                                              context,
+                                              baseSize: 60,
+                                            ),
+                                            color: AppColors.getTextSecondary(
+                                              isDark,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: _pickImage,
+                                      child: Container(
+                                        padding: EdgeInsets.all(
+                                          ResponsiveUtil.getSpacing(
+                                            context,
+                                            baseSpacing: 8,
+                                          ),
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              AppColors.getPrimary(isDark),
+                                              AppColors.getPrimary(
+                                                isDark,
+                                              ).withOpacity(0.8),
+                                            ],
+                                          ),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 3,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.camera_alt,
+                                          color: Colors.white,
+                                          size: ResponsiveUtil.getIconSize(
+                                            context,
+                                            baseSize: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: ResponsiveUtil.getSpacing(
+                                  context,
+                                  baseSpacing: 16,
+                                ),
+                              ),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _pickImage,
+                                  icon: Icon(
+                                    Icons.photo_camera_outlined,
+                                    size: ResponsiveUtil.getIconSize(
+                                      context,
+                                      baseSize: 20,
+                                    ),
+                                  ),
+                                  label: Text(
+                                    'Change Profile Picture',
+                                    style: AppTextStyles.bodyMedium(
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.getPrimary(
+                                      isDark,
+                                    ),
+                                    side: BorderSide(
+                                      color: AppColors.getPrimary(
+                                        isDark,
+                                      ).withOpacity(0.5),
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: ResponsiveUtil.getSpacing(
+                                        context,
+                                        baseSpacing: 12,
+                                      ),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        ResponsiveUtil.getBorderRadius(
+                                          context,
+                                          baseRadius: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                height: ResponsiveUtil.getSpacing(
+                                  context,
+                                  baseSpacing: 20,
+                                ),
+                              ),
+                              // Name Field
+                              TextField(
+                                controller: _nameController,
+                                style: AppTextStyles.bodyLarge(isDark: isDark),
+                                decoration: InputDecoration(
+                                  labelText: 'Full Name',
+                                  labelStyle: AppTextStyles.labelLarge(
+                                    isDark: isDark,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.person_outline,
+                                    color: AppColors.getTextSecondary(isDark),
+                                    size: ResponsiveUtil.getIconSize(
+                                      context,
+                                      baseSize: 24,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: AppColors.getSurface(isDark),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      ResponsiveUtil.getBorderRadius(
+                                        context,
+                                        baseRadius: 16,
+                                      ),
+                                    ),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      ResponsiveUtil.getBorderRadius(
+                                        context,
+                                        baseRadius: 16,
+                                      ),
+                                    ),
+                                    borderSide: BorderSide(
+                                      color: AppColors.getBorder(isDark),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      ResponsiveUtil.getBorderRadius(
+                                        context,
+                                        baseRadius: 16,
+                                      ),
+                                    ),
+                                    borderSide: BorderSide(
+                                      color: AppColors.getPrimary(isDark),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal:
+                                        AppSizes.getInputPaddingHorizontal(
+                                          context,
+                                        ),
+                                    vertical: AppSizes.getInputPaddingVertical(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'[a-zA-Z\s]'),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: ResponsiveUtil.getSpacing(
+                                  context,
+                                  baseSpacing: 24,
+                                ),
+                              ),
+                              // Save Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: AppSizes.getButtonHeight(context),
+                                child: ElevatedButton(
+                                  onPressed: _updateProfile,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.getPrimary(
+                                      isDark,
+                                    ),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        ResponsiveUtil.getBorderRadius(
+                                          context,
+                                          baseRadius: 16,
+                                        ),
+                                      ),
+                                    ),
+                                    elevation: ResponsiveUtil.getElevation(
+                                      context,
+                                      baseElevation: 5,
+                                    ),
+                                    shadowColor: AppColors.getPrimary(
+                                      isDark,
+                                    ).withOpacity(0.3),
+                                  ),
+                                  child: Text(
+                                    'Save Changes',
+                                    style: AppTextStyles.button(
+                                      isDark: isDark,
+                                    ).copyWith(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: _pickImage,
-                    child: const Text("Change Profile Picture"),
-                  ),
-                  const SizedBox(height: 20),
+                    ),
+                  );
+                },
+              ),
+            ),
+    );
+  }
 
-                  // Name Field
-                  TextField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      labelText: "Full Name",
-                      prefixIcon: const Icon(Icons.person_outline),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primary),
+  Widget _buildShimmerEffect(bool isDark) {
+    return SingleChildScrollView(
+      padding: ResponsiveUtil.getResponsivePadding(context).copyWith(
+        bottom: ResponsiveUtil.getResponsivePadding(context).bottom + 16,
+      ),
+      child: Material(
+        elevation: ResponsiveUtil.getElevation(context, baseElevation: 8),
+        borderRadius: BorderRadius.circular(
+          ResponsiveUtil.getBorderRadius(context, baseRadius: 24),
+        ),
+        color: Colors.transparent,
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(
+              ResponsiveUtil.getBorderRadius(context, baseRadius: 24),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.getCard(isDark),
+                AppColors.getCard(isDark).withOpacity(0.95),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.getShadow(isDark).withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(
+              ResponsiveUtil.getSpacing(context, baseSpacing: 20),
+            ),
+            child: Shimmer.fromColors(
+              baseColor: AppColors.getShimmerBase(isDark),
+              highlightColor: AppColors.getShimmerHighlight(isDark),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: ResponsiveUtil.getAvatarSize(context, baseSize: 120),
+                    height: ResponsiveUtil.getAvatarSize(
+                      context,
+                      baseSize: 120,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey300,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  SizedBox(
+                    height: ResponsiveUtil.getSpacing(context, baseSpacing: 16),
+                  ),
+                  Container(width: 200, height: 20, color: AppColors.grey300),
+                  SizedBox(
+                    height: ResponsiveUtil.getSpacing(context, baseSpacing: 20),
+                  ),
+                  Container(
+                    width: double.infinity,
+                    height: AppSizes.getInputHeight(context),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey300,
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtil.getBorderRadius(context, baseRadius: 16),
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  // Save Button
                   SizedBox(
+                    height: ResponsiveUtil.getSpacing(context, baseSpacing: 24),
+                  ),
+                  Container(
                     width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                      ),
-                      onPressed: _updateProfile,
-                      child: const Text(
-                        "Save Changes",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    height: AppSizes.getButtonHeight(context),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey300,
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtil.getBorderRadius(context, baseRadius: 16),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildShimmerEffect() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey.shade300,
-        highlightColor: Colors.grey.shade100,
-        child: Column(
-          children: [
-            // Shimmer for profile picture
-            Stack(
-              children: [
-                CircleAvatar(radius: 50, backgroundColor: Colors.grey.shade300),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.grey,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Shimmer for change picture button
-            Container(width: 150, height: 20, color: Colors.grey.shade300),
-            const SizedBox(height: 20),
-            // Shimmer for name field
-            Container(
-              width: double.infinity,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            const SizedBox(height: 30),
-            // Shimmer for save button
-            Container(
-              width: double.infinity,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

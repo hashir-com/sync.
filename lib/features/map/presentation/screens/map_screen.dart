@@ -1,0 +1,275 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, Factory; // Fixed: Only kIsWeb from foundation
+import 'package:flutter/gestures.dart'
+    show
+        Factory,
+        OneSequenceGestureRecognizer,
+        EagerGestureRecognizer; // Gestures for Factory, etc.
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:sync_event/features/map/domain/services/location_service.dart';
+import 'package:sync_event/features/map/presentation/widgets/event_card.dart';
+import 'package:sync_event/features/map/presentation/widgets/loading_indicator.dart';
+import 'package:sync_event/features/map/presentation/widgets/search_bar.dart';
+import 'package:sync_event/features/map/presentation/widgets/search_results.dart';
+import 'package:sync_event/features/map/presentation/provider/map_providers.dart';
+
+class MapScreen extends ConsumerStatefulWidget {
+  const MapScreen({super.key});
+
+  @override
+  ConsumerState<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends ConsumerState<MapScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final LocationService _locationService = LocationService();
+  bool _listenerSetup = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeSearchController();
+  }
+
+  void _initializeSearchController() {
+    _searchController.addListener(() {
+      final currentText = _searchController.text;
+      if (ref.read(searchQueryProvider) != currentText) {
+        ref.read(searchQueryProvider.notifier).state = currentText;
+        print('MapScreen: Search query updated to "$currentText"');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(eventsMapProvider);
+    final selectedEvent = ref.watch(selectedEventProvider);
+
+    if (!_listenerSetup) {
+      _setupEventListener();
+      _listenerSetup = true;
+    }
+
+    return Scaffold(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _buildMap(eventsAsync),
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: SearchBarWidget(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                onLocateTap: _handleLocateMe,
+              ),
+            ),
+            Positioned(
+              top: 90,
+              left: 16,
+              right: 16,
+              child: const SearchResultsWidget(),
+            ),
+            Positioned(
+              bottom: 100,
+              left: 0,
+              right: 0,
+              child: const Center(child: LoadingIndicatorWidget()),
+            ),
+            if (selectedEvent != null)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 1.0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: FadeTransition(opacity: animation, child: child),
+                    );
+                  },
+                  child: Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    key: ValueKey(selectedEvent.id),
+                    child: EventDetailCard(event: selectedEvent),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // BuildMap: Render Google Map with markers
+ // Add this method to your _MapScreenState class to replace _buildMap
+
+Widget _buildMap(AsyncValue eventsAsync) {
+  return eventsAsync.when(
+    data: (events) {
+      print('MapScreen: Rendering map with ${events.length} events');
+      
+      // CRITICAL: Store markers in a local variable to prevent rebuilds
+      final markers = ref.watch(markerStateProvider);
+      
+      return GoogleMap(
+        key: const ValueKey('sync_event_map'),
+        mapToolbarEnabled: false,
+        zoomControlsEnabled: false,
+        mapType: MapType.hybrid,
+        initialCameraPosition: _getInitialCameraPosition(events),
+        markers: markers,
+        
+        // CRITICAL: Prevent unnecessary rebuilds
+        myLocationButtonEnabled: false,
+        myLocationEnabled: false,
+        
+        // Web: Add gesture recognizers to prevent conflicts with overlays
+        gestureRecognizers: kIsWeb
+            ? <Factory<OneSequenceGestureRecognizer>>{
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              }.toSet()
+            : <Factory<OneSequenceGestureRecognizer>>{},
+            
+        onMapCreated: (controller) {
+          // CRITICAL: Defer state update
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref.read(mapControllerProvider.notifier).state = controller;
+              print('MapScreen: Map created');
+              
+              // Web: Avoid setMapStyle (can blank map)
+              if (!kIsWeb) {
+                controller.setMapStyle(null);
+              }
+            }
+          });
+        },
+        
+        onTap: (_) {
+          // CRITICAL: Defer state update with proper null check
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref.read(selectedEventProvider.notifier).state = null;
+              print('MapScreen: Map tapped, cleared selected event');
+            }
+          });
+        },
+        
+        // CRITICAL: Add onCameraMoveStarted to prevent conflicts
+        onCameraMoveStarted: () {
+          print('MapScreen: Camera move started');
+        },
+        
+        // CRITICAL: Add onCameraIdle to ensure map is stable
+        onCameraIdle: () {
+          print('MapScreen: Camera idle');
+        },
+      );
+    },
+    loading: () => const Center(child: CircularProgressIndicator()),
+    error: (err, stack) {
+      print('MapScreen: Error loading events: $err');
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading map',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              err.toString(),
+              style: const TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+  CameraPosition _getInitialCameraPosition(List<dynamic> events) {
+    if (events.isNotEmpty &&
+        events.first.latitude != null &&
+        events.first.longitude != null) {
+      print(
+        'MapScreen: Initial position set to ${events.first.latitude}, ${events.first.longitude}',
+      );
+      return CameraPosition(
+        target: LatLng(events.first.latitude!, events.first.longitude!),
+        zoom: 5,
+        tilt: 60,
+      );
+    }
+    print('MapScreen: Using default initial position');
+    return const CameraPosition(
+      target: LatLng(11.8705, 75.3679),
+      zoom: 5,
+      tilt: 60,
+    );
+  }
+
+  void _setupEventListener() {
+    ref.listen(eventsMapProvider, (previous, state) {
+      state.whenData((events) {
+        print('MapScreen: Events updated, ${events.length} events received');
+        ref.read(allEventsProvider.notifier).state = events;
+        Future.microtask(
+          () => ref.read(markerStateProvider.notifier).buildMarkers(events),
+        );
+      });
+    });
+  }
+
+  Future<void> _handleLocateMe() async {
+    try {
+      final cameraPosition = await _locationService.getCurrentLocation();
+      if (cameraPosition != null && mounted) {
+        ref
+            .read(mapControllerProvider.notifier)
+            .state
+            ?.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+        print('MapScreen: Animated to user location');
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Location found!')));
+        }
+      }
+    } on LocationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+}

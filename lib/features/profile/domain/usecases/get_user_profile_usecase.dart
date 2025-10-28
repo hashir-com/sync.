@@ -5,8 +5,7 @@ import 'package:sync_event/core/usecases/usecase.dart';
 import 'package:sync_event/features/profile/domain/entities/profile_entity.dart';
 import 'package:sync_event/features/profile/domain/repositories/profile_repository.dart';
 
-class GetUserProfileUseCase
-    implements UseCase<ProfileEntity, GetProfileParams> {
+class GetUserProfileUseCase implements UseCase<ProfileEntity, GetProfileParams> {
   final ProfileRepository repository;
 
   GetUserProfileUseCase(this.repository);

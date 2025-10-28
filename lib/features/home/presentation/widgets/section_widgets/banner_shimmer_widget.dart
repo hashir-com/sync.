@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -13,7 +13,7 @@ class BannerShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: ResponsiveUtil.isMobile(context) ? 220.h : 260.h,
+      height: ResponsiveUtil.isMobile(context) ? 220 : 260,
       child: Shimmer.fromColors(
         baseColor: AppColors.getShimmerBase(isDark),
         highlightColor: AppColors.getShimmerHighlight(isDark),

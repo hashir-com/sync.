@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -17,19 +16,19 @@ class BookingLoadingWidget extends StatelessWidget {
 
     return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium.w),
+        padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
         child: Column(
           children: [
-            SizedBox(height: AppSizes.spacingMedium.h),
-            _buildShimmerCard(isDark, height: 150.h),
-            SizedBox(height: AppSizes.spacingXxl.h),
-            _buildShimmerCard(isDark, height: 200.h),
-            SizedBox(height: AppSizes.spacingXxl.h),
-            _buildShimmerCard(isDark, height: 180.h),
-            SizedBox(height: AppSizes.spacingXxl.h),
-            _buildShimmerCard(isDark, height: 220.h),
-            SizedBox(height: AppSizes.spacingXxl.h),
-            _buildShimmerCard(isDark, height: 140.h),
+            SizedBox(height: AppSizes.spacingMedium),
+            _buildShimmerCard(isDark, height: 150),
+            SizedBox(height: AppSizes.spacingXxl),
+            _buildShimmerCard(isDark, height: 200),
+            SizedBox(height: AppSizes.spacingXxl),
+            _buildShimmerCard(isDark, height: 180),
+            SizedBox(height: AppSizes.spacingXxl),
+            _buildShimmerCard(isDark, height: 220),
+            SizedBox(height: AppSizes.spacingXxl),
+            _buildShimmerCard(isDark, height: 140),
           ],
         ),
       ),
@@ -44,7 +43,7 @@ class BookingLoadingWidget extends StatelessWidget {
         height: height,
         decoration: BoxDecoration(
           color: AppColors.getSurface(isDark),
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         ),
       ),
     );
@@ -72,7 +71,7 @@ class BookingErrorWidget extends StatelessWidget {
             size: AppSizes.iconXxl * 2,
             color: AppColors.getError(isDark),
           ),
-          SizedBox(height: AppSizes.spacingLarge.h),
+          SizedBox(height: AppSizes.spacingLarge),
           Text(
             error is String ? error : 'Error loading event',
             style: AppTextStyles.headingSmall(isDark: isDark),
@@ -80,7 +79,7 @@ class BookingErrorWidget extends StatelessWidget {
           if (error != null && error is! String)
             Padding(
               padding:
-                  EdgeInsets.symmetric(vertical: AppSizes.spacingMedium.h),
+                  EdgeInsets.symmetric(vertical: AppSizes.spacingMedium),
               child: Text(
                 error is Failure ? error.message : error.toString(),
                 style: AppTextStyles.bodyMedium(isDark: isDark),
@@ -92,7 +91,7 @@ class BookingErrorWidget extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.getPrimary(isDark),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
               ),
             ),
             child: Text(

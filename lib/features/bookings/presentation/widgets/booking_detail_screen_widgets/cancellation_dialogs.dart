@@ -1,5 +1,5 @@
 // import 'package:flutter/material.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';
+// 
 // import 'package:sync_event/core/constants/app_colors.dart';
 // import 'package:sync_event/core/constants/app_sizes.dart';
 // import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -59,7 +59,7 @@
 //     final isDark = ThemeUtils.isDark(context);
 //     return SafeArea(
 //       child: Padding(
-//         padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+//         padding: EdgeInsets.all(AppSizes.paddingMedium),
 //         child: Column(
 //           mainAxisSize: MainAxisSize.min,
 //           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +73,7 @@
 //             _buildRadioTile('Other'),
 //             if (selectedReason == 'Other')
 //               Padding(
-//                 padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium.w),
+//                 padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
 //                 child: TextField(
 //                   controller: otherReasonController,
 //                   decoration: InputDecoration(
@@ -92,7 +92,7 @@
 //                   onPressed: () => Navigator.pop(context),
 //                   child: Text('Cancel', style: AppTextStyles.bodyMedium(isDark: isDark)),
 //                 ),
-//                 SizedBox(width: AppSizes.spacingMedium.w),
+//                 SizedBox(width: AppSizes.spacingMedium),
 //                 ElevatedButton(
 //                   onPressed: () {
 //                     if (selectedReason == null) {

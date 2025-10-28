@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
 import 'package:sync_event/features/bookings/presentation/providers/booking_provider.dart';
@@ -16,14 +16,25 @@ class BookingsListView extends ConsumerWidget {
 
   const BookingsListView({super.key, required this.userId});
 
-  List<BookingEntity> _applyFilters(List<BookingEntity> bookings, BookingsFilterState filterState) {
+  List<BookingEntity> _applyFilters(
+    List<BookingEntity> bookings,
+    BookingsFilterState filterState,
+  ) {
     final query = filterState.searchQuery.toLowerCase();
     return bookings.where((b) {
-      final matchesStatus = filterState.statusFilter == 'all' || b.status == filterState.statusFilter;
-      final matchesDate = filterState.dateFilter == null ||
-          (b.startTime.isAfter(filterState.dateFilter!.start.subtract(const Duration(days: 1))) &&
-              b.startTime.isBefore(filterState.dateFilter!.end.add(const Duration(days: 1))));
-      final matchesSearch = b.id.toLowerCase().contains(query) ||
+      final matchesStatus =
+          filterState.statusFilter == 'all' ||
+          b.status == filterState.statusFilter;
+      final matchesDate =
+          filterState.dateFilter == null ||
+          (b.startTime.isAfter(
+                filterState.dateFilter!.start.subtract(const Duration(days: 1)),
+              ) &&
+              b.startTime.isBefore(
+                filterState.dateFilter!.end.add(const Duration(days: 1)),
+              ));
+      final matchesSearch =
+          b.id.toLowerCase().contains(query) ||
           b.ticketType.toLowerCase().contains(query) ||
           b.paymentId.toLowerCase().contains(query);
       return matchesStatus && matchesDate && matchesSearch;
@@ -43,19 +54,22 @@ class BookingsListView extends ConsumerWidget {
         }
         final filteredBookings = _applyFilters(bookings, filterState);
         return ListView(
-          padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+          padding: EdgeInsets.all(AppSizes.paddingMedium),
           children: [
             FilterCard(userId: userId, filterState: filterState),
-            SizedBox(height: AppSizes.spacingMedium.h),
+            SizedBox(height: AppSizes.spacingMedium),
             if (filteredBookings.isEmpty)
               NoResultsView(filterState: filterState)
             else
-              ...filteredBookings.map((booking) => BookingCard(booking: booking, userId: userId)),
+              ...filteredBookings.map(
+                (booking) => BookingCard(booking: booking, userId: userId),
+              ),
           ],
         );
       },
       loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-      error: (error, stack) => ErrorView(message: 'Error loading bookings', error: error),
+      error: (error, stack) =>
+          ErrorView(message: 'Error loading bookings', error: error),
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/util/responsive_util.dart';
 
 class AppSizes {
@@ -44,22 +44,22 @@ class AppSizes {
 
   // Legacy Spacing (for backward compatibility)
 
-  static double get spacingXs => 4.w;
-  static double get spacingSmall => 8.w;
-  static double get spacingMedium => 12.w;
-  static double get spacingLarge => 16.w;
-  static double get spacingXl => 20.w;
-  static double get spacingXxl => 24.w;
-  static double get spacingXxxl => 32.w;
-  static double get spacingMaxl => 82.w;
+  static double get spacingXs => 4;
+  static double get spacingSmall => 8;
+  static double get spacingMedium => 12;
+  static double get spacingLarge => 16;
+  static double get spacingXl => 20;
+  static double get spacingXxl => 24;
+  static double get spacingXxxl => 32;
+  static double get spacingMaxl => 82;
 
-  static double get paddingXs => 4.w;
-  static double get paddingSmall => 8.w;
-  static double get paddingMedium => 12.w;
-  static double get paddingLarge => 16.w;
-  static double get paddingXl => 20.w;
-  static double get paddingXxl => 24.w;
-  static double get paddingXxxl => 32.w;
+  static double get paddingXs => 4;
+  static double get paddingSmall => 8;
+  static double get paddingMedium => 12;
+  static double get paddingLarge => 16;
+  static double get paddingXl => 20;
+  static double get paddingXxl => 24;
+  static double get paddingXxxl => 32;
 
   // Responsive Border Radius
 
@@ -71,15 +71,15 @@ class AppSizes {
   }
 
   // Legacy border radius
-  static double get radiusXs => 4.r;
-  static double get radiusSmall => 8.r;
-  static double get radiusMedium => 12.r;
-  static double get radiusLarge => 16.r;
-  static double get radiusXl => 20.r;
-  static double get radiusXxl => 24.r;
-  static double get radiusXxxl => 28.r;
-  static double get radiusSemiRound => 70.r;
-  static double get radiusRound => 100.r;
+  static double get radiusXs => 4;
+  static double get radiusSmall => 8;
+  static double get radiusMedium => 12;
+  static double get radiusLarge => 16;
+  static double get radiusXl => 20;
+  static double get radiusXxl => 24;
+  static double get radiusXxxl => 28;
+  static double get radiusSemiRound => 70;
+  static double get radiusRound => 100;
 
   // Responsive Button Sizes
 
@@ -89,30 +89,30 @@ class AppSizes {
 
   static double getButtonPaddingHorizontal(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 24.w;
+      return 24;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 32.w;
+      return 32;
     } else {
-      return 40.w;
+      return 40;
     }
   }
 
   static double getButtonPaddingVertical(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 12.h;
+      return 12;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 16.h;
+      return 16;
     } else {
-      return 20.h;
+      return 20;
     }
   }
 
   // Legacy button sizes
-  static double get buttonHeightSmall => 36.h;
-  static double get buttonHeightMedium => 44.h;
-  static double get buttonHeightLarge => 52.h;
-  static double get buttonPaddingHorizontal => 24.w;
-  static double get buttonPaddingVertical => 12.h;
+  static double get buttonHeightSmall => 36;
+  static double get buttonHeightMedium => 44;
+  static double get buttonHeightLarge => 52;
+  static double get buttonPaddingHorizontal => 24;
+  static double get buttonPaddingVertical => 12;
 
   // Responsive Icon Sizes
 
@@ -121,12 +121,12 @@ class AppSizes {
   }
 
   // Legacy icon sizes
-  static double get iconXs => 16.sp;
-  static double get iconSmall => 20.sp;
-  static double get iconMedium => 24.sp;
-  static double get iconLarge => 32.sp;
-  static double get iconXl => 40.sp;
-  static double get iconXxl => 48.sp;
+  static double get iconXs => 16;
+  static double get iconSmall => 20;
+  static double get iconMedium => 24;
+  static double get iconLarge => 32;
+  static double get iconXl => 40;
+  static double get iconXxl => 48;
 
   // Responsive Avatar Sizes
 
@@ -135,11 +135,11 @@ class AppSizes {
   }
 
   // Legacy avatar sizes
-  static double get avatarSmall => 32.r;
-  static double get avatarMedium => 40.r;
-  static double get avatarLarge => 50.r;
-  static double get avatarXl => 64.r;
-  static double get avatarXxl => 80.r;
+  static double get avatarSmall => 32;
+  static double get avatarMedium => 40;
+  static double get avatarLarge => 50;
+  static double get avatarXl => 64;
+  static double get avatarXxl => 80;
 
   // Responsive Card & Container
 
@@ -159,46 +159,46 @@ class AppSizes {
   static double get cardElevationLow => 2.0;
   static double get cardElevationMedium => 4.0;
   static double get cardElevationHigh => 8.0;
-  static double get cardMarginHorizontal => 16.w;
-  static double get cardMarginVertical => 8.h;
-  static double get cardPadding => 16.w;
+  static double get cardMarginHorizontal => 16;
+  static double get cardMarginVertical => 8;
+  static double get cardPadding => 16;
 
   // Responsive Input Fields
 
   static double getInputHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 48.h;
+      return 48;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 52.h;
+      return 52;
     } else {
-      return 56.h;
+      return 56;
     }
   }
 
   static double getInputPaddingHorizontal(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 16.w;
+      return 16;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 20.w;
+      return 20;
     } else {
-      return 24.w;
+      return 24;
     }
   }
 
   static double getInputPaddingVertical(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 16.h;
+      return 16;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 18.h;
+      return 18;
     } else {
-      return 20.h;
+      return 20;
     }
   }
 
   // Legacy input properties
-  static double get inputHeight => 56.h;
-  static double get inputPaddingHorizontal => 16.w;
-  static double get inputPaddingVertical => 16.h;
+  static double get inputHeight => 56;
+  static double get inputPaddingHorizontal => 16;
+  static double get inputPaddingVertical => 16;
   static double get inputBorderWidth => 1.0;
   static double get inputBorderWidthFocused => 2.0;
 
@@ -206,26 +206,26 @@ class AppSizes {
 
   static double getFontSize(BuildContext context, {double baseSize = 14}) {
     final multiplier = ResponsiveUtil.getFontSizeMultiplier(context);
-    return (baseSize * multiplier).sp;
+    return (baseSize * multiplier);
   }
 
   // Legacy font sizes
-  static double get fontXs => 10.sp;
-  static double get fontSmall => 12.sp;
-  static double get fontMedium => 14.sp;
-  static double get fontLarge => 16.sp;
-  static double get fontXl => 18.sp;
-  static double get fontXxxl => 24.sp;
+  static double get fontXs => 10;
+  static double get fontSmall => 12;
+  static double get fontMedium => 14;
+  static double get fontLarge => 16;
+  static double get fontXl => 18;
+  static double get fontXxxl => 24;
 
   // Display text sizes
-  static double get fontDisplay1 => 32.sp;
-  static double get fontDisplay2 => 28.sp;
-  static double get fontDisplay3 => 24.sp;
+  static double get fontDisplay1 => 32;
+  static double get fontDisplay2 => 28;
+  static double get fontDisplay3 => 24;
 
   // Headline sizes
-  static double get fontHeadline1 => 22.sp;
-  static double get fontHeadline2 => 20.sp;
-  static double get fontHeadline3 => 18.sp;
+  static double get fontHeadline1 => 22;
+  static double get fontHeadline2 => 20;
+  static double get fontHeadline3 => 18;
 
   // Responsive Layout Properties
 
@@ -269,44 +269,44 @@ class AppSizes {
 
   static double getDialogPadding(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 16.w;
+      return 16;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 24.w;
+      return 24;
     } else {
-      return 32.w;
+      return 32;
     }
   }
 
   // Legacy dialog properties
   static double get dialogElevation => 8.0;
-  static double get dialogPadding => 24.w;
-  static double get dialogMaxWidth => 400.w;
+  static double get dialogPadding => 24;
+  static double get dialogMaxWidth => 400;
 
   // Responsive App Bar
 
   static double getAppBarHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 56.h;
+      return 56;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 64.h;
+      return 64;
     } else {
-      return 72.h;
+      return 72;
     }
   }
 
   // Legacy app bar
-  static double get appBarHeight => 56.h;
+  static double get appBarHeight => 56;
   static double get appBarElevation => 0.0;
 
   // Responsive Bottom Navigation
 
   static double getBottomNavHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 60.h;
+      return 60;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 70.h;
+      return 70;
     } else {
-      return 80.h;
+      return 80;
     }
   }
 
@@ -315,19 +315,19 @@ class AppSizes {
   }
 
   // Legacy bottom nav
-  static double get bottomNavHeight => 60.h;
+  static double get bottomNavHeight => 60;
   static double get bottomNavElevation => 8.0;
-  static double get bottomNavIconSize => 24.sp;
+  static double get bottomNavIconSize => 24;
 
   // Responsive Floating Action Button
 
   static double getFabSize(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 56.r;
+      return 56;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 64.r;
+      return 64;
     } else {
-      return 72.r;
+      return 72;
     }
   }
 
@@ -336,36 +336,36 @@ class AppSizes {
   }
 
   // Legacy FAB
-  static double get fabSize => 56.r;
+  static double get fabSize => 56;
   static double get fabElevation => 4.0;
-  static double get fabIconSize => 24.sp;
+  static double get fabIconSize => 24;
 
   // Responsive List Items
 
   static double getListTileHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 56.h;
+      return 56;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 64.h;
+      return 64;
     } else {
-      return 72.h;
+      return 72;
     }
   }
 
   static double getListTilePadding(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 16.w;
+      return 16;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 20.w;
+      return 20;
     } else {
-      return 24.w;
+      return 24;
     }
   }
 
   // Legacy list tile
-  static double get listTileHeight => 56.h;
-  static double get listTileVerticalPadding => 12.h;
-  static double get listTileHorizontalPadding => 16.w;
+  static double get listTileHeight => 56;
+  static double get listTileVerticalPadding => 12;
+  static double get listTileHorizontalPadding => 16;
 
   // Responsive Image Sizes
 
@@ -376,19 +376,19 @@ class AppSizes {
     double desktopSize = 160,
   }) {
     if (ResponsiveUtil.isMobile(context)) {
-      return mobileSize.w;
+      return mobileSize;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return tabletSize.w;
+      return tabletSize;
     } else {
-      return desktopSize.w;
+      return desktopSize;
     }
   }
 
   // Legacy image sizes
-  static double get imageSmall => 80.w;
-  static double get imageMedium => 120.w;
-  static double get imageLarge => 200.w;
-  static double get imageXl => 300.w;
+  static double get imageSmall => 80;
+  static double get imageMedium => 120;
+  static double get imageLarge => 200;
+  static double get imageXl => 300;
 
   // Responsive Screen Padding
 
@@ -397,37 +397,37 @@ class AppSizes {
   }
 
   // Legacy screen padding
-  static double get screenPaddingHorizontal => 16.w;
-  static double get screenPaddingVertical => 16.h;
-  static double get screenPaddingTop => 20.h;
-  static double get screenPaddingBottom => 20.h;
+  static double get screenPaddingHorizontal => 16;
+  static double get screenPaddingVertical => 16;
+  static double get screenPaddingTop => 20;
+  static double get screenPaddingBottom => 20;
 
   // Responsive Chip
 
   static double getChipHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 32.h;
+      return 32;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 36.h;
+      return 36;
     } else {
-      return 40.h;
+      return 40;
     }
   }
 
   static double getChipPadding(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 12.w;
+      return 12;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 16.w;
+      return 16;
     } else {
-      return 20.w;
+      return 20;
     }
   }
 
   // Legacy chip
-  static double get chipHeight => 32.h;
-  static double get chipPaddingHorizontal => 12.w;
-  static double get chipPaddingVertical => 8.h;
+  static double get chipHeight => 32;
+  static double get chipPaddingHorizontal => 12;
+  static double get chipPaddingVertical => 8;
 
   // Responsive Dot Indicator
 
@@ -435,47 +435,47 @@ class AppSizes {
     BuildContext context, {
     bool isActive = true,
   }) {
-    final baseWidth = isActive ? 14 : 8;
+    final double baseWidth = isActive ? 14 : 8;
     if (ResponsiveUtil.isMobile(context)) {
-      return baseWidth.w;
+      return baseWidth;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return (baseWidth * 1.2).w;
+      return (baseWidth * 1.2);
     } else {
-      return (baseWidth * 1.4).w;
+      return (baseWidth * 1.4);
     }
   }
 
   static double getDotIndicatorHeight(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 8.h;
+      return 8;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 10.h;
+      return 10;
     } else {
-      return 12.h;
+      return 12;
     }
   }
 
   // Legacy dot indicator
-  static double get dotIndicatorActiveWidth => 14.w;
-  static double get dotIndicatorInactiveWidth => 8.w;
-  static double get dotIndicatorHeight => 8.h;
-  static double get dotIndicatorSpacing => 6.w;
+  static double get dotIndicatorActiveWidth => 14;
+  static double get dotIndicatorInactiveWidth => 8;
+  static double get dotIndicatorHeight => 8;
+  static double get dotIndicatorSpacing => 6;
 
   // Responsive Snackbar
 
   static double getSnackbarPadding(BuildContext context) {
     if (ResponsiveUtil.isMobile(context)) {
-      return 16.w;
+      return 16;
     } else if (ResponsiveUtil.isTablet(context)) {
-      return 24.w;
+      return 24;
     } else {
-      return 32.w;
+      return 32;
     }
   }
 
   // Legacy snackbar
   static double get snackbarElevation => 6.0;
-  static double get snackbarPadding => 16.w;
+  static double get snackbarPadding => 16;
 
   // Responsive Divider & Border
 

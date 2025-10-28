@@ -1,4 +1,4 @@
-package com.example.sync_event
+package ashir.developer.sync_event
 
 import io.flutter.embedding.android.FlutterActivity
 

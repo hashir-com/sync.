@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -21,13 +21,13 @@ class BookingEventDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingLarge.w),
+      padding: EdgeInsets.all(AppSizes.paddingLarge),
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         border: Border.all(
           color: AppColors.getPrimary(isDark).withOpacity(0.15),
-          width: 1.w,
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -42,17 +42,18 @@ class BookingEventDetailsCard extends StatelessWidget {
         children: [
           Text(
             'Event Details',
-            style: AppTextStyles.headingSmall(isDark: isDark)
-                .copyWith(fontWeight: FontWeight.w700),
+            style: AppTextStyles.headingSmall(
+              isDark: isDark,
+            ).copyWith(fontWeight: FontWeight.w700),
           ),
-          SizedBox(height: AppSizes.spacingLarge.h),
+          SizedBox(height: AppSizes.spacingLarge),
           _DetailRow(
             icon: Icons.calendar_today_rounded,
             label: 'Date',
             value: DateFormat('EEEE, MMMM d, y').format(event.startTime),
             isDark: isDark,
           ),
-          SizedBox(height: AppSizes.spacingMedium.h),
+          SizedBox(height: AppSizes.spacingMedium),
           _DetailRow(
             icon: Icons.access_time_rounded,
             label: 'Time',
@@ -60,7 +61,7 @@ class BookingEventDetailsCard extends StatelessWidget {
                 '${DateFormat('h:mm a').format(event.startTime)} - ${DateFormat('h:mm a').format(event.endTime)}',
             isDark: isDark,
           ),
-          SizedBox(height: AppSizes.spacingMedium.h),
+          SizedBox(height: AppSizes.spacingMedium),
           _DetailRow(
             icon: Icons.location_on_rounded,
             label: 'Location',
@@ -91,18 +92,18 @@ class _DetailRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: EdgeInsets.all(AppSizes.paddingSmall.w),
+          padding: EdgeInsets.all(AppSizes.paddingSmall),
           decoration: BoxDecoration(
             color: AppColors.getPrimary(isDark).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           ),
           child: Icon(
             icon,
-            size: AppSizes.iconMedium.sp,
+            size: AppSizes.iconMedium,
             color: AppColors.getPrimary(isDark),
           ),
         ),
-        SizedBox(width: AppSizes.spacingMedium.w),
+        SizedBox(width: AppSizes.spacingMedium),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,11 +115,12 @@ class _DetailRow extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(height: AppSizes.spacingXs.h),
+              SizedBox(height: AppSizes.spacingXs),
               Text(
                 value,
-                style: AppTextStyles.bodyMedium(isDark: isDark)
-                    .copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.bodyMedium(
+                  isDark: isDark,
+                ).copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),

@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flow_drawer/flow_drawer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -145,7 +145,7 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
                 id: user.id,
                 title: user.name,
                 subtitle: user.email,
-                imageUrl: user.profileImageUrl,
+                imageUrl: user.image,
                 type: SearchResultType.user,
                 data: user,
               ),
@@ -168,7 +168,9 @@ final searchResultsProvider = Provider<AsyncValue<List<SearchResult>>>((ref) {
 // Updated Header Section with Search
 
 class HeaderSection extends ConsumerStatefulWidget {
-  const HeaderSection({super.key});
+  final FlowDrawerController controller;
+
+  const HeaderSection({super.key, required this.controller});
 
   @override
   ConsumerState<HeaderSection> createState() => _HeaderSectionState();
@@ -233,20 +235,20 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
           children: [
             Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingXl.w,
-                vertical: AppSizes.paddingLarge.h,
+                horizontal: AppSizes.paddingXl,
+                vertical: AppSizes.paddingLarge,
               ),
               child: Column(
                 children: [
                   // Search Bar Row
                   Row(
                     children: [
-                      // Drawer Icon
+                      // Drawer Icon - UPDATED TO USE FLOW DRAWER CONTROLLER
                       InkWell(
                         borderRadius: BorderRadius.circular(
                           AppSizes.radiusRound,
                         ),
-                        onTap: () => Scaffold.of(context).openDrawer(),
+                        onTap: widget.controller.toggle,
                         child: Container(
                           width: AppSizes.iconXl,
                           height: AppSizes.iconXl,
@@ -324,7 +326,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                               fillColor: AppColors.getSurface(isDark),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusRound.r,
+                                  AppSizes.radiusRound,
                                 ),
                                 borderSide: BorderSide.none,
                               ),
@@ -334,13 +336,13 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusRound.r,
+                                  AppSizes.radiusRound,
                                 ),
                                 borderSide: BorderSide.none,
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusRound.r,
+                                  AppSizes.radiusRound,
                                 ),
                                 borderSide: BorderSide(
                                   color: AppColors.getPrimary(isDark),
@@ -390,7 +392,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                               Icon(
                                 Icons.tune_outlined,
                                 color: AppColors.getTextPrimary(isDark),
-                                size: AppSizes.iconMedium.sp,
+                                size: AppSizes.iconMedium,
                               ),
                               Consumer(
                                 builder: (context, ref, child) {
@@ -417,39 +419,7 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
                       ),
                     ],
                   ),
-
-                  // if (!_showSearchResults) ...[
-                  //   SizedBox(height: AppSizes.spacingXxl.h),
-
-                  //   // Categories Row
-                  //   // Row(
-                  //   //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //   //   children: [
-                  //   //     _buildCategoryItem(
-                  //   //       context: context,
-                  //   //       isDark: isDark,
-                  //   //       icon: '🔔',
-                  //   //       label: 'Notification',
-                  //   //       isSelected: true,
-                  //   //     ),
-                  //   //     _buildCategoryItem(
-                  //   //       context: context,
-                  //   //       isDark: isDark,
-                  //   //       icon: '🎯',
-                  //   //       label: 'Filter',
-                  //   //       hasNewBadge: true,
-                  //   //     ),
-                  //   //     _buildCategoryItem(
-                  //   //       context: context,
-                  //   //       isDark: isDark,
-                  //   //       icon: '⭐',
-                  //   //       label: 'Popular',
-                  //   //       hasNewBadge: true,
-                  //   //     ),
-                  //   //   ],
-                  //   // ),
-                  // ],
-                  SizedBox(height: AppSizes.spacingMedium.h),
+                  SizedBox(height: AppSizes.spacingMedium),
                 ],
               ),
             ),
@@ -522,7 +492,6 @@ class _HeaderSectionState extends ConsumerState<HeaderSection> {
       ),
     );
   }
-
 }
 
 // PART 3: Search Results Dropdown
@@ -804,29 +773,7 @@ class _SearchResultTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        result.type == SearchResultType.event
-                            ? Icons.location_on_outlined
-                            : Icons.email_outlined,
-                        size: 14,
-                        color: AppColors.getTextSecondary(isDark),
-                      ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          result.subtitle,
-                          style: AppTextStyles.bodySmall(
-                            isDark: isDark,
-                          ).copyWith(color: AppColors.getTextSecondary(isDark)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+                  
                 ],
               ),
             ),

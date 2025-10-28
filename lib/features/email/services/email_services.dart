@@ -43,10 +43,15 @@ class EmailService {
       ..recipients.add(userEmail)
       ..subject = 'Invoice for Booking #$bookingId'
       ..text =
-          'Thank you for your booking!\n\n'
+          'Thank you for booking with Sync Event!\n\n'
+          'We are pleased to confirm your booking.\n\n'
+          'Booking Details:\n'
           'Booking ID: $bookingId\n'
           'Amount Paid: ₹$amount\n\n'
-          'We hope you enjoy the event!';
+          'We look forward to seeing you at the event. '
+          'For any questions or assistance, feel free to contact our support team support@sync-event.com.\n\n'
+          'Best regards,\n'
+          'Sync Event Team';
 
     try {
       await send(message, smtp);

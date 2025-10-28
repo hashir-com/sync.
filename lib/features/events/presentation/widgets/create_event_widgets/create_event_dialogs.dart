@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
@@ -148,16 +148,17 @@ class MaxAttendeesDialog {
                     });
                   },
                 ),
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
 
                 //INDIVIDUAL CAPACITY SETTINGS
                 if (!tempIsOpenCommon) ...[
                   Text(
                     'Individual Limits',
-                    style: AppTextStyles.titleMedium(isDark: isDark)
-                        .copyWith(fontWeight: FontWeight.w600),
+                    style: AppTextStyles.titleMedium(
+                      isDark: isDark,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
-                  SizedBox(height: AppSizes.spacingSmall.h),
+                  SizedBox(height: AppSizes.spacingSmall),
 
                   _buildCapacityTile(
                     isDark: isDark,
@@ -175,11 +176,16 @@ class MaxAttendeesDialog {
                           tempControllers['vip']!.clear();
                         }
                         //AUTO-TICK COMMON IF ALL 3 ARE UNLIMITED
-                        _checkAutoCommonTick(setDialogState, tempIsOpenVip, tempIsOpenPremium, tempIsOpenRegular);
+                        _checkAutoCommonTick(
+                          setDialogState,
+                          tempIsOpenVip,
+                          tempIsOpenPremium,
+                          tempIsOpenRegular,
+                        );
                       });
                     },
                   ),
-                  SizedBox(height: AppSizes.spacingSmall.h),
+                  SizedBox(height: AppSizes.spacingSmall),
 
                   _buildCapacityTile(
                     isDark: isDark,
@@ -197,11 +203,16 @@ class MaxAttendeesDialog {
                           tempControllers['premium']!.clear();
                         }
                         //AUTO-TICK COMMON IF ALL 3 ARE UNLIMITED
-                        _checkAutoCommonTick(setDialogState, tempIsOpenVip, tempIsOpenPremium, tempIsOpenRegular);
+                        _checkAutoCommonTick(
+                          setDialogState,
+                          tempIsOpenVip,
+                          tempIsOpenPremium,
+                          tempIsOpenRegular,
+                        );
                       });
                     },
                   ),
-                  SizedBox(height: AppSizes.spacingSmall.h),
+                  SizedBox(height: AppSizes.spacingSmall),
 
                   _buildCapacityTile(
                     isDark: isDark,
@@ -219,7 +230,12 @@ class MaxAttendeesDialog {
                           tempControllers['regular']!.clear();
                         }
                         //AUTO-TICK COMMON IF ALL 3 ARE UNLIMITED
-                        _checkAutoCommonTick(setDialogState, tempIsOpenVip, tempIsOpenPremium, tempIsOpenRegular);
+                        _checkAutoCommonTick(
+                          setDialogState,
+                          tempIsOpenVip,
+                          tempIsOpenPremium,
+                          tempIsOpenRegular,
+                        );
                       });
                     },
                   ),
@@ -232,8 +248,9 @@ class MaxAttendeesDialog {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 'Cancel',
-                style: AppTextStyles.labelLarge(isDark: isDark)
-                    .copyWith(color: AppColors.getTextSecondary(isDark)),
+                style: AppTextStyles.labelLarge(
+                  isDark: isDark,
+                ).copyWith(color: AppColors.getTextSecondary(isDark)),
               ),
             ),
             TextButton(
@@ -252,8 +269,9 @@ class MaxAttendeesDialog {
               },
               child: Text(
                 'Save',
-                style: AppTextStyles.labelLarge(isDark: isDark)
-                    .copyWith(color: AppColors.getPrimary(isDark)),
+                style: AppTextStyles.labelLarge(
+                  isDark: isDark,
+                ).copyWith(color: AppColors.getPrimary(isDark)),
               ),
             ),
           ],
@@ -286,10 +304,10 @@ class MaxAttendeesDialog {
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.getPrimary(isDark).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         border: Border.all(
           color: AppColors.getPrimary(isDark).withOpacity(0.3),
           width: 1,
@@ -297,9 +315,9 @@ class MaxAttendeesDialog {
       ),
       child: InkWell(
         onTap: () => onCommonChanged(!isOpenCommon),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         child: Padding(
-          padding: EdgeInsets.all(AppSizes.paddingSmall.w),
+          padding: EdgeInsets.all(AppSizes.paddingSmall),
           child: Row(
             children: [
               Checkbox(
@@ -321,9 +339,9 @@ class MaxAttendeesDialog {
                     ),
                     Text(
                       'Unlimited attendees for VIP, Premium & Regular',
-                      style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-                        color: AppColors.getTextSecondary(isDark),
-                      ),
+                      style: AppTextStyles.bodySmall(
+                        isDark: isDark,
+                      ).copyWith(color: AppColors.getTextSecondary(isDark)),
                     ),
                   ],
                 ),
@@ -332,7 +350,7 @@ class MaxAttendeesDialog {
                 Icon(
                   Icons.loop,
                   color: AppColors.getPrimary(isDark),
-                  size: AppSizes.iconMedium.sp,
+                  size: AppSizes.iconMedium,
                 ),
             ],
           ),
@@ -355,10 +373,10 @@ class MaxAttendeesDialog {
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         border: Border.all(color: AppColors.getBorder(isDark)),
       ),
       child: Column(
@@ -367,29 +385,30 @@ class MaxAttendeesDialog {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(AppSizes.paddingXs.w),
+                padding: EdgeInsets.all(AppSizes.paddingXs),
                 decoration: BoxDecoration(
                   color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusRound.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusRound),
                 ),
-                child: Icon(icon, color: iconColor, size: AppSizes.iconSmall.sp),
+                child: Icon(icon, color: iconColor, size: AppSizes.iconSmall),
               ),
-              SizedBox(width: AppSizes.spacingSmall.w),
+              SizedBox(width: AppSizes.spacingSmall),
               Expanded(
                 child: Text(
                   title,
-                  style: AppTextStyles.bodyMedium(isDark: isDark)
-                      .copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium(
+                    isDark: isDark,
+                  ).copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
           ),
-          SizedBox(height: AppSizes.spacingSmall.h),
+          SizedBox(height: AppSizes.spacingSmall),
           InkWell(
             onTap: () => onOpenChanged(!isOpen),
-            borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.paddingXs.h),
+              padding: EdgeInsets.symmetric(vertical: AppSizes.paddingXs),
               child: Row(
                 children: [
                   Checkbox(
@@ -409,32 +428,33 @@ class MaxAttendeesDialog {
             ),
           ),
           if (!isOpen) ...[
-            SizedBox(height: AppSizes.spacingSmall.h),
+            SizedBox(height: AppSizes.spacingSmall),
             TextFormField(
               controller: controller,
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: AppTextStyles.bodySmall(isDark: isDark)
-                    .copyWith(color: AppColors.getTextSecondary(isDark)),
+                hintStyle: AppTextStyles.bodySmall(
+                  isDark: isDark,
+                ).copyWith(color: AppColors.getTextSecondary(isDark)),
                 prefixIcon: Icon(
                   Icons.people_outline,
-                  size: AppSizes.iconSmall.sp,
+                  size: AppSizes.iconSmall,
                   color: AppColors.getTextSecondary(isDark),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                   borderSide: BorderSide(color: AppColors.getBorder(isDark)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                   borderSide: BorderSide(
                     color: AppColors.getPrimary(isDark),
                     width: 2,
                   ),
                 ),
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingMedium.w,
-                  vertical: AppSizes.paddingSmall.h,
+                  horizontal: AppSizes.paddingMedium,
+                  vertical: AppSizes.paddingSmall,
                 ),
                 filled: true,
                 fillColor: AppColors.getSurface(isDark),
@@ -480,16 +500,26 @@ class MaxAttendeesDialog {
     }
 
     // Individual capacities
-    final vipCapacity = isOpenVip ? 99999 : (int.tryParse(controllers['vip']!.text.trim()) ?? 0);
-    final premiumCapacity = isOpenPremium ? 99999 : (int.tryParse(controllers['premium']!.text.trim()) ?? 0);
-    final regularCapacity = isOpenRegular ? 99999 : (int.tryParse(controllers['regular']!.text.trim()) ?? 0);
+    final vipCapacity = isOpenVip
+        ? 99999
+        : (int.tryParse(controllers['vip']!.text.trim()) ?? 0);
+    final premiumCapacity = isOpenPremium
+        ? 99999
+        : (int.tryParse(controllers['premium']!.text.trim()) ?? 0);
+    final regularCapacity = isOpenRegular
+        ? 99999
+        : (int.tryParse(controllers['regular']!.text.trim()) ?? 0);
 
-    final totalFiniteCapacity = (vipCapacity != 99999 ? vipCapacity : 0) +
+    final totalFiniteCapacity =
+        (vipCapacity != 99999 ? vipCapacity : 0) +
         (premiumCapacity != 99999 ? premiumCapacity : 0) +
         (regularCapacity != 99999 ? regularCapacity : 0);
 
     // Validation
-    if (totalFiniteCapacity <= 0 && !isOpenVip && !isOpenPremium && !isOpenRegular) {
+    if (totalFiniteCapacity <= 0 &&
+        !isOpenVip &&
+        !isOpenPremium &&
+        !isOpenRegular) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Set at least one capacity limit')),
       );
@@ -548,66 +578,84 @@ class PriceDialog {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: tempIsFree,
-                      onChanged: (v) {
-                        setDialogState(() {
-                          tempIsFree = v ?? false;
-                          if (tempIsFree) {
-                            tempIsFreeCategory['vip'] = true;
-                            tempIsFreeCategory['premium'] = true;
-                            tempIsFreeCategory['regular'] = true;
-                            tempControllers.forEach((_, ctrl) => ctrl.clear());
-                          } else {
-                            tempIsFreeCategory['vip'] = false;
-                            tempIsFreeCategory['premium'] = false;
-                            tempIsFreeCategory['regular'] = false;
-                          }
-                        });
-                      },
-                      activeColor: AppColors.getPrimary(isDark),
-                    ),
-                    Text(
-                      'Mark All Categories as Free',
-                      style: AppTextStyles.bodyLarge(isDark: isDark),
-                    ),
-                  ],
+                //COMMON FREE OPTION (TOP)
+                _buildCommonFreeTile(
+                  isDark: isDark,
+                  isFree: tempIsFree,
+                  setDialogState: setDialogState,
+                  onFreeChanged: (bool value) {
+                    setDialogState(() {
+                      tempIsFree = value;
+                      if (value) {
+                        //Set all individual free when common is selected
+                        tempIsFreeCategory['vip'] = true;
+                        tempIsFreeCategory['premium'] = true;
+                        tempIsFreeCategory['regular'] = true;
+                        tempControllers.forEach((_, ctrl) => ctrl.clear());
+                      } else {
+                        tempIsFreeCategory['vip'] = false;
+                        tempIsFreeCategory['premium'] = false;
+                        tempIsFreeCategory['regular'] = false;
+                      }
+                    });
+                  },
                 ),
                 SizedBox(height: AppSizes.spacingMedium),
-                _buildPriceTile(
-                  isDark: isDark,
-                  state: state,
-                  category: 'vip',
-                  label: 'VIP',
-                  tempIsFree: tempIsFree,
-                  tempIsFreeCategory: tempIsFreeCategory,
-                  controller: tempControllers['vip']!,
-                  setDialogState: setDialogState,
-                ),
-                SizedBox(height: AppSizes.spacingSmall),
-                _buildPriceTile(
-                  isDark: isDark,
-                  state: state,
-                  category: 'premium',
-                  label: 'Premium',
-                  tempIsFree: tempIsFree,
-                  tempIsFreeCategory: tempIsFreeCategory,
-                  controller: tempControllers['premium']!,
-                  setDialogState: setDialogState,
-                ),
-                SizedBox(height: AppSizes.spacingSmall),
-                _buildPriceTile(
-                  isDark: isDark,
-                  state: state,
-                  category: 'regular',
-                  label: 'Regular',
-                  tempIsFree: tempIsFree,
-                  tempIsFreeCategory: tempIsFreeCategory,
-                  controller: tempControllers['regular']!,
-                  setDialogState: setDialogState,
-                ),
+
+                //INDIVIDUAL PRICE SETTINGS
+                if (!tempIsFree) ...[
+                  Text(
+                    'Individual Prices',
+                    style: AppTextStyles.titleMedium(
+                      isDark: isDark,
+                    ).copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(height: AppSizes.spacingSmall),
+
+                  _buildPriceTile(
+                    isDark: isDark,
+                    title: 'VIP Tickets',
+                    icon: Icons.star,
+                    iconColor: AppColors.warning,
+                    isFree: tempIsFreeCategory['vip']!,
+                    controller: tempControllers['vip']!,
+                    hint: 'VIP price',
+                    setDialogState: setDialogState,
+                    tempIsFree: tempIsFree,
+                    tempIsFreeCategory: tempIsFreeCategory,
+                    category: 'vip',
+                  ),
+                  SizedBox(height: AppSizes.spacingSmall),
+
+                  _buildPriceTile(
+                    isDark: isDark,
+                    title: 'Premium Tickets',
+                    icon: Icons.diamond,
+                    iconColor: AppColors.primary,
+                    isFree: tempIsFreeCategory['premium']!,
+                    controller: tempControllers['premium']!,
+                    hint: 'Premium price',
+                    setDialogState: setDialogState,
+                    tempIsFree: tempIsFree,
+                    tempIsFreeCategory: tempIsFreeCategory,
+                    category: 'premium',
+                  ),
+                  SizedBox(height: AppSizes.spacingSmall),
+
+                  _buildPriceTile(
+                    isDark: isDark,
+                    title: 'Regular Tickets',
+                    icon: Icons.person_outline,
+                    iconColor: AppColors.secondary,
+                    isFree: tempIsFreeCategory['regular']!,
+                    controller: tempControllers['regular']!,
+                    hint: 'Regular price',
+                    setDialogState: setDialogState,
+                    tempIsFree: tempIsFree,
+                    tempIsFreeCategory: tempIsFreeCategory,
+                    category: 'regular',
+                  ),
+                ],
               ],
             ),
           ),
@@ -708,34 +756,134 @@ class PriceDialog {
     );
   }
 
+  //NEW: Common free tile
+  static Widget _buildCommonFreeTile({
+    required bool isDark,
+    required bool isFree,
+    required StateSetter setDialogState,
+    required void Function(bool) onFreeChanged,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      decoration: BoxDecoration(
+        color: AppColors.getPrimary(isDark).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+        border: Border.all(
+          color: AppColors.getPrimary(isDark).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: () => onFreeChanged(!isFree),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+        child: Padding(
+          padding: EdgeInsets.all(AppSizes.paddingSmall),
+          child: Row(
+            children: [
+              Checkbox(
+                value: isFree,
+                onChanged: (v) => onFreeChanged(v ?? false),
+                activeColor: AppColors.getPrimary(isDark),
+                checkColor: Colors.white,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Free Event (All Categories Free)',
+                      style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.getPrimary(isDark),
+                      ),
+                    ),
+                    Text(
+                      'No cost for VIP, Premium & Regular',
+                      style: AppTextStyles.bodySmall(
+                        isDark: isDark,
+                      ).copyWith(color: AppColors.getTextSecondary(isDark)),
+                    ),
+                  ],
+                ),
+              ),
+              if (isFree)
+                Icon(
+                  Icons.money,
+                  color: AppColors.getPrimary(isDark),
+                  size: AppSizes.iconMedium,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  //UPDATED: Price tile (same as capacity but for prices)
   static Widget _buildPriceTile({
     required bool isDark,
-    required dynamic state,
-    required String category,
-    required String label,
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required bool isFree,
+    required TextEditingController controller,
+    required String hint,
+    required StateSetter setDialogState,
     required bool tempIsFree,
     required Map<String, bool> tempIsFreeCategory,
-    required TextEditingController controller,
-    required StateSetter setDialogState,
+    required String category,
   }) {
-    return ExpansionTile(
-      title: Text(
-        (state.categoryPrices[category] ?? 0.0) > 0
-            ? '$label: ₹${state.categoryPrices[category]!.toStringAsFixed(2)}'
-            : 'Set $label Price',
-        style: AppTextStyles.bodyLarge(isDark: isDark),
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(isDark),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+        border: Border.all(color: AppColors.getBorder(isDark)),
       ),
-      collapsedBackgroundColor: AppColors.getBackground(isDark),
-      backgroundColor: AppColors.getBackground(isDark),
-      children: [
-        Padding(
-          padding: EdgeInsets.all(AppSizes.paddingSmall),
-          child: Column(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
+              Container(
+                padding: EdgeInsets.all(AppSizes.paddingXs),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusRound),
+                ),
+                child: Icon(icon, color: iconColor, size: AppSizes.iconSmall),
+              ),
+              SizedBox(width: AppSizes.spacingSmall),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTextStyles.bodyMedium(
+                    isDark: isDark,
+                  ).copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSizes.spacingSmall),
+          InkWell(
+            onTap: () => {
+              if (!tempIsFree)
+                setDialogState(() {
+                  tempIsFreeCategory[category] = !isFree;
+                  if (tempIsFreeCategory[category]!) {
+                    controller.clear();
+                  }
+                }),
+            },
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSizes.paddingXs),
+              child: Row(
                 children: [
                   Checkbox(
-                    value: tempIsFreeCategory[category],
+                    value: isFree,
                     onChanged: tempIsFree
                         ? null
                         : (v) {
@@ -747,36 +895,56 @@ class PriceDialog {
                             });
                           },
                     activeColor: AppColors.getPrimary(isDark),
+                    checkColor: Colors.white,
                   ),
-                  Text(
-                    'Free $label Tickets',
-                    style: AppTextStyles.bodyLarge(isDark: isDark),
+                  Expanded(
+                    child: Text(
+                      'Free $title',
+                      style: AppTextStyles.bodyMedium(isDark: isDark),
+                    ),
                   ),
                 ],
               ),
-              if (!tempIsFreeCategory[category]!)
-                TextFormField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    hintText: 'Enter $label price (e.g., 500)',
-                    hintStyle: AppTextStyles.bodyMedium(isDark: isDark),
-                    prefixText: '₹ ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-                      borderSide: BorderSide(
-                        color: AppColors.getBorder(isDark),
-                      ),
-                    ),
-                  ),
-                  style: AppTextStyles.bodyLarge(isDark: isDark),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
+            ),
+          ),
+          if (!isFree) ...[
+            SizedBox(height: AppSizes.spacingSmall),
+            TextFormField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: AppTextStyles.bodySmall(
+                  isDark: isDark,
+                ).copyWith(color: AppColors.getTextSecondary(isDark)),
+                prefixText: '₹ ',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                  borderSide: BorderSide(color: AppColors.getBorder(isDark)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                  borderSide: BorderSide(
+                    color: AppColors.getPrimary(isDark),
+                    width: 2,
                   ),
                 ),
-            ],
-          ),
-        ),
-      ],
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingMedium,
+                  vertical: AppSizes.paddingSmall,
+                ),
+                filled: true,
+                fillColor: AppColors.getSurface(isDark),
+                counterText: '',
+              ),
+              style: AppTextStyles.bodyLarge(isDark: isDark),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -840,10 +1008,7 @@ class CategoryDialog {
                             // Trigger rebuild by invalidating category provider
                             ref.invalidate(categoryRepositoryProvider);
                           },
-                          icon: Icon(
-                            Icons.refresh,
-                            size: AppSizes.iconSmall.sp,
-                          ),
+                          icon: Icon(Icons.refresh, size: AppSizes.iconSmall),
                           label: Text(
                             'Retry',
                             style: AppTextStyles.bodySmall(isDark: isDark),
@@ -876,7 +1041,7 @@ class CategoryDialog {
                         SizedBox(height: AppSizes.spacingMedium),
                         TextButton.icon(
                           onPressed: () => Navigator.pop(dialogContext),
-                          icon: Icon(Icons.close, size: AppSizes.iconSmall.sp),
+                          icon: Icon(Icons.close, size: AppSizes.iconSmall),
                           label: Text(
                             'Close',
                             style: AppTextStyles.bodySmall(isDark: isDark),
@@ -899,11 +1064,11 @@ class CategoryDialog {
                               Text(
                                 category.icon!,
                                 style: TextStyle(
-                                  fontSize: AppSizes.fontXl.sp,
+                                  fontSize: AppSizes.fontXl,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              SizedBox(width: AppSizes.spacingSmall.w),
+                              SizedBox(width: AppSizes.spacingSmall),
                             ],
                             Expanded(
                               child: Text(

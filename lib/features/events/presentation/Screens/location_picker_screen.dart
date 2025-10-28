@@ -281,11 +281,13 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen>
             .setLocation(newPos, addr);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update map. Please try again.'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update map. Please try again.'),
+          ),
+        );
+      }
     }
   }
 
@@ -307,16 +309,24 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen>
           desiredAccuracy: LocationAccuracy.high,
         );
         final latLng = LatLng(position.latitude, position.longitude);
-          await _moveCamera(latLng);
-          // Ensure state carries the address for Done button enablement
-          final placemarks = await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
-          if (placemarks.isNotEmpty) {
-            final p = placemarks.first;
-            final addr = [p.name, p.locality, p.administrativeArea, p.country]
-                .where((e) => e != null && e.isNotEmpty)
-                .join(', ');
-            ref.read(locationPickerNotifierProvider.notifier).setLocation(latLng, addr);
-          }
+        await _moveCamera(latLng);
+        // Ensure state carries the address for Done button enablement
+        final placemarks = await placemarkFromCoordinates(
+          latLng.latitude,
+          latLng.longitude,
+        );
+        if (placemarks.isNotEmpty) {
+          final p = placemarks.first;
+          final addr = [
+            p.name,
+            p.locality,
+            p.administrativeArea,
+            p.country,
+          ].where((e) => e != null && e.isNotEmpty).join(', ');
+          ref
+              .read(locationPickerNotifierProvider.notifier)
+              .setLocation(latLng, addr);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

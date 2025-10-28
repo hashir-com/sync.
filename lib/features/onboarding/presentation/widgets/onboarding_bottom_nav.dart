@@ -2,12 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
-import 'package:sync_event/core/constants/app_sizes.dart';
-import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/onboarding/controller/onboarding_controler.dart';
 
@@ -33,9 +31,8 @@ class OnboardingBottomNav extends ConsumerWidget {
         duration: const Duration(milliseconds: 300),
         curve: Curves.ease,
       );
-      ref.read(onboardingProvider.notifier).setPage(currentPage + 1); // Use setPage instead of nextPage
+      ref.read(onboardingProvider.notifier).setPage(currentPage + 1);
     } else {
-      // Defer navigation to avoid web build-time issues
       Future.microtask(() {
         if (context.mounted) {
           context.go('/login');
@@ -45,7 +42,6 @@ class OnboardingBottomNav extends ConsumerWidget {
   }
 
   void _skip(BuildContext context) {
-    // Defer navigation to avoid web build-time issues
     Future.microtask(() {
       if (context.mounted) {
         context.go('/login');
@@ -56,167 +52,266 @@ class OnboardingBottomNav extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ThemeUtils.isDark(context);
+    final fontMultiplier = ResponsiveUtil.getFontSizeMultiplier(context);
+    final spacing = ResponsiveUtil.getSpacing(context);
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingLarge.w,
-        vertical: AppSizes.paddingXl.h,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.getPrimary(isDark),
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppSizes.radiusSemiRound.r),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.getShadow(isDark),
-            blurRadius: AppSizes.cardElevationHigh,
-            offset: Offset(0, -2.h),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use constraints for fine-tuned responsiveness within the available space
+        final maxWidth = constraints.maxWidth;
+        final isNarrow =
+            maxWidth <
+            400; // Additional check for very narrow screens (e.g., mobile portrait)
+
+        return Container(
+          width: double.infinity, // Ensure full width
+          constraints: BoxConstraints(
+            minHeight:
+                ResponsiveUtil.getButtonHeight(context) *
+                2.5, // Minimum height for visibility
+            maxHeight: constraints.maxHeight > 0
+                ? constraints.maxHeight
+                : double.infinity,
           ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Title
-            AnimatedOpacity(
-              opacity: 1.0,
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                title,
-                style: AppTextStyles.headingLarge(isDark: false).copyWith(
-                  fontSize: AppSizes.fontXxxl.sp,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.start,
-                semanticsLabel: title,
+          padding: ResponsiveUtil.getResponsiveVerticalPadding(context)
+              .copyWith(
+                left: ResponsiveUtil.getPadding(context) * 1.5,
+                right: ResponsiveUtil.getPadding(context) * 1.5,
+              ),
+          decoration: BoxDecoration(
+            color: AppColors.getPrimary(isDark),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(
+                ResponsiveUtil.getBorderRadius(context, baseRadius: 20.0),
               ),
             ),
-            SizedBox(height: AppSizes.spacingMaxl.h),
-
-            // Subtitle
-            AnimatedOpacity(
-              opacity: 1.0,
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                subtitle,
-                style: AppTextStyles.bodyMedium(isDark: false).copyWith(
-                  fontSize: AppSizes.fontMedium.sp,
-                  color: Colors.white.withOpacity(0.85),
-                  height: 1.4,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.getShadow(isDark),
+                blurRadius: ResponsiveUtil.getElevation(
+                  context,
+                  baseElevation: 8.0,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                semanticsLabel: subtitle,
+                offset: const Offset(0, -2),
               ),
-            ),
-            SizedBox(height: AppSizes.spacingXl.h),
-
-            // Navigation controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Skip button
-                Semantics(
-                  label: 'Skip onboarding',
-                  child: TextButton(
-                    onPressed: () => _skip(context),
-                    style: TextButton.styleFrom(
-                      minimumSize: Size(
-                        AppSizes.buttonHeightSmall.w,
-                        AppSizes.buttonHeightSmall.h,
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.paddingMedium.w,
-                        vertical: AppSizes.paddingSmall.h,
-                      ),
-                      foregroundColor: Colors.white.withOpacity(0.9),
-                    ),
-                    child: Text(
-                      'Skip',
-                      style: AppTextStyles.labelLarge(isDark: false).copyWith(
-                        fontSize: AppSizes.fontMedium.sp,
-                        color: Colors.white.withOpacity(0.75),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Page indicator
-                SmoothPageIndicator(
-                  controller: controller,
-                  count: totalPages,
-                  effect: WormEffect(
-                    dotWidth: AppSizes.dotIndicatorActiveWidth.w,
-                    dotHeight: AppSizes.dotIndicatorHeight.h,
-                    spacing: AppSizes.dotIndicatorSpacing.w,
-                    activeDotColor: Colors.white,
-                    dotColor: Colors.white.withOpacity(0.4),
-                    strokeWidth: 1.5,
-                  ),
-                ),
-
-                // Next/Get Started button
-                Semantics(
-                  label: currentPage == totalPages - 1
-                      ? 'Get started'
-                      : 'Next page',
-                  child: TextButton(
-                    onPressed: () => _nextPage(context, ref),
-                    style: TextButton.styleFrom(
-                      minimumSize: Size(
-                        AppSizes.buttonHeightSmall.w,
-                        AppSizes.buttonHeightSmall.h,
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.paddingMedium.w,
-                        vertical: AppSizes.paddingSmall.h,
-                      ),
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.white.withOpacity(0.15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusRound.r,
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            bottom: true, // Ensure bottom safe area on mobile
+            child: IntrinsicHeight(
+              // Use IntrinsicHeight to size based on children
+              child: Padding(
+                padding: EdgeInsets.only(top: spacing, bottom: spacing * 0.5),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Title - Adjust alignment and size based on width
+                    Expanded(
+                      // Allow title to take space but not overflow
+                      flex: 2,
+                      child: AnimatedOpacity(
+                        opacity: 1.0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isNarrow ? spacing : spacing * 0.5,
+                          ),
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: (32.0 * fontMultiplier).clamp(
+                                20.0,
+                                36.0,
+                              ), // Adjusted clamp for mobile
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: isNarrow
+                                ? TextAlign.center
+                                : TextAlign.start,
+                            maxLines: isNarrow ? 2 : 1,
+                            overflow: TextOverflow.ellipsis,
+                            semanticsLabel: title,
+                          ),
                         ),
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          currentPage == totalPages - 1
-                              ? 'Get Started'
-                              : 'Next',
-                          style: AppTextStyles.labelLarge(isDark: false)
-                              .copyWith(
-                                fontSize: AppSizes.fontMedium.sp,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                    SizedBox(height: spacing * 0.5),
+
+                    // Subtitle - Center and clamp lines for narrow screens
+                    Expanded(
+                      flex: 1,
+                      child: AnimatedOpacity(
+                        opacity: 1.0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: spacing),
+                          child: Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: (16.0 * fontMultiplier).clamp(
+                                12.0,
+                                18.0,
                               ),
+                              color: Colors.white.withOpacity(0.85),
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: isNarrow ? 1 : 2,
+                            overflow: TextOverflow.ellipsis,
+                            semanticsLabel: subtitle,
+                          ),
                         ),
-                        SizedBox(width: AppSizes.spacingXs.w),
-                        Icon(
-                          currentPage == totalPages - 1
-                              ? Icons.check_rounded
-                              : Icons.arrow_forward_rounded,
-                          size: AppSizes.iconSmall.sp,
-                          color: Colors.white,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    SizedBox(height: spacing * 0.25),
+
+                    // Navigation controls - Flexible row without scroll
+                    Expanded(
+                      flex: 2,
+                      child: Row(
+                        children: [
+                          // Skip button - Expanded for flexibility
+                          Expanded(
+                            flex: 1,
+                            child: Semantics(
+                              label: 'Skip onboarding',
+                              child: TextButton(
+                                onPressed: () => _skip(context),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: spacing * 0.25,
+                                    vertical: spacing * 0.125,
+                                  ),
+                                  foregroundColor: Colors.white.withOpacity(
+                                    0.9,
+                                  ),
+                                  minimumSize: const Size(
+                                    0,
+                                    32,
+                                  ), // Allow shrink
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'Skip',
+                                  style: TextStyle(
+                                    fontSize: (14.0 * fontMultiplier).clamp(
+                                      12.0,
+                                      16.0,
+                                    ),
+                                    color: Colors.white.withOpacity(0.75),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Page indicator - Fixed width, centered
+                          const Spacer(),
+                          SizedBox(
+                            width: (maxWidth * 0.2).clamp(
+                              80.0,
+                              200.0,
+                            ), // Responsive width
+                            child: SmoothPageIndicator(
+                              controller: controller,
+                              count: totalPages,
+                              effect: WormEffect(
+                                dotWidth: (12.0 * fontMultiplier).clamp(
+                                  6.0,
+                                  14.0,
+                                ),
+                                dotHeight: (8.0 * fontMultiplier).clamp(
+                                  4.0,
+                                  10.0,
+                                ),
+                                spacing: (6.0 * fontMultiplier).clamp(3.0, 8.0),
+                                activeDotColor: Colors.white,
+                                dotColor: Colors.white.withOpacity(0.4),
+                                strokeWidth: 1.0,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+
+                          // Next/Get Started button - Expanded for flexibility
+                          Expanded(
+                            flex: 1,
+                            child: Semantics(
+                              label: currentPage == totalPages - 1
+                                  ? 'Get started'
+                                  : 'Next page',
+                              child: TextButton(
+                                onPressed: () => _nextPage(context, ref),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: spacing * 0.25,
+                                    vertical: spacing * 0.125,
+                                  ),
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.15,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      ResponsiveUtil.getBorderRadius(context),
+                                    ),
+                                  ),
+                                  minimumSize: const Size(0, 32),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        currentPage == totalPages - 1
+                                            ? 'Get Started'
+                                            : 'Next',
+                                        style: TextStyle(
+                                          fontSize: (14.0 * fontMultiplier)
+                                              .clamp(12.0, 16.0),
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (!isNarrow) ...[
+                                      // Hide icon on very narrow to save space
+                                      SizedBox(width: spacing * 0.125),
+                                      Icon(
+                                        currentPage == totalPages - 1
+                                            ? Icons.check_rounded
+                                            : Icons.arrow_forward_rounded,
+                                        size: (18.0 * fontMultiplier).clamp(
+                                          14.0,
+                                          20.0,
+                                        ),
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

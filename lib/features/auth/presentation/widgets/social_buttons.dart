@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
@@ -27,16 +26,16 @@ class SocialButtons extends ConsumerWidget {
           message,
           style: AppTextStyles.bodyMedium(
             isDark: true,
-          ).copyWith(fontSize: AppSizes.fontMedium.sp, color: Colors.white),
+          ).copyWith(fontSize: AppSizes.fontMedium, color: Colors.white),
         ),
         backgroundColor: isError
             ? AppColors.getError(isDark)
             : AppColors.getSuccess(isDark),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXxl.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
         ),
-        margin: EdgeInsets.all(AppSizes.paddingLarge.w),
+        margin: EdgeInsets.all(AppSizes.paddingLarge),
       ),
     );
   }
@@ -51,13 +50,13 @@ class SocialButtons extends ConsumerWidget {
       children: [
         // Google Sign-In Button
         SizedBox(
-          width: 320.w,
+          width: 320,
           child: Material(
             elevation: AppSizes.cardElevationMedium,
-            borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
             shadowColor: AppColors.getShadow(isDark),
             child: InkWell(
-              borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
               onTap: authState.isLoading
                   ? null
                   : () async {
@@ -82,11 +81,11 @@ class SocialButtons extends ConsumerWidget {
                     },
               child: Container(
                 padding: EdgeInsets.symmetric(
-                  vertical: AppSizes.paddingMedium.h,
-                  horizontal: AppSizes.paddingLarge.w,
+                  vertical: AppSizes.paddingMedium,
+                  horizontal: AppSizes.paddingLarge,
                 ),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
                   color: AppColors.getCard(isDark),
                   border: Border.all(
                     color: AppColors.getBorder(isDark).withOpacity(0.3),
@@ -103,14 +102,14 @@ class SocialButtons extends ConsumerWidget {
                             FaIcon(
                               FontAwesomeIcons.google,
                               color: AppColors.getTextSecondary(isDark),
-                              size: AppSizes.iconMedium.sp,
+                              size: AppSizes.iconMedium,
                             ),
-                            SizedBox(width: AppSizes.spacingLarge.w),
+                            SizedBox(width: AppSizes.spacingLarge),
                             Text(
                               "Continue with Google",
                               style: AppTextStyles.labelLarge(isDark: isDark)
                                   .copyWith(
-                                    fontSize: AppSizes.fontMedium.sp,
+                                    fontSize: AppSizes.fontMedium,
                                     fontWeight: FontWeight.w500,
                                   ),
                             ),
@@ -123,14 +122,14 @@ class SocialButtons extends ConsumerWidget {
                           FaIcon(
                             FontAwesomeIcons.google,
                             color: AppColors.error,
-                            size: AppSizes.iconMedium.sp,
+                            size: AppSizes.iconMedium,
                           ),
-                          SizedBox(width: AppSizes.spacingLarge.w),
+                          SizedBox(width: AppSizes.spacingLarge),
                           Text(
                             "Continue with Google",
                             style: AppTextStyles.labelLarge(isDark: isDark)
                                 .copyWith(
-                                  fontSize: AppSizes.fontMedium.sp,
+                                  fontSize: AppSizes.fontMedium,
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -140,25 +139,25 @@ class SocialButtons extends ConsumerWidget {
             ),
           ),
         ),
-        SizedBox(height: AppSizes.spacingXl.h),
+        SizedBox(height: AppSizes.spacingXl),
 
         // Phone Sign-In Button
         SizedBox(
-          width: 320.w,
+          width: 320,
           child: Material(
             elevation: AppSizes.cardElevationMedium,
-            borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
             shadowColor: AppColors.getShadow(isDark),
             child: InkWell(
-              borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               onTap: () => context.push('/phone'),
               child: Container(
                 padding: EdgeInsets.symmetric(
-                  vertical: AppSizes.paddingMedium.h,
-                  horizontal: AppSizes.paddingLarge.w,
+                  vertical: AppSizes.paddingMedium,
+                  horizontal: AppSizes.paddingLarge,
                 ),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
                   color: AppColors.getCard(isDark),
                   border: Border.all(
                     color: AppColors.getBorder(isDark).withOpacity(0.3),
@@ -171,13 +170,13 @@ class SocialButtons extends ConsumerWidget {
                     Icon(
                       Icons.phone_rounded,
                       color: AppColors.getPrimary(isDark),
-                      size: AppSizes.iconMedium.sp,
+                      size: AppSizes.iconMedium,
                     ),
-                    SizedBox(width: AppSizes.spacingLarge.w),
+                    SizedBox(width: AppSizes.spacingLarge),
                     Text(
                       "Continue with Phone",
                       style: AppTextStyles.labelLarge(isDark: isDark).copyWith(
-                        fontSize: AppSizes.fontMedium.sp,
+                        fontSize: AppSizes.fontMedium,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

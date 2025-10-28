@@ -1,3 +1,4 @@
+import 'package:sync_event/features/wallet/data/models/wallet_model.dart';
 import 'package:sync_event/features/wallet/domain/entities/wallet_entity.dart';
 
 class WalletModel extends WalletEntity {

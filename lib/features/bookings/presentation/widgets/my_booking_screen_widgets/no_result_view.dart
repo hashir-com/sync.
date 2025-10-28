@@ -26,19 +26,32 @@ class NoResultsView extends ConsumerWidget {
               size: AppSizes.getIconSize(context, baseSize: AppSizes.iconLarge),
               color: AppColors.getTextSecondary(isDark),
             ),
-            SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingSmall)),
+            SizedBox(
+              height: AppSizes.getHeightSpacing(
+                context,
+                baseSpacing: AppSizes.spacingSmall,
+              ),
+            ),
             Text(
               'No bookings match your filters',
               style: AppTextStyles.bodyMedium(isDark: isDark),
               textAlign: TextAlign.center,
             ),
             if (filterState.hasActiveFilters) ...[
-              SizedBox(height: AppSizes.getHeightSpacing(context, baseSpacing: AppSizes.spacingSmall)),
+              SizedBox(
+                height: AppSizes.getHeightSpacing(
+                  context,
+                  baseSpacing: AppSizes.spacingSmall,
+                ),
+              ),
               TextButton(
-                onPressed: () => ref.read(bookingsFilterProvider.notifier).clearFilters(),
+                onPressed: () =>
+                    ref.read(bookingsFilterProvider.notifier).clearFilters(),
                 child: Text(
                   'Clear Filters',
-                  style: AppTextStyles.bodySmall(isDark: isDark).copyWith(color: AppColors.getPrimary(isDark)),
+                  style: AppTextStyles.bodySmall(
+                    isDark: isDark,
+                  ).copyWith(color: AppColors.getPrimary(isDark)),
                 ),
               ),
             ],
