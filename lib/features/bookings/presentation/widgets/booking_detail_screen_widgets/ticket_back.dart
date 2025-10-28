@@ -72,6 +72,7 @@ class TicketBack extends StatelessWidget {
                       'Time',
                       DateFormat('h:mm a').format(booking.startTime),
                       isDark,
+                      makeValueWhite: true,
                     ),
                     SizedBox(height: 8),
                     _buildDetailItem(
@@ -117,6 +118,7 @@ class TicketBack extends StatelessWidget {
     String value,
     bool isDark, {
     bool highlight = false,
+    bool makeValueWhite = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -129,7 +131,9 @@ class TicketBack extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: highlight
+            color: makeValueWhite
+                ? Colors.white
+                : highlight
                 ? AppColors.getPrimary(isDark)
                 : (isDark ? Colors.white : Colors.black87),
             fontSize: highlight ? 14 : 12,
