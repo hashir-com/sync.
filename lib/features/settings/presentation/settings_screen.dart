@@ -53,7 +53,7 @@ class SettingsScreen extends ConsumerWidget {
               isDark,
               Icons.person_outline_rounded,
               'Account Settings',
-              '/account-settings', // placeholder route
+              '/profile', // placeholder route
             ),
             _buildThemeSwitcher(context, ref, isDark),
 
@@ -68,14 +68,14 @@ class SettingsScreen extends ConsumerWidget {
               isDark,
               Icons.help_outline,
               'Help & FAQ',
-              '/help', // placeholder route
+              '/help-faq', // placeholder route
             ),
             _buildSimpleTile(
               context,
               isDark,
               Icons.mail_outline_rounded,
               'Contact Us',
-              '/contact', // placeholder route
+              '/contact-us', // placeholder route
             ),
 
             SizedBox(height: AppSizes.spacingXxl),
@@ -89,14 +89,14 @@ class SettingsScreen extends ConsumerWidget {
               isDark,
               Icons.privacy_tip_outlined,
               'Privacy & Security',
-              '/privacy', // placeholder route
+              '/privacy-security', // placeholder route
             ),
             _buildSimpleTile(
               context,
               isDark,
               Icons.description_outlined,
               'Terms & Conditions',
-              '/terms', // placeholder route
+              '/terms-conditions', // placeholder route
             ),
             _buildSimpleTile(
               context,

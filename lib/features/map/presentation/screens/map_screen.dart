@@ -7,7 +7,7 @@ import 'package:flutter/gestures.dart'
         OneSequenceGestureRecognizer,
         EagerGestureRecognizer; // Gestures for Factory, etc.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter/scheduler.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sync_event/features/map/domain/services/location_service.dart';
 import 'package:sync_event/features/map/presentation/widgets/event_card.dart';
@@ -123,46 +123,98 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   // BuildMap: Render Google Map with markers
-  Widget _buildMap(AsyncValue eventsAsync) {
-    return eventsAsync.when(
-      data: (events) {
-        print('MapScreen: Rendering map with ${events.length} events');
-        return GoogleMap(
-          mapToolbarEnabled: false,
-          zoomControlsEnabled: false,
-          mapType: MapType.hybrid,
-          initialCameraPosition: _getInitialCameraPosition(events),
-          markers: ref.watch(markerStateProvider),
-          // Web: Add gesture recognizers to prevent conflicts with overlays
-          gestureRecognizers: kIsWeb
-              ? <Factory<OneSequenceGestureRecognizer>>{
-                  Factory<OneSequenceGestureRecognizer>(
-                    () => EagerGestureRecognizer(),
-                  ),
-                }.toSet()
-              : <
-                  Factory<OneSequenceGestureRecognizer>
-                >{}, // Fixed: Empty set instead of null for non-web
-          onMapCreated: (controller) {
-            ref.read(mapControllerProvider.notifier).state = controller;
-            print('MapScreen: Map created');
-            // Web: Avoid setMapStyle (can blank map)
-            if (!kIsWeb) {
-              controller.setMapStyle(null);
+ // Add this method to your _MapScreenState class to replace _buildMap
+
+Widget _buildMap(AsyncValue eventsAsync) {
+  return eventsAsync.when(
+    data: (events) {
+      print('MapScreen: Rendering map with ${events.length} events');
+      
+      // CRITICAL: Store markers in a local variable to prevent rebuilds
+      final markers = ref.watch(markerStateProvider);
+      
+      return GoogleMap(
+        key: const ValueKey('sync_event_map'),
+        mapToolbarEnabled: false,
+        zoomControlsEnabled: false,
+        mapType: MapType.hybrid,
+        initialCameraPosition: _getInitialCameraPosition(events),
+        markers: markers,
+        
+        // CRITICAL: Prevent unnecessary rebuilds
+        myLocationButtonEnabled: false,
+        myLocationEnabled: false,
+        
+        // Web: Add gesture recognizers to prevent conflicts with overlays
+        gestureRecognizers: kIsWeb
+            ? <Factory<OneSequenceGestureRecognizer>>{
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              }.toSet()
+            : <Factory<OneSequenceGestureRecognizer>>{},
+            
+        onMapCreated: (controller) {
+          // CRITICAL: Defer state update
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref.read(mapControllerProvider.notifier).state = controller;
+              print('MapScreen: Map created');
+              
+              // Web: Avoid setMapStyle (can blank map)
+              if (!kIsWeb) {
+                controller.setMapStyle(null);
+              }
             }
-          },
-          onTap: (_) {
-            ref.read(selectedEventProvider.notifier).state = null;
-            print('MapScreen: Map tapped, cleared selected event');
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(
-        child: Text('Error: $err', style: const TextStyle(fontSize: 14)),
-      ),
-    );
-  }
+          });
+        },
+        
+        onTap: (_) {
+          // CRITICAL: Defer state update with proper null check
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref.read(selectedEventProvider.notifier).state = null;
+              print('MapScreen: Map tapped, cleared selected event');
+            }
+          });
+        },
+        
+        // CRITICAL: Add onCameraMoveStarted to prevent conflicts
+        onCameraMoveStarted: () {
+          print('MapScreen: Camera move started');
+        },
+        
+        // CRITICAL: Add onCameraIdle to ensure map is stable
+        onCameraIdle: () {
+          print('MapScreen: Camera idle');
+        },
+      );
+    },
+    loading: () => const Center(child: CircularProgressIndicator()),
+    error: (err, stack) {
+      print('MapScreen: Error loading events: $err');
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading map',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              err.toString(),
+              style: const TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   CameraPosition _getInitialCameraPosition(List<dynamic> events) {
     if (events.isNotEmpty &&

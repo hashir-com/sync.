@@ -26,6 +26,11 @@ import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/Screens/my_events.dart';
 import 'package:sync_event/features/favorites/screens/favorite_screen.dart';
 import 'package:sync_event/features/home/presentation/screen/home.dart';
+import 'package:sync_event/features/legal_settings/presentation/about_screen.dart';
+import 'package:sync_event/features/legal_settings/presentation/contact_us_screen.dart';
+import 'package:sync_event/features/legal_settings/presentation/help_faq.dart';
+import 'package:sync_event/features/legal_settings/presentation/privacy_security.dart';
+import 'package:sync_event/features/legal_settings/presentation/terms_condition_screen.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
 import 'package:sync_event/features/profile/presentation/screens/other_users_profile_screen.dart';
@@ -260,6 +265,32 @@ final GoRouter appRouter = GoRouter(
         final extra = state.extra as Map<String, dynamic>;
         return BookingConfirmationScreen(event: extra['event'] as EventEntity);
       },
+    ),
+
+    GoRoute(
+      path: '/help-faq',
+      name: 'help-faq',
+      builder: (context, state) => const HelpFaqScreen(),
+    ),
+    GoRoute(
+      path: '/contact-us',
+      name: 'contact-us',
+      builder: (context, state) => const ContactUsScreen(),
+    ),
+    GoRoute(
+      path: '/privacy-security',
+      name: 'privacy-security',
+      builder: (context, state) => const PrivacySecurityScreen(),
+    ),
+    GoRoute(
+      path: '/terms-conditions',
+      name: 'terms-conditions',
+      builder: (context, state) => const TermsConditionsScreen(),
+    ),
+    GoRoute(
+      path: '/about',
+      name: 'about',
+      builder: (context, state) => const AboutScreen(),
     ),
   ],
 );

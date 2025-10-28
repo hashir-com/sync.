@@ -6,6 +6,7 @@ import 'package:sync_event/features/auth/presentation/providers/auth_notifier.da
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/widgets/event_detail_screen_widgets/detail_section.dart';
 import 'package:sync_event/features/events/presentation/widgets/event_detail_screen_widgets/header_image.dart';
+import 'package:sync_event/widgets/error_boundary.dart';
 
 // Main screen for displaying event details
 class EventDetailScreen extends ConsumerStatefulWidget {
@@ -54,14 +55,24 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen>
       backgroundColor: AppColors.getBackground(isDark),
       body: FadeTransition(
         opacity: _fadeController,
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              HeaderImage(event: widget.event, isOrganizer: isOrganizer, isDark: isDark),
-              DetailSection(event: widget.event, isOrganizer: isOrganizer, isDark: isDark),
-            ],
+        child: ErrorBoundary(
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HeaderImage(
+                  event: widget.event,
+                  isOrganizer: isOrganizer,
+                  isDark: isDark,
+                ),
+                DetailSection(
+                  event: widget.event,
+                  isOrganizer: isOrganizer,
+                  isDark: isDark,
+                ),
+              ],
+            ),
           ),
         ),
       ),
