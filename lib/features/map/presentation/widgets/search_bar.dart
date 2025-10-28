@@ -3,7 +3,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
@@ -47,7 +47,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
           Expanded(
             child: _buildSearchField(isDark, query),
           ),
-          SizedBox(width: AppSizes.spacingMedium.w),
+          SizedBox(width: AppSizes.spacingMedium),
           _buildLocateButton(isDark),
         ],
       ),
@@ -59,13 +59,13 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         color: AppColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSemiRound),
         boxShadow: [
           BoxShadow(
             color: query.isNotEmpty
                 ? AppColors.getPrimary(isDark).withOpacity(0.3)
                 : AppColors.getShadow(isDark),
-            blurRadius: query.isNotEmpty ? 15.r : AppSizes.cardElevationMedium.r,
+            blurRadius: query.isNotEmpty ? 15: AppSizes.cardElevationMedium,
             offset: const Offset(0, 4),
             spreadRadius: query.isNotEmpty ? 2 : 0,
           ),
@@ -75,14 +75,14 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
         controller: widget.controller,
         focusNode: widget.focusNode,
         style: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
-          fontSize: AppSizes.fontLarge - 1.sp,
+          fontSize: AppSizes.fontLarge - 1,
           fontWeight: FontWeight.w500,
         ),
         cursorColor: AppColors.getPrimary(isDark),
         decoration: InputDecoration(
           hintText: 'Search events...',
           hintStyle: AppTextStyles.bodyLarge(isDark: isDark).copyWith(
-            fontSize: AppSizes.fontLarge - 1.sp,
+            fontSize: AppSizes.fontLarge - 1,
             fontWeight: FontWeight.w400,
             color: AppColors.getTextSecondary(isDark),
           ),
@@ -92,14 +92,14 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
             child: Icon(
               Icons.search,
               color: AppColors.getTextSecondary(isDark),
-              size: AppSizes.iconSmall + 2.sp,
+              size: AppSizes.iconSmall + 2,
             ),
           ),
           suffixIcon: query.isNotEmpty ? _buildClearButton(isDark) : null,
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
-            horizontal: AppSizes.paddingXl.w,
-            vertical: AppSizes.paddingLarge - 1.h,
+            horizontal: AppSizes.paddingXl,
+            vertical: AppSizes.paddingLarge - 1,
           ),
         ),
         onChanged: _onSearchChanged,
@@ -112,7 +112,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
       icon: Icon(
         Icons.clear,
         color: AppColors.getTextSecondary(isDark),
-        size: AppSizes.iconSmall + 2.sp,
+        size: AppSizes.iconSmall + 2,
       ),
       onPressed: () {
         widget.controller.clear();
@@ -131,7 +131,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
         boxShadow: [
           BoxShadow(
             color: AppColors.getPrimary(isDark).withOpacity(0.2),
-            blurRadius: AppSizes.cardElevationMedium.r,
+            blurRadius: AppSizes.cardElevationMedium,
             offset: const Offset(0, 4),
           ),
         ],
@@ -142,11 +142,11 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
           borderRadius: BorderRadius.circular(AppSizes.radiusRound),
           onTap: widget.onLocateTap,
           child: Padding(
-            padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+            padding: EdgeInsets.all(AppSizes.paddingMedium),
             child: Icon(
               Icons.my_location,
               color: AppColors.getPrimary(isDark),
-              size: AppSizes.iconMedium.sp,
+              size: AppSizes.iconMedium,
             ),
           ),
         ),

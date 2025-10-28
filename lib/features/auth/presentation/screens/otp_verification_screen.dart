@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import '../providers/phone_auth.dart';
 
@@ -76,7 +75,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               children: [
                 // Top-left text
                 Padding(
-                  padding: EdgeInsets.only(left: 32.w, top: 16.h),
+                  padding: EdgeInsets.only(left: 32, top: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -84,14 +83,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         "Verification",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 28.sp,
+                          fontSize: 28,
                         ),
                       ),
-                      SizedBox(height: 15.h),
+                      SizedBox(height: 15),
                       Text(
                         'OTP sent to +91${widget.phoneNumber}',
                         style: TextStyle(
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           color: Colors.black54,
                         ),
                       ),
@@ -112,15 +111,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             (index) => _buildOtpBox(index),
                           ),
                         ),
-                        SizedBox(height: 30.h),
+                        SizedBox(height: 30),
                         SizedBox(
-                          width: 200.w,
-                          height: 60.h,
+                          width: 200,
+                          height: 60,
                           child: ElevatedButton(
                             onPressed: authState.loading ? null : _submitOtp,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               elevation: 3,
                               backgroundColor: Theme.of(context).primaryColor,
@@ -133,7 +132,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     child: Text(
                                       'Verifying',
                                       style: TextStyle(
-                                        fontSize: 16.sp,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                       ),
@@ -142,7 +141,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                 : Text(
                                     'Verify OTP',
                                     style: TextStyle(
-                                      fontSize: 16.sp,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
                                     ),

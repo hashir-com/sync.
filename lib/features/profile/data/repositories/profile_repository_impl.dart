@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:sync_event/core/error/exceptions.dart';
@@ -26,9 +27,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       try {
         final profileData = await remoteDataSource.getUserProfile(uid);
         final profileEntity = ProfileModel.fromJson(profileData);
-        await localDataSource.cacheProfileData(
-          profileEntity.toJson().toString(),
-        );
+        await localDataSource.cacheProfileData(profileEntity.toJson());
         return Right(profileEntity);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message));
@@ -36,15 +35,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
         return Left(UnknownFailure(message: e.toString()));
       }
     } else {
-      // Try to get cached data
       try {
         final cachedData = await localDataSource.getCachedProfileData();
         if (cachedData != null) {
-          // Parse cached data and return
-          // This would need proper JSON parsing implementation
-          return const Left(CacheFailure(message: 'No cached data available'));
+          return Right(ProfileModel.fromJson(cachedData));
         }
-        return const Left(NetworkFailure(message: 'No internet connection'));
+        return const Left(CacheFailure(message: 'No cached data available'));
       } catch (e) {
         return Left(CacheFailure(message: e.toString()));
       }
@@ -59,12 +55,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.updateUserProfile(uid, data);
-        // Get updated profile
         final profileData = await remoteDataSource.getUserProfile(uid);
         final profileEntity = ProfileModel.fromJson(profileData);
-        await localDataSource.cacheProfileData(
-          profileEntity.toJson().toString(),
-        );
+        await localDataSource.cacheProfileData(profileEntity.toJson());
         return Right(profileEntity);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message));

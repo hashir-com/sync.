@@ -40,9 +40,10 @@ class BookTicketUseCase {
       startTime: booking.startTime,
       endTime: booking.endTime,
       userEmail: booking.userEmail,
+      paymentMethod: booking.paymentMethod, // CRITICAL FIX: This was missing!
     );
 
-    print('BookTicketUseCase: Booking with id=${booking.id}, userId=$userId');
+    print('BookTicketUseCase: Booking with id=${booking.id}, userId=$userId, paymentMethod=${booking.paymentMethod}');
     return await repository.bookTicket(bookingWithUserId);
   }
 }

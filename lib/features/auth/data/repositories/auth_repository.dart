@@ -54,6 +54,8 @@ class AuthRepositoryImpl implements AuthRepository {
             'email': email,
             'name': name,
             'image': imageUrl,
+            'nameLower': name.toLowerCase(), 
+            'emailLower': email.toLowerCase(),
             'createdAt': FieldValue.serverTimestamp(),
           });
 
@@ -119,61 +121,68 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
- @override
-Future<Either<Failure, UserEntity>> signInWithGoogle(
-  bool forceAccountChooser,
-) async {
-  if (await networkInfo.isConnected) {
-    try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      if (forceAccountChooser) {
-        await googleSignIn.signOut(); // Forces account chooser on next sign-in
-      }
-
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        return const Left(AuthFailure(message: 'Google Sign-In cancelled'));
-      }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        // Check if user exists in Firestore; create if not
-        final userDoc = await firestore.collection('users').doc(user.uid).get();
-        if (!userDoc.exists) {
-          await firestore.collection('users').doc(user.uid).set({
-            'uid': user.uid,
-            'email': user.email,
-            'name': user.displayName ?? 'Anonymous',
-            'image': user.photoURL,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+  @override
+  Future<Either<Failure, UserEntity>> signInWithGoogle(
+    bool forceAccountChooser,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final GoogleSignIn googleSignIn = GoogleSignIn();
+        if (forceAccountChooser) {
+          await googleSignIn
+              .signOut(); // Forces account chooser on next sign-in
         }
 
-        final userEntity = UserModel.fromFirebase(user);
-        await localDataSource.cacheUserData(userEntity.toJson().toString());
-        return Right(userEntity);
-      }
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          return const Left(AuthFailure(message: 'Google Sign-In cancelled'));
+        }
 
-      return const Left(AuthFailure(message: 'Google Sign-In failed'));
-    } on FirebaseAuthException catch (e) {
-      return Left(AuthFailure(message: _mapFirebaseAuthException(e)));
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      return Left(UnknownFailure(message: e.toString()));
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        final UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithCredential(credential);
+        final User? user = userCredential.user;
+
+        if (user != null) {
+          // Check if user exists in Firestore; create if not
+          final userDoc = await firestore
+              .collection('users')
+              .doc(user.uid)
+              .get();
+          if (!userDoc.exists) {
+            await firestore.collection('users').doc(user.uid).set({
+              'uid': user.uid,
+              'email': user.email,
+              'name': user.displayName ?? 'Anonymous',
+              'image': user.photoURL,
+
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          }
+
+          final userEntity = UserModel.fromFirebase(user);
+          await localDataSource.cacheUserData(userEntity.toJson().toString());
+          return Right(userEntity);
+        }
+
+        return const Left(AuthFailure(message: 'Google Sign-In failed'));
+      } on FirebaseAuthException catch (e) {
+        return Left(AuthFailure(message: _mapFirebaseAuthException(e)));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } catch (e) {
+        return Left(UnknownFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
     }
-  } else {
-    return const Left(NetworkFailure(message: 'No internet connection'));
   }
-}
 
   @override
   Future<Either<Failure, void>> verifyPhoneNumber(
@@ -273,6 +282,4 @@ Future<Either<Failure, UserEntity>> signInWithGoogle(
         return 'Authentication failed: ${e.message ?? "An error occurred"}';
     }
   }
-
-  
 }

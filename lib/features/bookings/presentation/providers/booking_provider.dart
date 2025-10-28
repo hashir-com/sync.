@@ -162,6 +162,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
     required DateTime endTime,
     required List<String> seatNumbers,
     required String userEmail,
+    required String paymentMethod,
   }) async {
     state = const AsyncValue.loading();
 
@@ -207,6 +208,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
         startTime: startTime,
         endTime: endTime,
         userEmail: userEmail,
+        paymentMethod: paymentMethod,
       );
 
       final result = await bookTicketUseCase(booking);
@@ -218,6 +220,9 @@ class BookingNotifier extends StateNotifier<AsyncValue<BookingEntity?>> {
         (booked) {
           state = AsyncValue.data(booked);
           ref.invalidate(userBookingsProvider(booked.userId));
+          if (paymentMethod == 'wallet') {
+            ref.invalidate(walletNotifierProvider);
+          }
         },
       );
     } catch (e, stackTrace) {

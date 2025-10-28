@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/util/responsive_util.dart';
@@ -91,10 +91,10 @@ class NearbyEventsSection extends ConsumerWidget {
           }
         });
 
-        final height = ResponsiveUtil.isMobile(context) ? 240.h : 280.h;
+        final height = ResponsiveUtil.isMobile(context) ? 240 : 280;
 
         return SizedBox(
-          height: height,
+          height: height.toDouble(),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -117,7 +117,9 @@ class NearbyEventsSection extends ConsumerWidget {
 
                 return Padding(
                   padding: EdgeInsets.only(
-                    right: index == nearbyEvents.length - 1 ? 0 : AppSizes.spacingMedium,
+                    right: index == nearbyEvents.length - 1
+                        ? 0
+                        : AppSizes.spacingMedium,
                   ),
                   child: NearbySmallEventCard(
                     event: event,
@@ -125,8 +127,14 @@ class NearbyEventsSection extends ConsumerWidget {
                     distanceKm: distanceKm,
                     isFavorite: isFavorite,
                     onFavoriteTap: () {
-                      ref.read(favoritesProvider.notifier).toggleFavorite(event.id ?? '');
-                      showFavoriteSnackbarSafe(context, isFavorite, event.title ?? 'Event');
+                      ref
+                          .read(favoritesProvider.notifier)
+                          .toggleFavorite(event.id ?? '');
+                      showFavoriteSnackbarSafe(
+                        context,
+                        isFavorite,
+                        event.title ?? 'Event',
+                      );
                     },
                     onTap: () => context.push('/event-detail', extra: event),
                   ),

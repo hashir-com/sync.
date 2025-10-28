@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/features/favorites/providers/favorites_provider.dart';
@@ -19,7 +19,8 @@ class PopularEventsBanner extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PopularEventsBanner> createState() => _PopularEventsBannerState();
+  ConsumerState<PopularEventsBanner> createState() =>
+      _PopularEventsBannerState();
 }
 
 class _PopularEventsBannerState extends ConsumerState<PopularEventsBanner> {
@@ -45,10 +46,10 @@ class _PopularEventsBannerState extends ConsumerState<PopularEventsBanner> {
       return const SizedBox.shrink();
     }
 
-    final height = ResponsiveUtil.isMobile(context) ? 220.h : 260.h;
+    final height = ResponsiveUtil.isMobile(context) ? 220 : 260;
 
     return SizedBox(
-      height: height,
+      height: height.toDouble(),
       child: PageView.builder(
         controller: _pageController,
         onPageChanged: (_) {},
@@ -69,8 +70,14 @@ class _PopularEventsBannerState extends ConsumerState<PopularEventsBanner> {
               isDark: widget.isDark,
               isFavorite: isFavorite,
               onFavoriteTap: () {
-                ref.read(favoritesProvider.notifier).toggleFavorite(event.id ?? '');
-                showFavoriteSnackbarSafe(context, isFavorite, event.title ?? 'Event');
+                ref
+                    .read(favoritesProvider.notifier)
+                    .toggleFavorite(event.id ?? '');
+                showFavoriteSnackbarSafe(
+                  context,
+                  isFavorite,
+                  event.title ?? 'Event',
+                );
               },
               onTap: () => context.push('/event-detail', extra: event),
             ),

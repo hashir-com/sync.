@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -34,11 +34,11 @@ class EventDetailCard extends ConsumerWidget {
         );
       },
       child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingXl.w),
+        padding: EdgeInsets.all(AppSizes.paddingXl),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.getCard(isDark),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXxl.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
             boxShadow: [
               BoxShadow(
                 color: AppColors.getShadow(isDark),
@@ -48,15 +48,15 @@ class EventDetailCard extends ConsumerWidget {
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.all(AppSizes.cardPadding.w),
+            padding: EdgeInsets.all(AppSizes.cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildHeader(isDark, ref),
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
                 _buildDescription(isDark),
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
                 _buildFooter(isDark, context, ref),
               ],
             ),
@@ -74,7 +74,7 @@ class EventDetailCard extends ConsumerWidget {
           tag: event.id,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.getShadow(isDark),
@@ -83,22 +83,22 @@ class EventDetailCard extends ConsumerWidget {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
               child: Image.network(
                 event.imageUrl ?? 'https://via.placeholder.com/80',
-                width: AppSizes.imageSmall.w,
-                height: AppSizes.imageSmall.h,
+                width: AppSizes.imageSmall,
+                height: AppSizes.imageSmall,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Icon(
                   Icons.event_rounded,
-                  size: AppSizes.imageSmall.sp,
+                  size: AppSizes.imageSmall,
                   color: AppColors.getTextSecondary(isDark),
                 ),
               ),
             ),
           ),
         ),
-        SizedBox(width: AppSizes.spacingXxl.w),
+        SizedBox(width: AppSizes.spacingXxl),
         Expanded(child: _buildEventTitle(isDark)),
         _buildCloseButton(isDark, ref),
       ],
@@ -113,17 +113,17 @@ class EventDetailCard extends ConsumerWidget {
         Text(
           event.title,
           style: AppTextStyles.titleMedium(isDark: isDark).copyWith(
-            fontSize: AppSizes.fontLarge.sp,
+            fontSize: AppSizes.fontLarge,
             fontWeight: FontWeight.w600,
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        SizedBox(height: AppSizes.spacingSmall.h),
+        SizedBox(height: AppSizes.spacingSmall),
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.chipPaddingHorizontal.w,
-            vertical: AppSizes.chipPaddingVertical.h,
+            horizontal: AppSizes.chipPaddingHorizontal,
+            vertical: AppSizes.chipPaddingVertical,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -132,12 +132,12 @@ class EventDetailCard extends ConsumerWidget {
                 AppColors.getPrimary(isDark).withOpacity(0.2),
               ],
             ),
-            borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           ),
           child: Text(
             event.category,
             style: AppTextStyles.labelSmall(isDark: isDark).copyWith(
-              fontSize: AppSizes.fontSmall.sp,
+              fontSize: AppSizes.fontSmall,
               color: AppColors.getPrimary(isDark),
               fontWeight: FontWeight.w600,
             ),
@@ -152,7 +152,7 @@ class EventDetailCard extends ConsumerWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppSizes.radiusRound.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusRound),
         onTap: () {
           print(
             'EventDetailCard: Close button tapped for event ${event.title}, id=${event.id}',
@@ -162,10 +162,10 @@ class EventDetailCard extends ConsumerWidget {
         },
         splashColor: AppColors.getPrimary(isDark).withOpacity(0.2),
         child: Container(
-          padding: EdgeInsets.all(AppSizes.paddingSmall.w),
+          padding: EdgeInsets.all(AppSizes.paddingSmall),
           child: Icon(
             Icons.close_rounded,
-            size: AppSizes.iconSmall.sp,
+            size: AppSizes.iconSmall,
             color: AppColors.getTextSecondary(isDark),
           ),
         ),
@@ -176,10 +176,10 @@ class EventDetailCard extends ConsumerWidget {
   // BuildDescription: Display event description
   Widget _buildDescription(bool isDark) {
     return Container(
-      padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         border: Border.all(
           color: AppColors.getBorder(isDark),
           width: AppSizes.borderWidthThin,
@@ -187,10 +187,9 @@ class EventDetailCard extends ConsumerWidget {
       ),
       child: Text(
         event.description,
-        style: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-          fontSize: AppSizes.fontSmall.sp,
-          height: 1.4,
-        ),
+        style: AppTextStyles.bodySmall(
+          isDark: isDark,
+        ).copyWith(fontSize: AppSizes.fontSmall, height: 1.4),
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
       ),
@@ -212,12 +211,12 @@ class EventDetailCard extends ConsumerWidget {
   Widget _buildAttendeeInfo(bool isDark) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingMedium.w,
-        vertical: AppSizes.paddingSmall.h,
+        horizontal: AppSizes.paddingMedium,
+        vertical: AppSizes.paddingSmall,
       ),
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         border: Border.all(
           color: AppColors.getBorder(isDark).withOpacity(0.5),
           width: AppSizes.borderWidthThin,
@@ -227,14 +226,14 @@ class EventDetailCard extends ConsumerWidget {
         children: [
           Icon(
             Icons.people_rounded,
-            size: AppSizes.iconSmall.sp,
+            size: AppSizes.iconSmall,
             color: AppColors.getTextSecondary(isDark),
           ),
-          SizedBox(width: AppSizes.spacingSmall.w),
+          SizedBox(width: AppSizes.spacingSmall),
           Text(
             '${event.attendees.length}/${event.maxAttendees}',
             style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
-              fontSize: AppSizes.fontSmall.sp,
+              fontSize: AppSizes.fontSmall,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -252,19 +251,19 @@ class EventDetailCard extends ConsumerWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppSizes.radiusXl.r),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXl),
         onTap: () {
           context.push('/event-detail', extra: event);
           print('EventDetailCard: Navigated to details for ${event.title}');
         },
         child: Container(
           padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.paddingXl.w,
-            vertical: AppSizes.paddingMedium.h,
+            horizontal: AppSizes.paddingXl,
+            vertical: AppSizes.paddingMedium,
           ),
           decoration: BoxDecoration(
             color: AppColors.getPrimary(isDark),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXl.r),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXl),
             boxShadow: [
               BoxShadow(
                 color: AppColors.getShadow(isDark),
@@ -281,14 +280,14 @@ class EventDetailCard extends ConsumerWidget {
                 style: AppTextStyles.labelLarge(isDark: false).copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: AppSizes.fontMedium.sp,
+                  fontSize: AppSizes.fontMedium,
                 ),
               ),
-              SizedBox(width: AppSizes.spacingSmall.w),
+              SizedBox(width: AppSizes.spacingSmall),
               Icon(
                 Icons.arrow_forward_rounded,
                 color: Colors.white,
-                size: AppSizes.iconSmall.sp,
+                size: AppSizes.iconSmall,
               ),
             ],
           ),

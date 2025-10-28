@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/features/favorites/providers/favorites_provider.dart';
@@ -26,10 +26,10 @@ class SmallEventCardList extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final height = ResponsiveUtil.isMobile(context) ? 240.h : 280.h;
+    final height = ResponsiveUtil.isMobile(context) ? 240 : 280;
 
     return SizedBox(
-      height: height,
+      height: height.toDouble(),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -50,8 +50,14 @@ class SmallEventCardList extends ConsumerWidget {
               isDark: isDark,
               isFavorite: isFavorite,
               onFavoriteTap: () {
-                ref.read(favoritesProvider.notifier).toggleFavorite(event.id ?? '');
-                showFavoriteSnackbarSafe(context, isFavorite, event.title ?? 'Event');
+                ref
+                    .read(favoritesProvider.notifier)
+                    .toggleFavorite(event.id ?? '');
+                showFavoriteSnackbarSafe(
+                  context,
+                  isFavorite,
+                  event.title ?? 'Event',
+                );
               },
               onTap: () => context.push('/event-detail', extra: event),
             ),

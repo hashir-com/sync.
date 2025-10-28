@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -15,8 +14,11 @@ import 'package:sync_event/features/bookings/presentation/widgets/booking_screen
 import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_price_summary_card.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_ticket_selection_card.dart';
 import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/booking_widget.dart';
+import 'package:sync_event/features/bookings/presentation/widgets/booking_screen_widgets/wallet_balance_card.dart';
 import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart';
+import 'package:sync_event/features/wallet/presentation/provider/wallet_provider.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
   final String eventId;
@@ -38,6 +40,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
+    _initializeWallet();
   }
 
   void _initializeAnimations() {
@@ -61,6 +64,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
 
     _fadeController.forward();
     _slideController.forward();
+  }
+
+  void _initializeWallet() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authNotifierProvider);
+      final user = authState.user;
+      if (user != null && user.uid.isNotEmpty) {
+        ref.read(walletNotifierProvider.notifier).fetchWallet(user.uid);
+      }
+    });
   }
 
   @override
@@ -127,27 +140,29 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         opacity: _fadeAnimation,
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium.w),
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: AppSizes.spacingMedium.h),
+                SizedBox(height: AppSizes.spacingMedium),
                 BookingEventHeaderCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingEventImageCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingEventDetailsCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingTicketSelectionCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingPriceSummaryCard(event: event, isDark: isDark),
-                SizedBox(height: AppSizes.spacingXxl.h),
+                SizedBox(height: AppSizes.spacingXxl),
+                const BookingWalletBalanceCard(),
+                SizedBox(height: AppSizes.spacingXxl),
                 BookingPaymentSection(
                   event: event,
                   isDark: isDark,
                   bookingState: bookingState,
                 ),
-                SizedBox(height: AppSizes.paddingXl.h),
+                SizedBox(height: AppSizes.paddingXl),
               ],
             ),
           ),

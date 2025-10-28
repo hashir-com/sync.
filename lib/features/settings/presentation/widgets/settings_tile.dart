@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_sizes.dart';
 
 class SettingsTile extends StatelessWidget {
@@ -21,16 +21,13 @@ class SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(
-        icon,
-        size: AppSizes.iconMedium.sp,
-      ),
+      leading: Icon(icon, size: AppSizes.iconMedium),
       title: Text(label),
       trailing: trailing,
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingMedium.w,
-        vertical: AppSizes.paddingSmall.h,
+        horizontal: AppSizes.paddingMedium,
+        vertical: AppSizes.paddingSmall,
       ),
     );
   }

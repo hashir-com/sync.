@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sync_event/features/map/data/cache/marker_cache.dart';
@@ -10,16 +11,11 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
   final Ref ref;
 
   MarkerStateNotifier(this.buildMarkersUseCase, this.ref)
-    : super(MarkerCache.markers);
+      : super(MarkerCache.markers);
 
   Future<void> buildMarkers(List<EventEntity> events) async {
     print('MarkerStateNotifier: Building markers for ${events.length} events');
-    for (var event in events) {
-      print(
-        'MarkerStateNotifier: Event ${event.title}: id=${event.id}, lat=${event.latitude}, lng=${event.longitude}, status=${event.status}',
-      );
-    }
-
+    
     if (ref.read(isLoadingMarkersProvider)) {
       print('MarkerStateNotifier: Skipped due to loading');
       return;
@@ -32,35 +28,65 @@ class MarkerStateNotifier extends StateNotifier<Set<Marker>> {
         events,
         (event) => _onMarkerTap(event),
         onBatchUpdated: (updated) {
-          print(
-            'MarkerStateNotifier: Batch updated with ${updated.length} markers',
-          );
-          state = updated;
+          // CRITICAL: Use addPostFrameCallback for batch updates too
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              print('MarkerStateNotifier: Batch updated with ${updated.length} markers');
+              state = updated;
+            }
+          });
         },
       );
-      print('MarkerStateNotifier: Built ${markers.length} markers');
-      state = markers;
+      
+      // CRITICAL: Defer final state update
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          print('MarkerStateNotifier: Built ${markers.length} markers');
+          state = markers;
+        }
+      });
     } catch (e) {
       print('MarkerStateNotifier: Error building markers: $e');
     } finally {
-      ref.read(isLoadingMarkersProvider.notifier).state = false;
+      // CRITICAL: Defer loading state update
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(isLoadingMarkersProvider.notifier).state = false;
+        }
+      });
     }
   }
 
   void _onMarkerTap(EventEntity event) {
     print('MarkerStateNotifier: Tapped marker for ${event.title}');
-    ref.read(selectedEventProvider.notifier).state = event;
-    ref
-        .read(mapControllerProvider.notifier)
-        .state
-        ?.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(event.latitude!, event.longitude!),
-              zoom: 15,
-              tilt: 60,
+    
+    // CRITICAL FIX: Defer ALL state updates until after the current frame
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      try {
+        // Update selected event
+        ref.read(selectedEventProvider.notifier).state = event;
+        
+        // Animate camera with null check
+        final controller = ref.read(mapControllerProvider.notifier).state;
+        if (controller != null && 
+            event.latitude != null && 
+            event.longitude != null) {
+          controller.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: LatLng(event.latitude!, event.longitude!),
+                zoom: 15,
+                tilt: 60,
+              ),
             ),
-          ),
-        );
+          );
+          print('MarkerStateNotifier: Camera animated to ${event.title}');
+        }
+      } catch (e) {
+        print('MarkerStateNotifier: Error in marker tap handler: $e');
+      }
+    });
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/util/theme_util.dart';
@@ -14,9 +14,11 @@ class LoadingCard extends StatelessWidget {
     return Card(
       color: AppColors.getCard(isDark),
       elevation: AppSizes.cardElevationLow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
         child: const Center(child: CircularProgressIndicator.adaptive()),
       ),
     );

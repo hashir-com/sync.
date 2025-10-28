@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -36,7 +36,7 @@ class FavoritesScreen extends ConsumerWidget {
       body: favoriteEvents.isEmpty
           ? _buildEmptyState(context, isDark)
           : ListView.builder(
-              padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+              padding: EdgeInsets.all(AppSizes.paddingMedium),
               itemCount: favoriteEvents.length,
               itemBuilder: (context, index) {
                 final event = favoriteEvents[index];
@@ -64,12 +64,12 @@ class FavoritesScreen extends ConsumerWidget {
   Widget _buildEmptyState(BuildContext context, bool isDark) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingXxl.w),
+        padding: EdgeInsets.all(AppSizes.paddingXxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(AppSizes.paddingXxl.w),
+              padding: EdgeInsets.all(AppSizes.paddingXxl),
               decoration: BoxDecoration(
                 color: AppColors.getPrimary(isDark).withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -80,14 +80,14 @@ class FavoritesScreen extends ConsumerWidget {
                 color: AppColors.getPrimary(isDark),
               ),
             ),
-            SizedBox(height: AppSizes.spacingXxl.h),
+            SizedBox(height: AppSizes.spacingXxl),
             Text(
               'No Favorites Yet',
               style: AppTextStyles.headingMedium(
                 isDark: isDark,
               ).copyWith(fontWeight: FontWeight.w700),
             ),
-            SizedBox(height: AppSizes.spacingMedium.h),
+            SizedBox(height: AppSizes.spacingMedium),
             Text(
               'Start adding events to your favorites\nby tapping the heart icon',
               style: AppTextStyles.bodyMedium(
@@ -95,20 +95,20 @@ class FavoritesScreen extends ConsumerWidget {
               ).copyWith(color: AppColors.getTextSecondary(isDark)),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: AppSizes.spacingXxl.h),
+            SizedBox(height: AppSizes.spacingXxl),
             ElevatedButton.icon(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.go('/root'),
               icon: Icon(Icons.explore_rounded),
               label: Text('Explore Events'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.getPrimary(isDark),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingXxl.w,
-                  vertical: AppSizes.paddingLarge.h,
+                  horizontal: AppSizes.paddingXxl,
+                  vertical: AppSizes.paddingLarge,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
                 ),
               ),
             ),
@@ -117,8 +117,6 @@ class FavoritesScreen extends ConsumerWidget {
       ),
     );
   }
-
-
 
   void _showFavoriteSnackbar(
     BuildContext context,
@@ -135,9 +133,9 @@ class FavoritesScreen extends ConsumerWidget {
             Icon(
               wasAdded ? Icons.favorite : Icons.favorite_border,
               color: Colors.white,
-              size: AppSizes.iconMedium.sp,
+              size: AppSizes.iconMedium,
             ),
-            SizedBox(width: AppSizes.spacingMedium.w),
+            SizedBox(width: AppSizes.spacingMedium),
             Expanded(
               child: Text(
                 wasAdded ? 'Added to favorites' : 'Removed from favorites',
@@ -151,9 +149,9 @@ class FavoritesScreen extends ConsumerWidget {
         duration: const Duration(milliseconds: 2000),
         behavior: SnackBarBehavior.floating,
         backgroundColor: wasAdded ? Colors.red : Colors.grey[700],
-        margin: EdgeInsets.all(AppSizes.paddingMedium.w),
+        margin: EdgeInsets.all(AppSizes.paddingMedium),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         ),
       ),
     );

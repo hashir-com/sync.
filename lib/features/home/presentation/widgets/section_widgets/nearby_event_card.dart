@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -37,16 +37,16 @@ class NearbySmallEventCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: ResponsiveUtil.isMobile(context) ? 140.w : 180.w,
+        width: ResponsiveUtil.isMobile(context) ? 140 : 180,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              height: ResponsiveUtil.isMobile(context) ? 160.h : 200.h,
+              height: ResponsiveUtil.isMobile(context) ? 160 : 200,
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
                     child: Container(
                       width: double.infinity,
                       height: double.infinity,
@@ -80,8 +80,8 @@ class NearbySmallEventCard extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    top: AppSizes.paddingXs,
-                    left: AppSizes.paddingXs,
+                    top: AppSizes.paddingSmall,
+                    left: AppSizes.paddingMedium,
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: AppSizes.paddingSmall,

@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
@@ -48,18 +48,26 @@ class BookingCard extends ConsumerWidget {
     return eventStream.when(
       data: (events) {
         final event = events.isNotEmpty
-            ? events.firstWhere((e) => e.id == booking.eventId, orElse: () => placeholderEvent)
+            ? events.firstWhere(
+                (e) => e.id == booking.eventId,
+                orElse: () => placeholderEvent,
+              )
             : placeholderEvent;
         return Card(
           elevation: AppSizes.cardElevationLow,
           color: AppColors.getCard(isDark),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r)),
-          margin: EdgeInsets.only(bottom: AppSizes.spacingMedium.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+          ),
+          margin: EdgeInsets.only(bottom: AppSizes.spacingMedium),
           child: InkWell(
-            borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r),
-            onTap: () => context.push('/booking-details', extra: {'booking': booking, 'event': event}),
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+            onTap: () => context.push(
+              '/booking-details',
+              extra: {'booking': booking, 'event': event},
+            ),
             child: Padding(
-              padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+              padding: EdgeInsets.all(AppSizes.paddingMedium),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -67,18 +75,31 @@ class BookingCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
                         child: event.imageUrl != null
                             ? Image.network(
                                 event.imageUrl!,
-                                width: AppSizes.getImageSize(context, mobileSize: 80, tabletSize: 100, desktopSize: 120),
-                                height: AppSizes.getImageSize(context, mobileSize: 80, tabletSize: 100, desktopSize: 120),
+                                width: AppSizes.getImageSize(
+                                  context,
+                                  mobileSize: 80,
+                                  tabletSize: 100,
+                                  desktopSize: 120,
+                                ),
+                                height: AppSizes.getImageSize(
+                                  context,
+                                  mobileSize: 80,
+                                  tabletSize: 100,
+                                  desktopSize: 120,
+                                ),
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => ImagePlaceholder(),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    ImagePlaceholder(),
                               )
                             : ImagePlaceholder(),
                       ),
-                      SizedBox(width: AppSizes.spacingMedium.w),
+                      SizedBox(width: AppSizes.spacingMedium),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,82 +110,115 @@ class BookingCard extends ConsumerWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: AppSizes.spacingXs.h),
+                            SizedBox(height: AppSizes.spacingXs),
                             Text(
                               event.organizerName,
                               style: AppTextStyles.bodySmall(isDark: isDark),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: AppSizes.spacingSmall.h),
+                            SizedBox(height: AppSizes.spacingSmall),
                             StatusBadge(status: booking.status),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: AppSizes.spacingMedium.h),
-                  InfoRow(icon: Icons.calendar_today, label: DateFormat('MMM d, y').format(booking.startTime)),
-                  SizedBox(height: AppSizes.spacingSmall.h),
-                  InfoRow(icon: Icons.access_time, label: DateFormat('h:mm a').format(booking.startTime)),
-                  SizedBox(height: AppSizes.spacingSmall.h),
+                  SizedBox(height: AppSizes.spacingMedium),
+                  InfoRow(
+                    icon: Icons.calendar_today,
+                    label: DateFormat('MMM d, y').format(booking.startTime),
+                  ),
+                  SizedBox(height: AppSizes.spacingSmall),
+                  InfoRow(
+                    icon: Icons.access_time,
+                    label: DateFormat('h:mm a').format(booking.startTime),
+                  ),
+                  SizedBox(height: AppSizes.spacingSmall),
                   InfoRow(icon: Icons.location_on, label: event.location),
-                  SizedBox(height: AppSizes.spacingMedium.h),
+                  SizedBox(height: AppSizes.spacingMedium),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Ticket Type', style: AppTextStyles.labelSmall(isDark: isDark)),
-                          SizedBox(height: AppSizes.spacingXs.h),
+                          Text(
+                            'Ticket Type',
+                            style: AppTextStyles.labelSmall(isDark: isDark),
+                          ),
+                          SizedBox(height: AppSizes.spacingXs),
                           Text(
                             '${booking.ticketType.toUpperCase()} × ${booking.ticketQuantity}',
-                            style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(fontWeight: FontWeight.w600),
+                            style: AppTextStyles.bodyMedium(
+                              isDark: isDark,
+                            ).copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('Total Amount', style: AppTextStyles.labelSmall(isDark: isDark)),
-                          SizedBox(height: AppSizes.spacingXs.h),
+                          Text(
+                            'Total Amount',
+                            style: AppTextStyles.labelSmall(isDark: isDark),
+                          ),
+                          SizedBox(height: AppSizes.spacingXs),
                           Text(
                             '₹${booking.totalAmount.toStringAsFixed(2)}',
-                            style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.getPrimary(isDark),
-                            ),
+                            style: AppTextStyles.bodyMedium(isDark: isDark)
+                                .copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.getPrimary(isDark),
+                                ),
                           ),
                         ],
                       ),
                     ],
                   ),
                   if (booking.seatNumbers.isNotEmpty) ...[
-                    SizedBox(height: AppSizes.spacingMedium.h),
-                    Text('Seats', style: AppTextStyles.labelSmall(isDark: isDark)),
-                    SizedBox(height: AppSizes.spacingXs.h),
+                    SizedBox(height: AppSizes.spacingMedium),
+                    Text(
+                      'Seats',
+                      style: AppTextStyles.labelSmall(isDark: isDark),
+                    ),
+                    SizedBox(height: AppSizes.spacingXs),
                     Wrap(
-                      spacing: AppSizes.spacingSmall.w,
-                      runSpacing: AppSizes.spacingXs.h,
+                      spacing: AppSizes.spacingSmall,
+                      runSpacing: AppSizes.spacingXs,
                       children: booking.seatNumbers
-                          .map((seat) => Container(
-                                padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingSmall.w, vertical: AppSizes.paddingXs.h),
-                                decoration: BoxDecoration(
-                                  color: AppColors.getPrimary(isDark).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall.r),
+                          .map(
+                            (seat) => Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingSmall,
+                                vertical: AppSizes.paddingXs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.getPrimary(
+                                  isDark,
+                                ).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusSmall,
                                 ),
-                                child: Text(
-                                  seat,
-                                  style: AppTextStyles.labelSmall(isDark: isDark).copyWith(color: AppColors.getPrimary(isDark)),
-                                ),
-                              ))
+                              ),
+                              child: Text(
+                                seat,
+                                style: AppTextStyles.labelSmall(
+                                  isDark: isDark,
+                                ).copyWith(color: AppColors.getPrimary(isDark)),
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
                   ],
                   if (booking.status == 'confirmed') ...[
-                    SizedBox(height: AppSizes.spacingMedium.h),
-                    CancelButton(booking: booking, event: event, userId: userId),
+                    SizedBox(height: AppSizes.spacingMedium),
+                    CancelButton(
+                      booking: booking,
+                      event: event,
+                      userId: userId,
+                    ),
                   ],
                 ],
               ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:intl/intl.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
@@ -32,21 +32,22 @@ class SmallEventCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: ResponsiveUtil.isMobile(context) ? 140.w : 180.w,
+        width: ResponsiveUtil.isMobile(context) ? 140 : 180,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              height: ResponsiveUtil.isMobile(context) ? 160.h : 200.h,
+              height: ResponsiveUtil.isMobile(context) ? 160 : 200,
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXxl),
                     child: Container(
                       width: double.infinity,
                       height: double.infinity,
                       color: AppColors.getSurface(isDark),
-                      child: event.imageUrl != null && event.imageUrl!.isNotEmpty
+                      child:
+                          event.imageUrl != null && event.imageUrl!.isNotEmpty
                           ? Image.network(
                               event.imageUrl!,
                               width: double.infinity,
@@ -56,7 +57,9 @@ class SmallEventCard extends StatelessWidget {
                                 return Center(
                                   child: Icon(
                                     Icons.event_rounded,
-                                    color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+                                    color: AppColors.getTextSecondary(
+                                      isDark,
+                                    ).withOpacity(0.5),
                                   ),
                                 );
                               },
@@ -64,14 +67,16 @@ class SmallEventCard extends StatelessWidget {
                           : Center(
                               child: Icon(
                                 Icons.event_rounded,
-                                color: AppColors.getTextSecondary(isDark).withOpacity(0.5),
+                                color: AppColors.getTextSecondary(
+                                  isDark,
+                                ).withOpacity(0.5),
                               ),
                             ),
                     ),
                   ),
                   Positioned(
-                    top: AppSizes.paddingXs,
-                    left: AppSizes.paddingXs,
+                    top: AppSizes.paddingSmall,
+                    left: AppSizes.paddingMedium,
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: AppSizes.paddingSmall,
@@ -79,11 +84,15 @@ class SmallEventCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSmall,
+                        ),
                       ),
                       child: Text(
                         formattedDate,
-                        style: AppTextStyles.labelSmall(isDark: false).copyWith(fontWeight: FontWeight.w600),
+                        style: AppTextStyles.labelSmall(
+                          isDark: false,
+                        ).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -112,7 +121,9 @@ class SmallEventCard extends StatelessWidget {
             SizedBox(height: AppSizes.spacingXs),
             Text(
               event.title ?? 'Event',
-              style: AppTextStyles.titleSmall(isDark: isDark).copyWith(fontWeight: FontWeight.w700),
+              style: AppTextStyles.titleSmall(
+                isDark: isDark,
+              ).copyWith(fontWeight: FontWeight.w700),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -135,7 +146,9 @@ class SmallEventCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '$attendeesCount going',
-                    style: AppTextStyles.labelSmall(isDark: isDark).copyWith(color: AppColors.getPrimary(isDark)),
+                    style: AppTextStyles.labelSmall(
+                      isDark: isDark,
+                    ).copyWith(color: AppColors.getPrimary(isDark)),
                   ),
                 ),
               ],

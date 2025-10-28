@@ -8,10 +8,15 @@ import 'package:sync_event/features/auth/presentation/screens/otp_verification_s
 import 'package:sync_event/features/auth/presentation/screens/phone_signin_screen.dart';
 import 'package:sync_event/features/auth/presentation/screens/signup_screen.dart';
 import 'package:sync_event/features/bookings/domain/entities/booking_entity.dart';
+import 'package:sync_event/features/bookings/presentation/screens/booking_confirmation_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_detail_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:sync_event/features/bookings/presentation/screens/booking_details_loader.dart';
+import 'package:sync_event/features/calendar/presentation/screens/calendar_screen.dart';
+import 'package:sync_event/features/chat/presentation/screens/chat_list_screen.dart';
+import 'package:sync_event/features/chat/presentation/screens/chat_screen.dart';
+import 'package:sync_event/features/chat/presentation/screens/user_search_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/create_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/edit_event/edit_event_screen.dart';
 import 'package:sync_event/features/events/presentation/Screens/events_screen.dart';
@@ -21,8 +26,12 @@ import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/Screens/my_events.dart';
 import 'package:sync_event/features/favorites/screens/favorite_screen.dart';
 import 'package:sync_event/features/home/presentation/screen/home.dart';
+import 'package:sync_event/features/legal_settings/presentation/about_screen.dart';
+import 'package:sync_event/features/legal_settings/presentation/contact_us_screen.dart';
+import 'package:sync_event/features/legal_settings/presentation/help_faq.dart';
+import 'package:sync_event/features/legal_settings/presentation/privacy_security.dart';
+import 'package:sync_event/features/legal_settings/presentation/terms_condition_screen.dart';
 import 'package:sync_event/features/onboarding/presentation/pages/onboarding_page.dart';
-import 'package:sync_event/features/profile/presentation/screens/chat_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/edit_profile.dart';
 import 'package:sync_event/features/profile/presentation/screens/other_users_profile_screen.dart';
 import 'package:sync_event/features/profile/presentation/screens/profile_screen.dart';
@@ -75,7 +84,7 @@ final GoRouter appRouter = GoRouter(
         },
       ),
     ),
-    
+
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
     GoRoute(path: '/root', builder: (context, state) => const RootShell()),
@@ -224,15 +233,64 @@ final GoRouter appRouter = GoRouter(
       path: '/user-profile',
       builder: (context, state) => UserProfileScreen(user: state.extra),
     ),
+
+    // GoRoute(
+    //   path: '/chat',
+    //   builder: (context, state) => ChatScreen(otherUser: state.extra),
+    // ),
     GoRoute(
-      path: '/chat',
-      builder: (context, state) => ChatScreen(otherUser: state.extra),
+      path: '/favorites',
+      name: 'favorites',
+      builder: (context, state) => const FavoritesScreen(),
+    ),
+    GoRoute(path: '/chat', builder: (context, state) => const ChatListScreen()),
+    GoRoute(
+      path: '/chat/search',
+      builder: (context, state) => const UserSearchScreen(),
+    ),
+    GoRoute(
+      path: '/chat/:chatId',
+      builder: (context, state) {
+        final chatId = state.pathParameters['chatId']!;
+        return ChatScreen(chatId: chatId);
+      },
+    ),
+    GoRoute(
+      path: '/calendar',
+      builder: (context, state) => const CalendarScreen(),
+    ),
+    GoRoute(
+      path: '/booking-confirmation',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return BookingConfirmationScreen(event: extra['event'] as EventEntity);
+      },
     ),
 
     GoRoute(
-  path: '/favorites',
-  name: 'favorites',
-  builder: (context, state) => const FavoritesScreen(),
-),
+      path: '/help-faq',
+      name: 'help-faq',
+      builder: (context, state) => const HelpFaqScreen(),
+    ),
+    GoRoute(
+      path: '/contact-us',
+      name: 'contact-us',
+      builder: (context, state) => const ContactUsScreen(),
+    ),
+    GoRoute(
+      path: '/privacy-security',
+      name: 'privacy-security',
+      builder: (context, state) => const PrivacySecurityScreen(),
+    ),
+    GoRoute(
+      path: '/terms-conditions',
+      name: 'terms-conditions',
+      builder: (context, state) => const TermsConditionsScreen(),
+    ),
+    GoRoute(
+      path: '/about',
+      name: 'about',
+      builder: (context, state) => const AboutScreen(),
+    ),
   ],
 );

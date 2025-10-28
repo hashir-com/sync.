@@ -22,27 +22,11 @@ class MyEventsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('My Events'),
         actions: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.bug_report),
-                onPressed: () async {
-                  final snapshot = await FirebaseFirestore.instance
-                      .collection('events')
-                      .where('organizerId', isEqualTo: currentUserId)
-                      .get();
-                  for (var doc in snapshot.docs) {
-                    print('Firestore Event ID: ${doc.id}, Data: ${doc.data()}');
-                  }
-                },
-                tooltip: 'Debug Firestore',
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () => context.push('/create-event'),
-                tooltip: 'Create New Event',
-              ),
-            ],
+          
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => context.push('/create-event'),
+            tooltip: 'Create New Event',
           ),
         ],
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/features/auth/presentation/widgets/login_form.dart';
@@ -15,12 +14,12 @@ class LoginScreen extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final horizontalPadding = constraints.maxWidth < 600 ? 20.w : 40.w;
+          final double horizontalPadding = constraints.maxWidth < 600 ? 20 : 40;
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.symmetric(
               horizontal: horizontalPadding,
-              vertical: 20.h,
+              vertical: 20,
             ),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),

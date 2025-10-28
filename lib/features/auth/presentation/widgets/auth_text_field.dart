@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -91,64 +90,64 @@ class AuthTextField extends ConsumerWidget {
       validator: _validateField,
       style: AppTextStyles.bodyLarge(
         isDark: isDark,
-      ).copyWith(fontSize: AppSizes.fontMedium.sp),
+      ).copyWith(fontSize: AppSizes.fontMedium),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: AppTextStyles.bodyMedium(
           isDark: isDark,
-        ).copyWith(fontSize: AppSizes.fontMedium.sp),
+        ).copyWith(fontSize: AppSizes.fontMedium),
         hintText: label,
         hintStyle: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
-          fontSize: AppSizes.fontMedium.sp,
+          fontSize: AppSizes.fontMedium,
           color: AppColors.getTextSecondary(isDark).withOpacity(0.6),
         ),
         prefixIcon: Icon(
           icon,
           color: AppColors.getTextSecondary(isDark),
-          size: AppSizes.iconMedium.sp,
+          size: AppSizes.iconMedium,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           borderSide: BorderSide(
             color: AppColors.getBorder(isDark),
             width: AppSizes.inputBorderWidth,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           borderSide: BorderSide(
             color: AppColors.getBorder(isDark),
             width: AppSizes.inputBorderWidth,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           borderSide: BorderSide(
             color: AppColors.getPrimary(isDark),
             width: AppSizes.inputBorderWidthFocused,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           borderSide: BorderSide(
             color: AppColors.getError(isDark),
             width: AppSizes.inputBorderWidth,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium.r),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           borderSide: BorderSide(
             color: AppColors.getError(isDark),
             width: AppSizes.inputBorderWidthFocused,
           ),
         ),
         errorStyle: AppTextStyles.bodySmall(isDark: isDark).copyWith(
-          fontSize: AppSizes.fontSmall.sp,
+          fontSize: AppSizes.fontSmall,
           color: AppColors.getError(isDark),
         ),
         contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSizes.inputPaddingHorizontal.w,
-          vertical: AppSizes.inputPaddingVertical.h,
+          horizontal: AppSizes.inputPaddingHorizontal,
+          vertical: AppSizes.inputPaddingVertical,
         ),
         filled: true,
         fillColor: AppColors.getSurface(isDark).withOpacity(0.5),
@@ -159,7 +158,7 @@ class AuthTextField extends ConsumerWidget {
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
                   color: AppColors.getTextSecondary(isDark),
-                  size: AppSizes.iconMedium.sp,
+                  size: AppSizes.iconMedium,
                 ),
                 onPressed: () =>
                     ref.read(visibilityProvider!.notifier).state = !isObscure,

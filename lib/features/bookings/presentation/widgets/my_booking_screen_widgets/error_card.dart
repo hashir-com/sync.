@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
@@ -15,9 +15,11 @@ class ErrorCard extends StatelessWidget {
     return Card(
       color: AppColors.getCard(isDark),
       elevation: AppSizes.cardElevationLow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusLarge.r)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingMedium.w),
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
         child: Text(
           'Error loading event details',
           style: AppTextStyles.bodyMedium(isDark: isDark),
