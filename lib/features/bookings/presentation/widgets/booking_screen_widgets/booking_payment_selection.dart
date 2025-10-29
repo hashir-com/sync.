@@ -233,21 +233,20 @@ class BookingPaymentSection extends ConsumerWidget {
       return;
     }
 
-    print('💰 Starting wallet payment for ₹$totalAmount');
+    print(' Starting wallet payment for ₹$totalAmount');
 
     // Immediately navigate to confirmation loading screen
     if (context.mounted) {
-      context.go(
-        '/booking-confirmation',
-        extra: {'event': event},
-      );
+      context.go('/booking-confirmation', extra: {'event': event});
     }
 
     const uuid = Uuid();
     final walletPaymentId = 'wallet_${uuid.v4()}';
 
     try {
-      await ref.read(bookingNotifierProvider.notifier).bookTicket(
+      await ref
+          .read(bookingNotifierProvider.notifier)
+          .bookTicket(
             eventId: event.id,
             userId: userId,
             ticketType: selectedCategory,
@@ -261,9 +260,9 @@ class BookingPaymentSection extends ConsumerWidget {
             paymentMethod: 'wallet',
           );
 
-      print('✓ Booking request sent');
+      print('Booking request sent');
     } catch (e) {
-      print('✗ Exception during wallet payment: $e');
+      print('Exception during wallet payment: $e');
     }
   }
 
@@ -282,18 +281,17 @@ class BookingPaymentSection extends ConsumerWidget {
       return;
     }
 
-    print('💳 Razorpay payment successful, processing booking...');
+    print(' Razorpay payment successful, processing booking...');
 
     // Immediately navigate to confirmation loading screen
     if (context.mounted) {
-      context.go(
-        '/booking-confirmation',
-        extra: {'event': event},
-      );
+      context.go('/booking-confirmation', extra: {'event': event});
     }
 
     try {
-      await ref.read(bookingNotifierProvider.notifier).bookTicket(
+      await ref
+          .read(bookingNotifierProvider.notifier)
+          .bookTicket(
             eventId: event.id,
             userId: userId,
             ticketType: selectedCategory,

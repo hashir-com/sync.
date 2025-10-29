@@ -1,5 +1,3 @@
-// File: features/map/domain/usecases/build_marker_usecase.dart
-// Purpose: Build and update map markers from events, using circular image markers
 import 'dart:ui';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,9 +34,12 @@ class BuildMarkersUseCase {
 
     // CRITICAL FIX: Create initial markers with default icons FIRST
     // This prevents grey screen while loading custom icons
-    final initialMarkers = _createMarkersWithDefaultIcons(validEvents, onMarkerTap);
+    final initialMarkers = _createMarkersWithDefaultIcons(
+      validEvents,
+      onMarkerTap,
+    );
     MarkerCache.setMarkers(initialMarkers);
-    
+
     // Notify immediately with default markers
     if (onBatchUpdated != null) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -61,9 +62,9 @@ class BuildMarkersUseCase {
 
     MarkerCache.setMarkers(finalMarkers);
     MarkerCache.markBuilt();
-    
+
     print('BuildMarkersUseCase: Set ${finalMarkers.length} final markers');
-    
+
     // CRITICAL: Defer final update
     if (onBatchUpdated != null) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -79,9 +80,11 @@ class BuildMarkersUseCase {
     List<EventEntity> events,
     void Function(EventEntity) onMarkerTap,
   ) {
-    print('BuildMarkersUseCase: Creating ${events.length} markers with default icons');
+    print(
+      'BuildMarkersUseCase: Creating ${events.length} markers with default icons',
+    );
     final markers = <Marker>{};
-    
+
     for (final event in events) {
       markers.add(
         Marker(
@@ -93,7 +96,7 @@ class BuildMarkersUseCase {
         ),
       );
     }
-    
+
     return markers;
   }
 
@@ -104,28 +107,30 @@ class BuildMarkersUseCase {
   ) async {
     print('BuildMarkersUseCase: Creating markers with custom icons');
     final markers = <Marker>{};
-    
+
     for (final event in events) {
       final cachedIcon = await repository.getCachedIcon(event.id);
-      
+
       markers.add(
         Marker(
           markerId: MarkerId(event.id),
           position: LatLng(event.latitude!, event.longitude!),
-          icon: cachedIcon ?? 
-                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          anchor: cachedIcon != null 
-              ? const Offset(0.5, 0.5)  // Center for circular custom icons
+          icon:
+              cachedIcon ??
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          anchor: cachedIcon != null
+              ? const Offset(0.5, 0.5) // Center for circular custom icons
               : const Offset(0.5, 1.0), // Bottom center for default markers
           onTap: () => onMarkerTap(event),
         ),
       );
     }
-    
+
     return markers;
   }
 
   // LoadMarkerIcons: Asynchronously load and cache circular marker icons
+  // CRITICAL FIX: Load all in parallel without batches to minimize state updates (reduces rebuilds in release)
   Future<void> _loadMarkerIcons(
     List<EventEntity> validEvents,
     void Function(EventEntity) onMarkerTap, {
@@ -134,11 +139,11 @@ class BuildMarkersUseCase {
     print(
       'BuildMarkersUseCase: Loading icons for ${validEvents.length} events',
     );
-    
+
     final markersNeedingIcons = validEvents
         .where((event) => MarkerCache.getIcon(event.id) == null)
         .toList();
-    
+
     print(
       'BuildMarkersUseCase: ${markersNeedingIcons.length} markers need icons',
     );
@@ -148,44 +153,33 @@ class BuildMarkersUseCase {
       return;
     }
 
-    const batchSize = 5;
-    for (var i = 0; i < markersNeedingIcons.length; i += batchSize) {
-      final batch = markersNeedingIcons.skip(i).take(batchSize).toList();
-      print('BuildMarkersUseCase: Processing batch $i-${i + batch.length}');
+    try {
+      // CRITICAL FIX: Load all icons in parallel (no batches/delays for fewer updates)
+      await Future.wait(
+        markersNeedingIcons.map((e) => repository.getMarkerIcon(e.imageUrl, e.id)),
+        eagerError: false, // Continue even if some fail
+      );
 
-      try {
-        // Load icons in parallel for batch
-        await Future.wait(
-          batch.map((e) => repository.getMarkerIcon(e.imageUrl, e.id)),
-          eagerError: false, // Continue even if some fail
-        );
+      // CRITICAL FIX: Single update after all loads complete
+      final updatedMarkers = await _createMarkersWithCustomIcons(
+        validEvents,
+        onMarkerTap,
+      );
 
-        // CRITICAL FIX: Create updated markers after batch loads
-        final updatedMarkers = await _createMarkersWithCustomIcons(
-          validEvents,
-          onMarkerTap,
-        );
+      MarkerCache.setMarkers(updatedMarkers);
 
-        MarkerCache.setMarkers(updatedMarkers);
-        
-        // CRITICAL: Defer batch update
-        if (onBatchUpdated != null) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            print(
-              'BuildMarkersUseCase: Updated ${updatedMarkers.length} markers in batch',
-            );
-            onBatchUpdated(updatedMarkers);
-          });
-        }
-
-        // Small delay between batches to prevent overwhelming the map
-        if (i + batchSize < markersNeedingIcons.length) {
-          await Future.delayed(const Duration(milliseconds: 100));
-        }
-      } catch (e) {
-        print('BuildMarkersUseCase: Error loading batch: $e');
-        // Continue to next batch even if this one fails
+      // CRITICAL: Defer single batch update
+      if (onBatchUpdated != null) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          print(
+            'BuildMarkersUseCase: Updated ${updatedMarkers.length} markers (all loaded)',
+          );
+          onBatchUpdated(updatedMarkers);
+        });
       }
+    } catch (e) {
+      print('BuildMarkersUseCase: Error loading icons: $e');
+      // Continue with defaults even if load fails
     }
   }
 }
