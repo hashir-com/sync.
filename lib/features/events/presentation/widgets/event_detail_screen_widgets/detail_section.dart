@@ -87,8 +87,8 @@ class DetailSection extends StatelessWidget {
                     SizedBox(height: AppSizes.spacingMedium),
                     DetailTile(
                       icon: Icons.location_on_rounded,
-                      title: location,
-                      subtitle: locationSubtitle,
+                      title: locationSubtitle,
+                      subtitle: location,
                       isDark: isDark,
                     ),
                     SizedBox(height: AppSizes.spacingMedium),
@@ -98,7 +98,12 @@ class DetailSection extends StatelessWidget {
                       isDark: isDark,
                     ),
                     SizedBox(height: AppSizes.spacingMedium),
-                    ShareTile(isDark: isDark),
+                    ShareTile(
+                      isDark: isDark,
+                      eventTitle: 'Share With Friends',
+                      eventDescription: "Share this app with your friends to let them joiun the events!",
+                      shareUrl: "https://apkpure.com/p/ashir.developer.sync_event",
+                    ),
                     SizedBox(height: AppSizes.spacingXxl),
                     Text(
                       'About Event',

@@ -10,16 +10,22 @@ import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 class BookingEventHeaderCard extends StatelessWidget {
   final EventEntity event;
   final bool isDark;
+  final String? currentUserId; // Add this parameter
 
   const BookingEventHeaderCard({
     super.key,
     required this.event,
     required this.isDark,
+    this.currentUserId, // Add this to constructor
   });
 
   @override
   Widget build(BuildContext context) {
-    final isOrganizer = event.organizerId.isNotEmpty;
+    // Check if current user is the organizer
+    final isCurrentUserOrganizer =
+        currentUserId != null &&
+        event.organizerId.isNotEmpty &&
+        currentUserId == event.organizerId;
 
     return Container(
       padding: EdgeInsets.all(AppSizes.paddingLarge),
@@ -54,7 +60,7 @@ class BookingEventHeaderCard extends StatelessWidget {
           ),
           SizedBox(height: AppSizes.spacingMedium),
           _buildOrganizerRow(),
-          if (isOrganizer) _buildOrganizerBadge(),
+          if (isCurrentUserOrganizer) _buildOrganizerBadge(),
         ],
       ),
     );
