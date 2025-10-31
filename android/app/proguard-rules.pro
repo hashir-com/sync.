@@ -21,3 +21,9 @@
 -keepclassmembers class ** {
     @android.webkit.JavascriptInterface <methods>;
 }
+
+# Google Maps Flutter Plugin
+-keep class io.flutter.plugins.googlemaps.** { *; }
+-dontwarn io.flutter.plugins.googlemaps.**
+-keep class com.google.android.gms.maps.** { *; }
+-keep interface com.google.android.gms.maps.** { *; }

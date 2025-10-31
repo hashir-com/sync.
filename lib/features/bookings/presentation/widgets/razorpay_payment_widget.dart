@@ -240,45 +240,50 @@ class _RazorpayPaymentWidgetState extends State<RazorpayPaymentWidget> {
     // Show loading overlay when processing payment
     return Stack(
       children: [
-        ElevatedButton(
-          onPressed: _isProcessing ? null : _openCheckout,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.getPrimary(isDark),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isProcessing ? null : _openCheckout,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.getPrimary(isDark),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+              ),
+              disabledBackgroundColor: AppColors.getPrimary(
+                isDark,
+              ).withOpacity(0.6),
             ),
-            disabledBackgroundColor: AppColors.getPrimary(
-              isDark,
-            ).withOpacity(0.6),
-          ),
-          child: _isProcessing
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            child: _isProcessing
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(width: AppSizes.spacingMedium),
-                    Text(
-                      'Processing Payment...',
-                      style: AppTextStyles.button(
-                        isDark: false,
-                      ).copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                )
-              : Text(
-                  'Pay with Razorpay - ₹${widget.amount.toStringAsFixed(0)}',
-                  style: AppTextStyles.button(
-                    isDark: false,
-                  ).copyWith(fontWeight: FontWeight.w600),
-                ),
+                      SizedBox(width: AppSizes.spacingMedium),
+                      Text(
+                        'Processing Payment...',
+                        style: AppTextStyles.button(
+                          isDark: false,
+                        ).copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  )
+                : Text(
+                    'Pay with Razorpay - ₹${widget.amount.toStringAsFixed(0)}',
+                    style: AppTextStyles.button(
+                      isDark: false,
+                    ).copyWith(fontWeight: FontWeight.w600),
+                  ),
+          ),
         ),
 
         // Full-screen loading overlay when processing

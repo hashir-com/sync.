@@ -35,7 +35,7 @@ class ActionButtons extends StatelessWidget {
                 'Back',
                 style: AppTextStyles.labelMedium(
                   isDark: isDark,
-                ).copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                ).copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ),

@@ -14,7 +14,8 @@ import 'package:sync_event/features/map/presentation/state/marker_state_notifier
 
 // Provider for GoogleMapController
 final mapControllerProvider = StateProvider<GoogleMapController?>((ref) => null);
-
+// Add this to your map_providers.dart file (or wherever your providers are defined)
+final handlingMarkerTapProvider = StateProvider<bool>((ref) => false);
 // Provider for markers, using MarkerStateNotifier
 final markerStateProvider = StateNotifierProvider<MarkerStateNotifier, Set<Marker>>(
   (ref) => MarkerStateNotifier(ref.watch(buildMarkersUseCaseProvider), ref),
