@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,20 +12,27 @@ import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart'; // For deleteEventUseCaseProvider
 import 'package:sync_event/features/profile/presentation/providers/profile_providers.dart';
-import 'package:flutter/foundation.dart'; // For kDebugMode
+import 'package:sync_event/features/profile/domain/usecases/create_user_usecase.dart'; // For CreateProfileParams and provider
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   final String? userId;
 
   const ProfileScreen({super.key, this.userId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => ProfileScreenState();
+}
+
+class ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _profileCreated = false;
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = ThemeUtils.isDark(context);
     final currentUser = ref.watch(currentUserProvider);
     final currentUid = currentUser?.uid;
-    final isSelf = userId == null || userId == currentUid;
-    final effectiveUid = userId ?? currentUid;
+    final isSelf = widget.userId == null || widget.userId == currentUid;
+    final effectiveUid = widget.userId ?? currentUid;
 
     if (effectiveUid == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -32,6 +40,52 @@ class ProfileScreen extends ConsumerWidget {
 
     final profileAsync = ref.watch(userByIdProvider(effectiveUid));
     final eventsAsync = ref.watch(userHostedEventsProvider(effectiveUid));
+
+    // Listen for profile load errors and auto-create profile if needed
+    ref.listen<AsyncValue<UserModel?>>(userByIdProvider(effectiveUid), (
+      previous,
+      next,
+    ) {
+      if (next.hasError && !_profileCreated && isSelf && currentUser != null) {
+        _profileCreated = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          try {
+            // Create basic user profile using auth user data
+            final params = CreateProfileParams(
+              uid: currentUser.uid,
+              email: currentUser.email ?? '',
+              displayName:
+                  currentUser.displayName ??
+                  currentUser.email?.split('@')[0] ??
+                  'User',
+              bio: '', // Default
+              interests: <String>[], // Default
+            );
+            await ref.read(createUserProfileUseCaseProvider).call(params);
+            // Invalidate to refetch
+            ref.invalidate(userByIdProvider(effectiveUid));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Profile created successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } catch (e) {
+            debugPrint('Failed to create profile: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to create profile: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        });
+      }
+    });
 
     return SafeArea(
       child: Scaffold(
@@ -86,6 +140,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // ... (rest of the methods remain unchanged)
   SliverToBoxAdapter _buildProfileHeader(
     BuildContext context,
     UserModel user,
