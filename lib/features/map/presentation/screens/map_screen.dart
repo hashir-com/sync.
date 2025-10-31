@@ -113,12 +113,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       child: FadeTransition(opacity: animation, child: child),
                     );
                   },
-                  child: Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
+                  child: EventDetailCard(
+                    // <-- Removed inner Positioned; use key directly
                     key: ValueKey(selectedEvent.id),
-                    child: EventDetailCard(event: selectedEvent),
+                    event: selectedEvent,
                   ),
                 ),
               ),
