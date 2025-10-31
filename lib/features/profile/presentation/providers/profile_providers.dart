@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sync_event/features/profile/domain/entities/profile_entity.dart';
 // Use Case Providers (for DI)
 import 'package:sync_event/core/di/injection_container.dart';
+import 'package:sync_event/features/profile/domain/usecases/create_user_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
 
@@ -66,6 +67,9 @@ class UserModel extends ProfileEntity {
   }
 }
 
+final createUserProfileUseCaseProvider = Provider<CreateUserProfileUseCase>(
+  (ref) => sl<CreateUserProfileUseCase>(),
+);
 // Auth State Provider (fetches full profile)
 final authStateProvider = StreamProvider<UserModel?>((ref) {
   return firebase_auth.FirebaseAuth.instance.userChanges().asyncMap((
