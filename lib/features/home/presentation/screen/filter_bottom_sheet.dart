@@ -354,7 +354,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet>
                                   child: ElevatedButton(
                                     onPressed: () {
                                       widget.onApplyFilters();
-                                      context.go('/events');
+                                      context.push('/events');
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.getPrimary(

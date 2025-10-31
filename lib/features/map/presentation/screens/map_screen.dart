@@ -3,12 +3,13 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, Factory; // Fixed: Only kIsWeb from foundation
 import 'package:flutter/gestures.dart'
     show
-        Factory,
+        Factory, // Add Factory here
         OneSequenceGestureRecognizer,
         EagerGestureRecognizer; // Gestures for Factory, etc.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/map/domain/services/location_service.dart';
 import 'package:sync_event/features/map/presentation/widgets/event_card.dart';
 import 'package:sync_event/features/map/presentation/widgets/loading_indicator.dart';
@@ -28,6 +29,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final FocusNode _searchFocusNode = FocusNode();
   final LocationService _locationService = LocationService();
   bool _listenerSetup = false;
+  GoogleMapController? _mapController; // Local controller reference
+  bool _isMapInitialized = false; // Flag: Set initial position only once
+  LatLng? _lastTarget; // Preserve last target across rebuilds
+  double _lastZoom = 12.0; // Preserve last zoom
+  double _lastTilt = 0.0; // Preserve last tilt (flat for stability)
 
   @override
   void initState() {
@@ -123,118 +129,163 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   // BuildMap: Render Google Map with markers
- // Add this method to your _MapScreenState class to replace _buildMap
+  // CRITICAL FIX: Use switch for exhaustive handling and compiler satisfaction
+  Widget _buildMap(AsyncValue<List<EventEntity>> eventsAsync) {
+    return switch (eventsAsync) {
+      AsyncData(value: final events) => _buildMapData(events),
+      const AsyncLoading() => const Center(child: CircularProgressIndicator()),
+      AsyncError(error: final err) => _buildMapError(err),
+      // TODO: Handle this case.
+      AsyncValue<List<EventEntity>>() => throw UnimplementedError(),
+    };
+  }
 
-Widget _buildMap(AsyncValue eventsAsync) {
-  return eventsAsync.when(
-    data: (events) {
+  // Build map data widget
+  Widget _buildMapData(List<EventEntity> events) {
+    // CRITICAL: Only log on significant changes (debounce rebuild logs)
+    if (events.isNotEmpty) {
       print('MapScreen: Rendering map with ${events.length} events');
-      
-      // CRITICAL: Store markers in a local variable to prevent rebuilds
-      final markers = ref.watch(markerStateProvider);
-      
-      return GoogleMap(
-        key: const ValueKey('sync_event_map'),
-        mapToolbarEnabled: false,
-        zoomControlsEnabled: false,
-        mapType: MapType.hybrid,
-        initialCameraPosition: _getInitialCameraPosition(events),
-        markers: markers,
-        
-        // CRITICAL: Prevent unnecessary rebuilds
-        myLocationButtonEnabled: false,
-        myLocationEnabled: false,
-        
-        // Web: Add gesture recognizers to prevent conflicts with overlays
-        gestureRecognizers: kIsWeb
-            ? <Factory<OneSequenceGestureRecognizer>>{
-                Factory<OneSequenceGestureRecognizer>(
-                  () => EagerGestureRecognizer(),
-                ),
-              }.toSet()
-            : <Factory<OneSequenceGestureRecognizer>>{},
-            
-        onMapCreated: (controller) {
-          // CRITICAL: Defer state update
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              ref.read(mapControllerProvider.notifier).state = controller;
-              print('MapScreen: Map created');
-              
-              // Web: Avoid setMapStyle (can blank map)
-              if (!kIsWeb) {
-                controller.setMapStyle(null);
-              }
-            }
-          });
-        },
-        
-        onTap: (_) {
-          // CRITICAL: Defer state update with proper null check
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              ref.read(selectedEventProvider.notifier).state = null;
-              print('MapScreen: Map tapped, cleared selected event');
-            }
-          });
-        },
-        
-        // CRITICAL: Add onCameraMoveStarted to prevent conflicts
-        onCameraMoveStarted: () {
-          print('MapScreen: Camera move started');
-        },
-        
-        // CRITICAL: Add onCameraIdle to ensure map is stable
-        onCameraIdle: () {
-          print('MapScreen: Camera idle');
-        },
-      );
-    },
-    loading: () => const Center(child: CircularProgressIndicator()),
-    error: (err, stack) {
-      print('MapScreen: Error loading events: $err');
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              'Error loading map',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              err.toString(),
-              style: const TextStyle(fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+    }
 
-  CameraPosition _getInitialCameraPosition(List<dynamic> events) {
+    final markers = ref.watch(markerStateProvider);
+
+    return GoogleMap(
+      key: const ValueKey('sync_event_map'), // Stable key to preserve state
+      mapToolbarEnabled: false,
+      zoomControlsEnabled: false,
+      mapType: MapType
+          .normal, // Explicit: normal to avoid hybrid tile issues in release
+      // CRITICAL FIX: initialCameraPosition uses preserved state (target/zoom/tilt)
+      initialCameraPosition: CameraPosition(
+        target: _lastTarget ?? _getDefaultTarget(events),
+        zoom: _lastZoom,
+        tilt: _lastTilt,
+      ),
+      markers: markers,
+
+      myLocationButtonEnabled: false,
+      myLocationEnabled: false,
+
+      // CRITICAL FIX: Return empty set for mobile, not null
+      gestureRecognizers: kIsWeb
+          ? <Factory<OneSequenceGestureRecognizer>>{
+              Factory<OneSequenceGestureRecognizer>(
+                () => EagerGestureRecognizer(),
+              ),
+            }
+          : <
+              Factory<OneSequenceGestureRecognizer>
+            >{}, // Empty set instead of null
+
+      onMapCreated: (controller) {
+        _mapController = controller; // Local ref
+        ref.read(mapControllerProvider.notifier).state =
+            controller; // Provider ref
+
+        // CRITICAL: Set initial position ONLY once, via controller
+        if (!_isMapInitialized) {
+          _animateToInitialPosition(events);
+          _isMapInitialized = true;
+        }
+
+        // CRITICAL: Different timing for web vs mobile
+        if (kIsWeb) {
+          // Web: Immediate assignment
+          Future.microtask(() {
+            if (mounted) {
+              print('MapScreen: Map created (web)');
+            }
+          });
+        } else {
+          // Mobile: Post-frame callback
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              print('MapScreen: Map created (mobile)');
+              controller.setMapStyle(null); // Reset style for release mode
+            }
+          });
+        }
+      },
+
+      // CRITICAL FIX: Update preserved camera state during moves
+      onCameraMove: (CameraPosition position) {
+        _lastTarget = position.target;
+        _lastZoom = position.zoom;
+        _lastTilt = position.tilt;
+      },
+
+      onTap: (_) {
+        // CRITICAL FIX: Ignore map taps during marker handling to prevent spurious clears
+        if (ref.read(handlingMarkerTapProvider)) {
+          print('MapScreen: Ignoring map tap during marker handling');
+          return;
+        }
+        // CRITICAL: Add debouncing for web and release
+        Future.microtask(() {
+          if (mounted) {
+            ref.read(selectedEventProvider.notifier).state = null;
+            print('MapScreen: Map tapped, cleared selected event');
+          }
+        });
+      },
+
+      onCameraMoveStarted: () {
+        // Web/release can trigger excessively, so just log without state updates
+        print('MapScreen: Camera move started');
+      },
+
+      onCameraIdle: () {
+        print('MapScreen: Camera idle');
+        // CRITICAL FIX: No longer reset to default; rely on onCameraMove for preservation
+      },
+    );
+  }
+
+  // Build map error widget
+  Widget _buildMapError(Object err) {
+    print('MapScreen: Error loading events: $err');
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 16),
+          const Text(
+            'Error loading map',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            err.toString(),
+            style: const TextStyle(fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // CRITICAL FIX: Animate initial position only once via controller, using preserved zoom/tilt
+  void _animateToInitialPosition(List<EventEntity> events) {
+    final target = _getDefaultTarget(events);
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: target, zoom: _lastZoom, tilt: _lastTilt),
+      ),
+    );
+    print(
+      'MapScreen: Initial position animated to ${target.latitude}, ${target.longitude}',
+    );
+  }
+
+  // Get default target (first event or fallback)
+  LatLng _getDefaultTarget(List<EventEntity> events) {
     if (events.isNotEmpty &&
         events.first.latitude != null &&
         events.first.longitude != null) {
-      print(
-        'MapScreen: Initial position set to ${events.first.latitude}, ${events.first.longitude}',
-      );
-      return CameraPosition(
-        target: LatLng(events.first.latitude!, events.first.longitude!),
-        zoom: 5,
-        tilt: 60,
-      );
+      return LatLng(events.first.latitude!, events.first.longitude!);
     }
-    print('MapScreen: Using default initial position');
-    return const CameraPosition(
-      target: LatLng(11.8705, 75.3679),
-      zoom: 5,
-      tilt: 60,
-    );
+    return const LatLng(11.8705, 75.3679); // Fallback
   }
 
   void _setupEventListener() {

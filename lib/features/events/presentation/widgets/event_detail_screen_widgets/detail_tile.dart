@@ -63,10 +63,7 @@ class DetailTile extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: AppTextStyles.bodySmall(isDark: isDark),
-                ),
+                Text(subtitle, style: AppTextStyles.bodySmall(isDark: isDark)),
               ],
             ),
           ),

@@ -6,10 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:sync_event/core/constants/app_colors.dart';
 import 'package:sync_event/core/constants/app_sizes.dart';
 import 'package:sync_event/core/constants/app_text_styles.dart';
+import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:sync_event/features/auth/presentation/providers/user_data_provider.dart';
 import 'package:sync_event/features/chat/presentation/providers/chat_providers.dart';
-// Import the user data provider
-// import 'package:sync_event/features/auth/presentation/providers/user_data_provider.dart';
 
 class OrganizerTile extends ConsumerWidget {
   final String organizerId;
@@ -72,6 +71,10 @@ class OrganizerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Get current user ID
+    final currentUser = ref.watch(authStateProvider).value;
+    final isCurrentUserOrganizer = currentUser?.uid == organizerId;
+
     // Fetch organizer user data
     final userDataAsync = ref.watch(userDataProvider(organizerId));
 
@@ -80,10 +83,28 @@ class OrganizerTile extends ConsumerWidget {
         final organizerImageUrl = userData?.image;
         final displayName = userData?.name ?? organizerName;
 
-        return _buildTileContent(context, ref, displayName, organizerImageUrl);
+        return _buildTileContent(
+          context,
+          ref,
+          displayName,
+          organizerImageUrl,
+          isCurrentUserOrganizer,
+        );
       },
-      loading: () => _buildTileContent(context, ref, organizerName, null),
-      error: (_, __) => _buildTileContent(context, ref, organizerName, null),
+      loading: () => _buildTileContent(
+        context,
+        ref,
+        organizerName,
+        null,
+        isCurrentUserOrganizer,
+      ),
+      error: (_, __) => _buildTileContent(
+        context,
+        ref,
+        organizerName,
+        null,
+        isCurrentUserOrganizer,
+      ),
     );
   }
 
@@ -92,6 +113,7 @@ class OrganizerTile extends ConsumerWidget {
     WidgetRef ref,
     String displayName,
     String? imageUrl,
+    bool isCurrentUserOrganizer,
   ) {
     return Container(
       padding: EdgeInsets.all(AppSizes.paddingMedium),
@@ -122,9 +144,7 @@ class OrganizerTile extends ConsumerWidget {
                 children: [
                   Text(
                     displayName,
-                    style: AppTextStyles.bodyMedium(
-                      isDark: isDark,
-                    ).copyWith(
+                    style: AppTextStyles.bodyMedium(isDark: isDark).copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.getTextPrimary(isDark),
                     ),
@@ -134,17 +154,15 @@ class OrganizerTile extends ConsumerWidget {
                     'Organizer',
                     style: AppTextStyles.bodySmall(
                       isDark: isDark,
-                    ).copyWith(
-                      color: AppColors.getTextSecondary(isDark),
-                    ),
+                    ).copyWith(color: AppColors.getTextSecondary(isDark)),
                   ),
                 ],
               ),
             ],
           ),
-          GestureDetector(
-            onTap: () => _handleChatTap(context, ref),
-            child: Container(
+          // Show "You are the organizer" badge or Chat button
+          if (isCurrentUserOrganizer)
+            Container(
               padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.paddingMedium,
                 vertical: AppSizes.paddingSmall,
@@ -157,26 +175,50 @@ class OrganizerTile extends ConsumerWidget {
                   width: 1,
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 16,
-                    color: AppColors.getPrimary(isDark),
+              child: Text(
+                'You are the organizer',
+                style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
+                  color: AppColors.getPrimary(isDark),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () => _handleChatTap(context, ref),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingMedium,
+                  vertical: AppSizes.paddingSmall,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.getPrimary(isDark).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                  border: Border.all(
+                    color: AppColors.getPrimary(isDark).withOpacity(0.3),
+                    width: 1,
                   ),
-                  SizedBox(width: 4),
-                  Text(
-                    'Chat',
-                    style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 16,
                       color: AppColors.getPrimary(isDark),
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 4),
+                    Text(
+                      'Chat',
+                      style: AppTextStyles.labelMedium(isDark: isDark).copyWith(
+                        color: AppColors.getPrimary(isDark),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

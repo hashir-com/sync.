@@ -21,6 +21,13 @@
   <title>sync_event</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- CRITICAL: Set renderer before loading Flutter -->
+  <script>
+    // Use CanvasKit for better map rendering stability
+    window.flutterWebRenderer = "canvaskit";
+  </script>
+
+  <!-- Google Maps API -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDIXl0jACgHeym-6iS5cY5Ya-SARq-3E10&libraries=places"></script>
 </head>
