@@ -75,6 +75,7 @@ dependencies:
   syncfusion_flutter_calendar: ^29.2.5
   cached_network_image: ^3.4.1
   uuid: ^4.5.1
+  share_plus: ^12.0.1
 
 dev_dependencies:
   flutter_test:

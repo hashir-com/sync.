@@ -102,6 +102,8 @@ class _BookingConfirmationScreenState
   }
 
   Future<void> _performPostActions(BookingEntity booking) async {
+    if (!mounted) return;
+
     final authState = ref.read(authNotifierProvider);
     final userId = authState.user?.uid ?? '';
     if (userId.isEmpty) return;
@@ -119,10 +121,12 @@ class _BookingConfirmationScreenState
       print('⚠️ Email failed but continuing: $e');
     }
 
+    if (!mounted) return;
+
     ref.invalidate(userBookingsProvider(userId));
 
     if (booking.paymentMethod == 'wallet') {
-      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
       await ref.read(walletNotifierProvider.notifier).fetchWallet(userId);
       print('✓ Wallet refreshed, new balance should be visible');
     }

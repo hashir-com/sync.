@@ -77,8 +77,8 @@ class TopCitySmallEventCard extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    top: AppSizes.paddingXs,
-                    left: AppSizes.paddingXs,
+                    top: AppSizes.paddingSmall,
+                    left: AppSizes.paddingSmall,
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: AppSizes.paddingSmall,
@@ -117,41 +117,41 @@ class TopCitySmallEventCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    bottom: AppSizes.paddingXs,
-                    right: AppSizes.paddingXs,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.paddingXs,
-                        vertical: AppSizes.paddingXs / 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.getWarning(isDark),
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.radiusRound,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.star_rounded,
-                            size: 10,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            rating,
-                            style: AppTextStyles.labelSmall(isDark: false)
-                                .copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Positioned(
+                  //   bottom: AppSizes.paddingXs,
+                  //   right: AppSizes.paddingXs,
+                  //   child: Container(
+                  //     padding: EdgeInsets.symmetric(
+                  //       horizontal: AppSizes.paddingXs,
+                  //       vertical: AppSizes.paddingXs / 2,
+                  //     ),
+                  //     decoration: BoxDecoration(
+                  //       color: AppColors.getWarning(isDark),
+                  //       borderRadius: BorderRadius.circular(
+                  //         AppSizes.radiusRound,
+                  //       ),
+                  //     ),
+                  //     child: Row(
+                  //       mainAxisSize: MainAxisSize.min,
+                  //       children: [
+                  //         Icon(
+                  //           Icons.star_rounded,
+                  //           size: 10,
+                  //           color: Colors.white,
+                  //         ),
+                  //         SizedBox(width: 2),
+                  //         Text(
+                  //           rating,
+                  //           style: AppTextStyles.labelSmall(isDark: false)
+                  //               .copyWith(
+                  //                 color: Colors.white,
+                  //                 fontWeight: FontWeight.w700,
+                  //               ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
