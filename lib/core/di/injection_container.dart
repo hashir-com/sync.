@@ -49,6 +49,7 @@ import 'package:sync_event/features/profile/data/datasources/profile_local_datas
 import 'package:sync_event/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:sync_event/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:sync_event/features/profile/domain/repositories/profile_repository.dart';
+import 'package:sync_event/features/profile/domain/usecases/create_user_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:sync_event/features/profile/domain/usecases/update_user_profile_usecase.dart';
 
@@ -170,6 +171,9 @@ void _initProfile() {
   sl.registerLazySingleton<UpdateUserProfileUseCase>(
     () => UpdateUserProfileUseCase(sl<ProfileRepository>()),
   );
+  sl.registerLazySingleton<CreateUserProfileUseCase>(
+  () => CreateUserProfileUseCase(sl<ProfileRepository>()),
+);
 }
 
 void _initEvents() {

@@ -2,11 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
+import 'package:sync_event/core/error/exceptions.dart';
+
 abstract class ProfileRemoteDataSource {
   Future<Map<String, dynamic>> getUserProfile(String uid);
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data);
   Future<String> uploadProfileImage(File imageFile, String userId);
   Future<void> deleteProfileImage(String imageUrl);
+  Future<Map<String, dynamic>> createUserProfile(String uid, Map<String, dynamic> data);
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -52,4 +55,16 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       // Image might not exist, ignore error
     }
   }
+  
+ @override
+Future<Map<String, dynamic>> createUserProfile(String uid, Map<String, dynamic> data) async {
+  try {
+    await firebaseFirestore.collection('users').doc(uid).set(data); // Use uid as doc ID; merge: false for full create
+    return data; // Or fetch and return full doc data if needed
+  } on FirebaseException catch (e) {
+    throw ServerException(message: e.message ?? 'Failed to create user profile');
+  }
+}
+
+  
 }
