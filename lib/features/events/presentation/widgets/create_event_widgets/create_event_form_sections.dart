@@ -370,7 +370,7 @@ class DocumentTile extends ConsumerWidget {
     );
   }
 
-  // ... _pickDocument and _openDocument methods remain unchanged
+  // _pickDocument and _openDocument methods remain unchanged
   Future<void> _pickDocument(BuildContext context, WidgetRef ref) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,

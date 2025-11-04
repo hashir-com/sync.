@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/di/injection_container.dart';
 import 'package:sync_event/core/util/responsive_util.dart';
 import 'package:sync_event/core/util/theme_util.dart';
+import 'package:sync_event/features/events/domain/entities/event_entity.dart';
 import 'package:sync_event/features/events/presentation/providers/event_providers.dart'; // For deleteEventUseCaseProvider
 import 'package:sync_event/features/profile/presentation/providers/profile_providers.dart';
 import 'package:sync_event/features/profile/domain/usecases/create_user_usecase.dart'; // For CreateProfileParams and provider
@@ -544,8 +546,34 @@ class ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onDelete: isSelf
                     ? () => _showDeleteDialog(context, ref, eventData)
                     : null,
-                onTap: () => context.push('/event-detail', extra: eventData),
-                isDark: isDark,
+                onTap: () {
+  final event = EventEntity(
+    id: eventData['id'] as String,
+    title: eventData['title'] as String,
+    description: eventData['description'] as String,
+    location: eventData['location'] as String,
+    startTime: (eventData['startTime'] as Timestamp).toDate(),
+    endTime: (eventData['endTime'] as Timestamp).toDate(),
+    organizerId: eventData['organizerId'] as String,
+    organizerName: eventData['organizerName'] as String,
+    attendees: List<String>.from(eventData['attendees'] ?? []),
+    maxAttendees: eventData['maxAttendees'] as int,
+    category: eventData['category'] as String,
+    latitude: (eventData['latitude'] as num?)?.toDouble(),
+    longitude: (eventData['longitude'] as num?)?.toDouble(),
+    createdAt: (eventData['createdAt'] as Timestamp).toDate(),
+    updatedAt: (eventData['updatedAt'] as Timestamp).toDate(),
+    ticketPrice: (eventData['ticketPrice'] as num?)?.toDouble(),
+    imageUrl: eventData['imageUrl'] as String?,
+    documentUrl: eventData['documentUrl'] as String?,
+    status: eventData['status'] as String? ?? 'pending',
+    approvalReason: eventData['approvalReason'] as String?,
+    rejectionReason: eventData['rejectionReason'] as String?,
+    availableTickets: eventData['availableTickets'] as int? ?? 0,
+  );
+  context.push('/event-detail', extra: event);
+}, isDark: isDark,
+                
               );
             }, childCount: events.length),
           );
@@ -588,9 +616,35 @@ class ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _navigateToEdit(BuildContext context, Map<String, dynamic> event) {
-    context.push('/edit-event', extra: event);
-  }
+ void _navigateToEdit(BuildContext context, Map<String, dynamic> eventData) {
+  // Convert Map to EventEntity
+  final event = EventEntity(
+    id: eventData['id'] as String,
+    title: eventData['title'] as String,
+    description: eventData['description'] as String,
+    location: eventData['location'] as String,
+    startTime: (eventData['startTime'] as Timestamp).toDate(),
+    endTime: (eventData['endTime'] as Timestamp).toDate(),
+    organizerId: eventData['organizerId'] as String,
+    organizerName: eventData['organizerName'] as String,
+    attendees: List<String>.from(eventData['attendees'] ?? []),
+    maxAttendees: eventData['maxAttendees'] as int,
+    category: eventData['category'] as String,
+    latitude: (eventData['latitude'] as num?)?.toDouble(),
+    longitude: (eventData['longitude'] as num?)?.toDouble(),
+    createdAt: (eventData['createdAt'] as Timestamp).toDate(),
+    updatedAt: (eventData['updatedAt'] as Timestamp).toDate(),
+    ticketPrice: (eventData['ticketPrice'] as num?)?.toDouble(),
+    imageUrl: eventData['imageUrl'] as String?,
+    documentUrl: eventData['documentUrl'] as String?,
+    status: eventData['status'] as String? ?? 'pending',
+    approvalReason: eventData['approvalReason'] as String?,
+    rejectionReason: eventData['rejectionReason'] as String?,
+    availableTickets: eventData['availableTickets'] as int? ?? 0,
+  );
+  
+  context.push('/edit-event', extra: event);
+}
 
   void _showDeleteDialog(
     BuildContext context,

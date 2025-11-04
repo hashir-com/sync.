@@ -15,6 +15,12 @@ class EditEventFormData {
   final String? existingDocumentUrl;
   final double? latitude;
   final double? longitude;
+  
+  // NEW: Category-based pricing and capacity
+  final Map<String, double> categoryPrices;
+  final Map<String, int> categoryCapacities;
+  final bool isFreeEvent;
+  final bool isOpenCapacity;
 
   EditEventFormData({
     required this.title,
@@ -31,7 +37,12 @@ class EditEventFormData {
     this.existingDocumentUrl,
     this.latitude,
     this.longitude,
-  });
+    Map<String, double>? categoryPrices,
+    Map<String, int>? categoryCapacities,
+    this.isFreeEvent = false,
+    this.isOpenCapacity = false,
+  })  : categoryPrices = categoryPrices ?? {'vip': 0.0, 'premium': 0.0, 'regular': 0.0},
+        categoryCapacities = categoryCapacities ?? {'vip': 0, 'premium': 0, 'regular': 0};
 
   EditEventFormData copyWith({
     String? title,
@@ -48,6 +59,10 @@ class EditEventFormData {
     String? existingDocumentUrl,
     double? latitude,
     double? longitude,
+    Map<String, double>? categoryPrices,
+    Map<String, int>? categoryCapacities,
+    bool? isFreeEvent,
+    bool? isOpenCapacity,
     bool clearCoverImage = false,
     bool clearDocument = false,
   }) {
@@ -66,6 +81,10 @@ class EditEventFormData {
       existingDocumentUrl: clearDocument ? null : (existingDocumentUrl ?? this.existingDocumentUrl),
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      categoryPrices: categoryPrices ?? this.categoryPrices,
+      categoryCapacities: categoryCapacities ?? this.categoryCapacities,
+      isFreeEvent: isFreeEvent ?? this.isFreeEvent,
+      isOpenCapacity: isOpenCapacity ?? this.isOpenCapacity,
     );
   }
 }
