@@ -1,10 +1,12 @@
-// auth_notifier.dart - FIXED VERSION
+// auth_notifier.dart - FIXED VERSION WITH CACHE CLEARING
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sync_event/core/di/injection_container.dart';
 import 'package:sync_event/features/auth/domain/entities/user_entity.dart';
 import 'package:sync_event/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:sync_event/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_providers.dart';
+import 'package:sync_event/features/profile/data/datasources/profile_local_datasource.dart';
 
 class AuthState {
   final bool isLoading;
@@ -27,7 +29,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final SignOutUseCase _signOutUseCase;
 
   AuthNotifier(this._signInWithGoogleUseCase, this._signOutUseCase)
-      : super(AuthState()) {
+    : super(AuthState()) {
     // Initialize with current Firebase user on app start
     _initializeWithCurrentUser();
   }
@@ -76,11 +78,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    await _signOutUseCase.call();
-    state = AuthState();
+    try {
+      print(' LOGOUT: Starting signout process...');
+
+      // CRITICAL FIX: Clear profile cache BEFORE signing out
+      final localDataSource = sl<ProfileLocalDataSource>();
+      await localDataSource.clearProfileData();
+      print(' LOGOUT: Profile cache cleared');
+
+      // Sign out from Firebase
+      await _signOutUseCase.call();
+      print(' LOGOUT: Firebase signout complete');
+
+      // Reset auth state
+      state = AuthState();
+      print(' LOGOUT: Auth state reset');
+    } catch (e) {
+      print('❌ LOGOUT ERROR: $e');
+      // Still reset state even if cache clearing fails
+      state = AuthState();
+      rethrow;
+    }
   }
 
-  // NEW: Method to refresh auth state (useful after critical operations)
+  // Method to refresh auth state (useful after critical operations)
   void refreshAuthState() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
@@ -120,7 +141,7 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   ),
 );
 
-// NEW: Stream provider for real-time auth state
+// Stream provider for real-time auth state
 final authStateProvider = StreamProvider<User?>((ref) {
   return FirebaseAuth.instance.authStateChanges();
 });

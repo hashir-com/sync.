@@ -10,6 +10,7 @@ import 'package:sync_event/core/constants/app_text_styles.dart';
 import 'package:sync_event/core/util/theme_util.dart';
 import 'package:sync_event/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:sync_event/core/constants/app_theme.dart';
+import 'package:sync_event/features/profile/presentation/providers/other_users_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -119,6 +120,8 @@ class SettingsScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                   ),
                 ),
+
+                // Update the Sign Out button onPressed in your SettingsScreen
                 onPressed: () async {
                   final shouldLogout = await showDialog<bool>(
                     context: context,
@@ -175,8 +178,21 @@ class SettingsScreen extends ConsumerWidget {
                   );
 
                   if (shouldLogout == true && context.mounted) {
+                    // CRITICAL FIX: Invalidate ALL user-related providers before logout
+                    print('Invalidating all user providers...');
+
+                    // Invalidate auth and profile providers
+                    ref.invalidate(authStateProvider);
+                    ref.invalidate(allUsersProvider);
+
+                    // Sign out
                     await ref.read(authNotifierProvider.notifier).signOut();
-                    if (context.mounted) context.go('/login');
+
+                    print(' Logout complete, navigating to login...');
+
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
                   }
                 },
                 child: Text(
